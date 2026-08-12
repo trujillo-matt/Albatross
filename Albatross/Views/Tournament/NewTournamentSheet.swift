@@ -1,0 +1,380 @@
+import SwiftUI
+
+struct NewTournamentSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var tournamentStore: TournamentStore
+    @EnvironmentObject private var socialStore: SocialStore
+
+    // ── Step tracking ────────────────────────────────────────────────────
+    @State private var step = 1
+
+    // ── Step 1 ───────────────────────────────────────────────────────────
+    @State private var name: String = ""
+    @State private var matchType: TournamentMatchType = .bestBall
+    @State private var totalMatches: Int = 3
+
+    // ── Step 2 ───────────────────────────────────────────────────────────
+    @State private var courseNames: [String] = ["", "", ""]
+    @State private var matchTypes: [TournamentMatchType] = [.bestBall, .bestBall, .bestBall]
+
+    // ── Step 3 ───────────────────────────────────────────────────────────
+    @State private var searchQuery: String = ""
+    @State private var invitedProfiles: [UserProfile] = []
+
+    @State private var isCreating = false
+    @State private var errorMessage: String? = nil
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                switch step {
+                case 1:  step1View
+                case 2:  step2View
+                default: step3View
+                }
+            }
+            .navigationTitle(stepTitle)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if step < 3 {
+                        Button("Next") { advanceStep() }
+                            .disabled(!canAdvance)
+                            .font(.custom("Baskerville-SemiBold", size: 16))
+                    } else {
+                        Button(action: createTournament) {
+                            if isCreating {
+                                ProgressView()
+                            } else {
+                                Text("Create")
+                                    .font(.custom("Baskerville-SemiBold", size: 16))
+                            }
+                        }
+                        .disabled(isCreating)
+                    }
+                }
+            }
+        }
+        .onChange(of: totalMatches) { _, newValue in
+            adjustCourseNames(to: newValue)
+        }
+    }
+
+    // MARK: - Step 1: Name, type, matches
+
+    private var step1View: some View {
+        Form {
+            Section("Tournament Name") {
+                TextField("e.g. Ryder Cup 2025", text: $name)
+                    .font(.custom("Baskerville", size: 16))
+            }
+
+            Section {
+                Stepper(value: $totalMatches, in: 1...18) {
+                    HStack {
+                        Text("Matches")
+                            .font(.custom("Baskerville", size: 16))
+                        Spacer()
+                        Text("\(totalMatches)")
+                            .font(.custom("Baskerville-Bold", size: 16))
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+            } header: {
+                Text("Number of Matches")
+            } footer: {
+                Text("Points to win: \(String(format: "%.1f", Double(totalMatches) / 2.0 + 0.5))")
+                    .font(.custom("Baskerville", size: 12))
+            }
+        }
+    }
+
+    // MARK: - Step 2: Courses + formats
+
+    private var step2View: some View {
+        Form {
+            Section {
+                ForEach(0..<totalMatches, id: \.self) { index in
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Match \(index + 1)")
+                            .font(.custom("Baskerville-SemiBold", size: 13))
+                            .foregroundStyle(.secondary)
+
+                        TextField("Course name (optional)", text: courseNameBinding(for: index))
+                            .font(.custom("Baskerville", size: 16))
+
+                        Picker("Format", selection: matchTypeBinding(for: index)) {
+                            ForEach(TournamentMatchType.allCases, id: \.self) { type in
+                                Text(type.displayName).tag(type)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    .padding(.vertical, 4)
+                }
+            } header: {
+                Text("Course & format for each match")
+            } footer: {
+                Text("Course names can be updated later from the tournament detail page.")
+                    .font(.custom("Baskerville", size: 12))
+            }
+        }
+    }
+
+    // MARK: - Step 3: Invite players
+
+    private var step3View: some View {
+        VStack(spacing: 0) {
+            // Search bar
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("Search by name or username", text: $searchQuery)
+                    .font(.custom("Baskerville", size: 15))
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .onChange(of: searchQuery) { _, query in
+                        Task { await socialStore.searchUsers(query: query) }
+                    }
+                if !searchQuery.isEmpty {
+                    Button(action: {
+                        searchQuery = ""
+                        socialStore.searchResults = []
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(12)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 12)
+
+            // Invited chips
+            if !invitedProfiles.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(invitedProfiles) { profile in
+                            inviteChip(profile)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                }
+                .padding(.bottom, 12)
+            }
+
+            Divider()
+
+            // Search results
+            if socialStore.isSearching {
+                ProgressView()
+                    .padding(.top, 40)
+                Spacer()
+            } else if !socialStore.searchResults.isEmpty {
+                List {
+                    ForEach(socialStore.searchResults) { profile in
+                        let alreadyInvited = invitedProfiles.contains(where: { $0.id == profile.id })
+                        Button(action: {
+                            if alreadyInvited {
+                                invitedProfiles.removeAll { $0.id == profile.id }
+                            } else {
+                                invitedProfiles.append(profile)
+                            }
+                        }) {
+                            HStack(spacing: 12) {
+                                avatarView(profile, size: 38)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(profile.displayName)
+                                        .font(.custom("Baskerville-SemiBold", size: 15))
+                                        .foregroundStyle(.primary)
+                                    if let username = profile.username {
+                                        Text("@\(username)")
+                                            .font(.custom("Baskerville", size: 12))
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                                Spacer()
+                                if alreadyInvited {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(Color.accentColor)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .listStyle(.plain)
+            } else if searchQuery.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(Color.accentColor.opacity(0.5))
+                    Text("Search for players to invite")
+                        .font(.custom("Baskerville", size: 15))
+                        .foregroundStyle(.secondary)
+                    Text("You can also invite players after creating the tournament.")
+                        .font(.custom("Baskerville", size: 13))
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+                .padding(.top, 40)
+                Spacer()
+            } else {
+                VStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.tertiary)
+                    Text("No players found")
+                        .font(.custom("Baskerville", size: 15))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 40)
+                Spacer()
+            }
+
+            // Error message
+            if let error = errorMessage {
+                Text(error)
+                    .font(.custom("Baskerville", size: 13))
+                    .foregroundStyle(.red)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+    }
+
+    // MARK: - Subviews
+
+    private func inviteChip(_ profile: UserProfile) -> some View {
+        HStack(spacing: 6) {
+            Text(profile.displayName)
+                .font(.custom("Baskerville", size: 13))
+                .foregroundStyle(.primary)
+            Button(action: { invitedProfiles.removeAll { $0.id == profile.id } }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color(.tertiaryLabel))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color.accentColor.opacity(0.12))
+        .clipShape(Capsule())
+    }
+
+    @ViewBuilder
+    private func avatarView(_ profile: UserProfile, size: CGFloat) -> some View {
+        if let urlString = profile.avatarURL,
+           let url = URL(string: urlString) {
+            AsyncImage(url: url) { image in
+                image.resizable().scaledToFill()
+            } placeholder: {
+                Color.accentColor.opacity(0.2)
+            }
+            .frame(width: size, height: size)
+            .clipShape(Circle())
+        } else {
+            Circle()
+                .fill(Color.accentColor.opacity(0.2))
+                .frame(width: size, height: size)
+                .overlay(
+                    Text(String(profile.displayName.prefix(1)).uppercased())
+                        .font(.custom("Baskerville-Bold", size: size * 0.4))
+                        .foregroundStyle(Color.accentColor)
+                )
+        }
+    }
+
+    // MARK: - Helpers
+
+    private var stepTitle: String {
+        switch step {
+        case 1: return "New Tournament"
+        case 2: return "Courses"
+        default: return "Invite Players"
+        }
+    }
+
+    private var canAdvance: Bool {
+        switch step {
+        case 1: return !name.trimmingCharacters(in: .whitespaces).isEmpty
+        case 2: return true // course names are optional
+        default: return true
+        }
+    }
+
+    private func advanceStep() {
+        withAnimation { step += 1 }
+    }
+
+    private func adjustCourseNames(to count: Int) {
+        if courseNames.count < count {
+            courseNames.append(contentsOf: Array(repeating: "", count: count - courseNames.count))
+            matchTypes.append(contentsOf: Array(repeating: .bestBall, count: count - matchTypes.count))
+        } else if courseNames.count > count {
+            courseNames = Array(courseNames.prefix(count))
+            matchTypes = Array(matchTypes.prefix(count))
+        }
+    }
+
+    private func courseNameBinding(for index: Int) -> Binding<String> {
+        Binding(
+            get: { index < courseNames.count ? courseNames[index] : "" },
+            set: { value in
+                if index < courseNames.count { courseNames[index] = value }
+            }
+        )
+    }
+
+    private func matchTypeBinding(for index: Int) -> Binding<TournamentMatchType> {
+        Binding(
+            get: { index < matchTypes.count ? matchTypes[index] : .bestBall },
+            set: { value in
+                if index < matchTypes.count { matchTypes[index] = value }
+            }
+        )
+    }
+
+    private func createTournament() {
+        isCreating = true
+        errorMessage = nil
+        Task {
+            do {
+                let names = courseNames.map { $0.trimmingCharacters(in: .whitespaces) }
+                let tournament = try await tournamentStore.createTournament(
+                    name: name.trimmingCharacters(in: .whitespaces),
+                    matchType: matchTypes.first ?? .bestBall,
+                    totalMatches: totalMatches,
+                    courseNames: names,
+                    matchTypes: matchTypes
+                )
+                // Send invites
+                for profile in invitedProfiles {
+                    try? await tournamentStore.invitePlayer(
+                        tournamentID: tournament.id,
+                        userID: profile.id
+                    )
+                }
+                await MainActor.run {
+                    isCreating = false
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    isCreating = false
+                    errorMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+}

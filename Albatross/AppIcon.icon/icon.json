@@ -1,0 +1,41 @@
+{
+  "fill" : {
+    "automatic-gradient" : "srgb:0.00000,0.40392,0.27843,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "blend-mode" : "lighten",
+          "fill" : {
+            "solid" : "gray:1.00000,1.00000"
+          },
+          "hidden" : false,
+          "image-name" : "black-browed-albatross.png",
+          "name" : "black-browed-albatross",
+          "position" : {
+            "scale" : 1.55,
+            "translation-in-points" : [
+              10.849999999999852,
+              1.5499999999999545
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}

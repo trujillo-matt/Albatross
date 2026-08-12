@@ -6,6 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		F3BE50642F481DDE00DF4336 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = F3BE50632F481DDE00DF4336 /* Supabase */; };
+		F3BE507A2F48C49300DF4336 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3BE50792F48C49300DF4336 /* WidgetKit.framework */; };
+		F3BE507C2F48C49300DF4336 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3BE507B2F48C49300DF4336 /* SwiftUI.framework */; };
+		F3BE508D2F48C49500DF4336 /* AlbatrossWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F3BE50772F48C49300DF4336 /* AlbatrossWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F3E5FA492F4D777700BF6D9D /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3BE50792F48C49300DF4336 /* WidgetKit.framework */; };
+		F3E5FA4A2F4D777700BF6D9D /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F3BE507B2F48C49300DF4336 /* SwiftUI.framework */; };
+		F3E5FA5B2F4D777700BF6D9D /* AlbatrossControlCenterExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F3E5FA482F4D777600BF6D9D /* AlbatrossControlCenterExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		F3BE4F722F47C60C00DF4336 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,17 +31,86 @@
 			remoteGlobalIDString = F3BE4F632F47C60900DF4336;
 			remoteInfo = Albatross;
 		};
+		F3BE508B2F48C49500DF4336 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F3BE4F5C2F47C60900DF4336 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F3BE50762F48C49300DF4336;
+			remoteInfo = AlbatrossWidgetsExtension;
+		};
+		F3E5FA592F4D777700BF6D9D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F3BE4F5C2F47C60900DF4336 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F3E5FA472F4D777600BF6D9D;
+			remoteInfo = AlbatrossControlCenterExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F3BE50922F48C49500DF4336 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F3BE508D2F48C49500DF4336 /* AlbatrossWidgetsExtension.appex in Embed Foundation Extensions */,
+				F3E5FA5B2F4D777700BF6D9D /* AlbatrossControlCenterExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F3BE4F642F47C60900DF4336 /* Albatross.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Albatross.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3BE4F712F47C60C00DF4336 /* AlbatrossTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AlbatrossTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F3BE4F7B2F47C60C00DF4336 /* AlbatrossUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AlbatrossUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3BE50772F48C49300DF4336 /* AlbatrossWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AlbatrossWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3BE50792F48C49300DF4336 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		F3BE507B2F48C49300DF4336 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		F3E5FA482F4D777600BF6D9D /* AlbatrossControlCenterExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AlbatrossControlCenterExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F3E5FA622F4D784C00BF6D9D /* AlbatrossControlCenterExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AlbatrossControlCenterExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F3BE508E2F48C49500DF4336 /* Exceptions for "AlbatrossWidgets" folder in "AlbatrossWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F3BE50762F48C49300DF4336 /* AlbatrossWidgetsExtension */;
+		};
+		F3BE50982F48C64000DF4336 /* Exceptions for "Albatross" folder in "AlbatrossWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Models/AlbatrossLiveActivity.swift,
+			);
+			target = F3BE50762F48C49300DF4336 /* AlbatrossWidgetsExtension */;
+		};
+		F3BE509A2F48C97100DF4336 /* Exceptions for "Albatross" folder in "Albatross" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F3BE4F632F47C60900DF4336 /* Albatross */;
+		};
+		F3E5FA5F2F4D777700BF6D9D /* Exceptions for "AlbatrossControlCenter" folder in "AlbatrossControlCenterExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F3E5FA472F4D777600BF6D9D /* AlbatrossControlCenterExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		F3BE4F662F47C60900DF4336 /* Albatross */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F3BE509A2F48C97100DF4336 /* Exceptions for "Albatross" folder in "Albatross" target */,
+				F3BE50982F48C64000DF4336 /* Exceptions for "Albatross" folder in "AlbatrossWidgetsExtension" target */,
+			);
 			path = Albatross;
 			sourceTree = "<group>";
 		};
@@ -45,6 +124,22 @@
 			path = AlbatrossUITests;
 			sourceTree = "<group>";
 		};
+		F3BE507D2F48C49300DF4336 /* AlbatrossWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F3BE508E2F48C49500DF4336 /* Exceptions for "AlbatrossWidgets" folder in "AlbatrossWidgetsExtension" target */,
+			);
+			path = AlbatrossWidgets;
+			sourceTree = "<group>";
+		};
+		F3E5FA4B2F4D777700BF6D9D /* AlbatrossControlCenter */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F3E5FA5F2F4D777700BF6D9D /* Exceptions for "AlbatrossControlCenter" folder in "AlbatrossControlCenterExtension" target */,
+			);
+			path = AlbatrossControlCenter;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +147,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F3BE50642F481DDE00DF4336 /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -69,15 +165,37 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F3BE50742F48C49300DF4336 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F3BE507C2F48C49300DF4336 /* SwiftUI.framework in Frameworks */,
+				F3BE507A2F48C49300DF4336 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3E5FA452F4D777600BF6D9D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F3E5FA4A2F4D777700BF6D9D /* SwiftUI.framework in Frameworks */,
+				F3E5FA492F4D777700BF6D9D /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		F3BE4F5B2F47C60900DF4336 = {
 			isa = PBXGroup;
 			children = (
+				F3E5FA622F4D784C00BF6D9D /* AlbatrossControlCenterExtension.entitlements */,
 				F3BE4F662F47C60900DF4336 /* Albatross */,
 				F3BE4F742F47C60C00DF4336 /* AlbatrossTests */,
 				F3BE4F7E2F47C60C00DF4336 /* AlbatrossUITests */,
+				F3BE507D2F48C49300DF4336 /* AlbatrossWidgets */,
+				F3E5FA4B2F4D777700BF6D9D /* AlbatrossControlCenter */,
+				F3BE50782F48C49300DF4336 /* Frameworks */,
 				F3BE4F652F47C60900DF4336 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,8 +206,19 @@
 				F3BE4F642F47C60900DF4336 /* Albatross.app */,
 				F3BE4F712F47C60C00DF4336 /* AlbatrossTests.xctest */,
 				F3BE4F7B2F47C60C00DF4336 /* AlbatrossUITests.xctest */,
+				F3BE50772F48C49300DF4336 /* AlbatrossWidgetsExtension.appex */,
+				F3E5FA482F4D777600BF6D9D /* AlbatrossControlCenterExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		F3BE50782F48C49300DF4336 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F3BE50792F48C49300DF4336 /* WidgetKit.framework */,
+				F3BE507B2F48C49300DF4336 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -102,16 +231,20 @@
 				F3BE4F602F47C60900DF4336 /* Sources */,
 				F3BE4F612F47C60900DF4336 /* Frameworks */,
 				F3BE4F622F47C60900DF4336 /* Resources */,
+				F3BE50922F48C49500DF4336 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F3BE508C2F48C49500DF4336 /* PBXTargetDependency */,
+				F3E5FA5A2F4D777700BF6D9D /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				F3BE4F662F47C60900DF4336 /* Albatross */,
 			);
 			name = Albatross;
 			packageProductDependencies = (
+				F3BE50632F481DDE00DF4336 /* Supabase */,
 			);
 			productName = Albatross;
 			productReference = F3BE4F642F47C60900DF4336 /* Albatross.app */;
@@ -163,6 +296,50 @@
 			productReference = F3BE4F7B2F47C60C00DF4336 /* AlbatrossUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		F3BE50762F48C49300DF4336 /* AlbatrossWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F3BE508F2F48C49500DF4336 /* Build configuration list for PBXNativeTarget "AlbatrossWidgetsExtension" */;
+			buildPhases = (
+				F3BE50732F48C49300DF4336 /* Sources */,
+				F3BE50742F48C49300DF4336 /* Frameworks */,
+				F3BE50752F48C49300DF4336 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F3BE507D2F48C49300DF4336 /* AlbatrossWidgets */,
+			);
+			name = AlbatrossWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = AlbatrossWidgetsExtension;
+			productReference = F3BE50772F48C49300DF4336 /* AlbatrossWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		F3E5FA472F4D777600BF6D9D /* AlbatrossControlCenterExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F3E5FA5C2F4D777700BF6D9D /* Build configuration list for PBXNativeTarget "AlbatrossControlCenterExtension" */;
+			buildPhases = (
+				F3E5FA442F4D777600BF6D9D /* Sources */,
+				F3E5FA452F4D777600BF6D9D /* Frameworks */,
+				F3E5FA462F4D777600BF6D9D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F3E5FA4B2F4D777700BF6D9D /* AlbatrossControlCenter */,
+			);
+			name = AlbatrossControlCenterExtension;
+			packageProductDependencies = (
+			);
+			productName = AlbatrossControlCenterExtension;
+			productReference = F3E5FA482F4D777600BF6D9D /* AlbatrossControlCenterExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +361,12 @@
 						CreatedOnToolsVersion = 26.2;
 						TestTargetID = F3BE4F632F47C60900DF4336;
 					};
+					F3BE50762F48C49300DF4336 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					F3E5FA472F4D777600BF6D9D = {
+						CreatedOnToolsVersion = 26.2;
+					};
 				};
 			};
 			buildConfigurationList = F3BE4F5F2F47C60900DF4336 /* Build configuration list for PBXProject "Albatross" */;
@@ -195,6 +378,9 @@
 			);
 			mainGroup = F3BE4F5B2F47C60900DF4336;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F3BE50622F481DDE00DF4336 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F3BE4F652F47C60900DF4336 /* Products */;
 			projectDirPath = "";
@@ -203,6 +389,8 @@
 				F3BE4F632F47C60900DF4336 /* Albatross */,
 				F3BE4F702F47C60C00DF4336 /* AlbatrossTests */,
 				F3BE4F7A2F47C60C00DF4336 /* AlbatrossUITests */,
+				F3BE50762F48C49300DF4336 /* AlbatrossWidgetsExtension */,
+				F3E5FA472F4D777600BF6D9D /* AlbatrossControlCenterExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +411,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		F3BE4F792F47C60C00DF4336 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3BE50752F48C49300DF4336 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3E5FA462F4D777600BF6D9D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +455,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F3BE50732F48C49300DF4336 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F3E5FA442F4D777600BF6D9D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +481,16 @@
 			isa = PBXTargetDependency;
 			target = F3BE4F632F47C60900DF4336 /* Albatross */;
 			targetProxy = F3BE4F7C2F47C60C00DF4336 /* PBXContainerItemProxy */;
+		};
+		F3BE508C2F48C49500DF4336 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F3BE50762F48C49300DF4336 /* AlbatrossWidgetsExtension */;
+			targetProxy = F3BE508B2F48C49500DF4336 /* PBXContainerItemProxy */;
+		};
+		F3E5FA5A2F4D777700BF6D9D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F3E5FA472F4D777600BF6D9D /* AlbatrossControlCenterExtension */;
+			targetProxy = F3E5FA592F4D777700BF6D9D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -395,14 +621,24 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Albatross/Albatross.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = LWDX8WRPAY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Albatross/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Albatross;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Albatross uses the camera to scan paper scorecards.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Albatross saves your scorecard to Photos.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -412,6 +648,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = TrujSoft.Albatross;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -427,14 +664,24 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Albatross/Albatross.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = LWDX8WRPAY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Albatross/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Albatross;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Albatross uses the camera to scan paper scorecards.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Albatross saves your scorecard to Photos.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				INFOPLIST_KEY_NSSupportsLiveActivitiesFrequentUpdates = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -444,6 +691,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = TrujSoft.Albatross;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -459,7 +707,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = LWDX8WRPAY;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
@@ -481,7 +729,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = LWDX8WRPAY;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
@@ -502,7 +750,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = LWDX8WRPAY;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
@@ -522,7 +770,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = LWDX8WRPAY;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
@@ -535,6 +783,134 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_TARGET_NAME = Albatross;
+			};
+			name = Release;
+		};
+		F3BE50902F48C49500DF4336 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = LWDX8WRPAY;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AlbatrossWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AlbatrossWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = TrujSoft.Albatross.AlbatrossWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F3BE50912F48C49500DF4336 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = LWDX8WRPAY;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AlbatrossWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AlbatrossWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = TrujSoft.Albatross.AlbatrossWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F3E5FA5D2F4D777700BF6D9D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = AlbatrossControlCenterExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = LWDX8WRPAY;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AlbatrossControlCenter/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AlbatrossControlCenter;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = TrujSoft.Albatross.AlbatrossControlCenter;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F3E5FA5E2F4D777700BF6D9D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = AlbatrossControlCenterExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = LWDX8WRPAY;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AlbatrossControlCenter/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AlbatrossControlCenter;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = TrujSoft.Albatross.AlbatrossControlCenter;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -577,7 +953,44 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		F3BE508F2F48C49500DF4336 /* Build configuration list for PBXNativeTarget "AlbatrossWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F3BE50902F48C49500DF4336 /* Debug */,
+				F3BE50912F48C49500DF4336 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F3E5FA5C2F4D777700BF6D9D /* Build configuration list for PBXNativeTarget "AlbatrossControlCenterExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F3E5FA5D2F4D777700BF6D9D /* Debug */,
+				F3E5FA5E2F4D777700BF6D9D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F3BE50622F481DDE00DF4336 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F3BE50632F481DDE00DF4336 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F3BE50622F481DDE00DF4336 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F3BE4F5C2F47C60900DF4336 /* Project object */;
 }
