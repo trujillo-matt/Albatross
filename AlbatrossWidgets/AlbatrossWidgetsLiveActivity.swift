@@ -57,10 +57,8 @@ struct AlbatrossLiveActivityWidget: Widget {
                 }
 
             } compactTrailing: {
-                // "Hole 7" or "Thru 18"
-                Text(holeLabel(context.state.holesPlayed))
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.secondary)
+                // "Hole 7" or "Thru 18"; shorter when the island has little width
+                CompactHoleLabel(holesPlayed: context.state.holesPlayed)
 
             } minimal: {
                 // Minimal: just score-to-par
@@ -174,6 +172,43 @@ func scoreToParColor(_ scoreToPar: Int) -> Color {
     case 1:     return Color.orange
     default:    return Color.red
     }
+}
+
+/// Compact trailing text. On iOS 27 and later, when the system limits the island's width,
+/// the label drops its word ("H7") so it is never cut off mid-word. Earlier systems use the full label.
+struct CompactHoleLabel: View {
+    let holesPlayed: Int
+
+    var body: some View {
+        if #available(iOS 27.0, *) {
+            WidthAwareHoleLabel(holesPlayed: holesPlayed)
+        } else {
+            label(holeLabel(holesPlayed))
+        }
+    }
+}
+
+@available(iOS 27.0, *)
+private struct WidthAwareHoleLabel: View {
+    let holesPlayed: Int
+    @Environment(\.isDynamicIslandLimitedInWidth) private var isLimitedInWidth
+
+    var body: some View {
+        label(isLimitedInWidth ? shortHoleLabel(holesPlayed) : holeLabel(holesPlayed))
+    }
+}
+
+private func label(_ text: String) -> some View {
+    Text(text)
+        .font(.system(size: 11, weight: .medium))
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+}
+
+func shortHoleLabel(_ holesPlayed: Int) -> String {
+    if holesPlayed == 0 { return "H1" }
+    return "H\(holesPlayed)"
 }
 
 func holeLabel(_ holesPlayed: Int) -> String {
