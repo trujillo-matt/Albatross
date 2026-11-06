@@ -10,6 +10,20 @@ struct ScoreInputView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var inputText: String = ""
 
+    @State private var viewportHeight: CGFloat = 0
+
+    /// The sheet's height varies with the device, its orientation and the text size.
+    /// The content scrolls when it cannot fit, and stretches to fill the sheet when
+    /// there is spare room, so the number pad keys are never squashed or cut off.
+    private func scrollingWhenNeeded<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        ScrollView {
+            content()
+                .frame(minHeight: viewportHeight)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewportHeight = $0 }
+    }
+
     private var parsedScore: Int? {
         guard let v = Int(inputText), v >= 1, v <= 20 else { return nil }
         return v
@@ -17,6 +31,7 @@ struct ScoreInputView: View {
 
     var body: some View {
         NavigationStack {
+            scrollingWhenNeeded {
             VStack(spacing: 0) {
                 // Header — tapping here commits + dismisses (acts as "save")
                 VStack(spacing: 6) {
@@ -37,6 +52,8 @@ struct ScoreInputView: View {
                     HStack(alignment: .center, spacing: 6) {
                         Text(inputText.isEmpty ? (score.map { String($0) } ?? "—") : inputText)
                             .font(.custom("Baskerville-Bold", size: 72))
+                            // The value is a large display figure; scaling it further only crowds the keys.
+                            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                             .foregroundStyle(scoreDisplayColor)
                             .contentTransition(.numericText())
                             .animation(.snappy, value: inputText)
@@ -66,6 +83,7 @@ struct ScoreInputView: View {
                 NumberPadView(inputText: $inputText, par: par, onCommit: commit)
                     .background(Color(.systemGroupedBackground))
             }
+            }
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -81,7 +99,7 @@ struct ScoreInputView: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         // Drag-to-dismiss also commits the score
         .onDisappear {
@@ -133,6 +151,8 @@ private struct NumberPadView: View {
 
     private let haptic = UIImpactFeedbackGenerator(style: .light)
 
+    @ScaledMetric(relativeTo: .title2) private var keyMinHeight: CGFloat = 52
+
     var body: some View {
         VStack(spacing: 12) {
             ForEach(rows, id: \.self) { row in
@@ -140,11 +160,11 @@ private struct NumberPadView: View {
                     ForEach(row, id: \.self) { key in
                         if key.isEmpty {
                             Color.clear
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .frame(maxWidth: .infinity, minHeight: keyMinHeight, maxHeight: .infinity)
                         } else {
                             Button(action: { handleKey(key) }) {
                                 keyLabel(key)
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                    .frame(maxWidth: .infinity, minHeight: keyMinHeight, maxHeight: .infinity)
                             }
                             .buttonStyle(KeyButtonStyle(key: key, par: par))
                         }
