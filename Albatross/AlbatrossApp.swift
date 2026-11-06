@@ -85,6 +85,13 @@ struct AlbatrossApp: App {
                 authStore.roundStore = roundStore
                 socialStore.authStore = authStore
                 tournamentStore.authStore = authStore
+                #if DEBUG
+                // UI tests launch with this argument to start from one empty in-progress round.
+                if CommandLine.arguments.contains("-uitest-seed-round"),
+                   !roundStore.rounds.contains(where: { $0.courseName == "UI Test Course" }) {
+                    roundStore.add(Round(courseName: "UI Test Course"))
+                }
+                #endif
             }
             // React to auth state changes that happen after initial load
             // (e.g. sign-in completes, session restored asynchronously)

@@ -603,3 +603,50 @@ private struct BookletScoreCell: View {
         }
     }
 }
+
+// MARK: - Previews
+
+#if DEBUG
+private func previewStore() -> RoundStore {
+    let store = RoundStore()
+    var round = Round(courseName: "Great Waters at Reynolds")
+    round.scores = [5, 6, 5, 4, 6, 5, 6, 3, 7, 6, 5, 4, 7, 4, 5, 4, 3, 5]
+    store.add(round)
+    return store
+}
+
+/// The same booklet at a very narrow, a compact and a regular width.
+/// Size classes come from the environment, not from the frame, so they are set explicitly.
+#Preview("Narrow, 280 pt") {
+    let store = previewStore()
+    NavigationStack {
+        BookletView(roundID: store.rounds[0].id) { _, _ in }
+    }
+    .frame(width: 280)
+    .environment(\.horizontalSizeClass, .compact)
+    .environmentObject(store)
+    .environmentObject(CourseStore())
+}
+
+#Preview("Compact, 390 pt") {
+    let store = previewStore()
+    NavigationStack {
+        BookletView(roundID: store.rounds[0].id) { _, _ in }
+    }
+    .frame(width: 390)
+    .environment(\.horizontalSizeClass, .compact)
+    .environmentObject(store)
+    .environmentObject(CourseStore())
+}
+
+#Preview("Regular, 820 pt") {
+    let store = previewStore()
+    NavigationStack {
+        BookletView(roundID: store.rounds[0].id) { _, _ in }
+    }
+    .frame(width: 820)
+    .environment(\.horizontalSizeClass, .regular)
+    .environmentObject(store)
+    .environmentObject(CourseStore())
+}
+#endif
