@@ -114,6 +114,7 @@ struct TournamentDetailView: View {
                         }
                     }
                 }
+                .clippedToHorizontalSafeArea()
             }
         }
         .padding(16)

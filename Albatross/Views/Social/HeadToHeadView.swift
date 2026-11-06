@@ -72,6 +72,7 @@ struct HeadToHeadView: View {
 
                     Spacer(minLength: 40)
                 }
+                .readableContentWidth()
             }
         }
         .navigationTitle("Head to Head")

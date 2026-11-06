@@ -30,6 +30,13 @@ extension View {
     func clippedToHorizontalSafeArea() -> some View {
         modifier(HorizontalSafeAreaClip())
     }
+
+    /// Keeps a column of content at a comfortable reading width and centres it,
+    /// so cards and text don't stretch across a wide screen.
+    func readableContentWidth(_ maxWidth: CGFloat = 680) -> some View {
+        frame(maxWidth: maxWidth)
+            .frame(maxWidth: .infinity)
+    }
 }
 
 extension ToolbarContent {

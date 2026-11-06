@@ -151,6 +151,7 @@ struct SignInView: View {
                         .padding(.top, 28)
                         .padding(.bottom, 48)
                 }
+                .readableContentWidth(480)
             }
             .scrollDismissesKeyboard(.interactively)
         }

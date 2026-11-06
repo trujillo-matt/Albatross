@@ -158,6 +158,7 @@ struct TournamentListView: View {
             }
             .padding(.horizontal, 16)
         }
+        .clippedToHorizontalSafeArea()
     }
 
     private func tournamentCard(_ tournament: Tournament) -> some View {

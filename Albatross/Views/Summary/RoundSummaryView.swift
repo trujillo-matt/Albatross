@@ -37,6 +37,7 @@ struct RoundSummaryView: View {
                         .padding(.horizontal, 24)
                         .padding(.bottom, 32)
                 }
+                .readableContentWidth(560)
             }
         }
         .navigationTitle(round.courseName)

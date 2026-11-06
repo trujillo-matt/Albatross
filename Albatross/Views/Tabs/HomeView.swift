@@ -96,6 +96,7 @@ struct HomeView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
+            .readableContentWidth()
         }
         .refreshable {
             await socialStore.loadFeed()

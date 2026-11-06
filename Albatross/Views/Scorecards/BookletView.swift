@@ -33,6 +33,7 @@ struct BookletView: View {
     @State private var showFinishConfirm = false
     @State private var hasHandledOpeningHole = false
     @State private var spreadViewportHeight: CGFloat = 0
+    @State private var spineEmphasis = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var round: Round? { store.rounds.first { $0.id == roundID } }
@@ -96,6 +97,16 @@ struct BookletView: View {
             }
         }
         .onAppear { openNextHoleIfRequested(round) }
+        .hingeFeedback { pulseSpine() }
+    }
+
+    /// A brief emphasis on the spine when the device opens or closes. Effect only: layout never depends on it.
+    private func pulseSpine() {
+        guard !reduceMotion else { return }
+        withAnimation(.easeOut(duration: 0.3)) { spineEmphasis = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(.easeIn(duration: 0.4)) { spineEmphasis = false }
+        }
     }
 
     /// One page at a time. Paging gives the flip between cover and interior pages.
@@ -160,8 +171,8 @@ struct BookletView: View {
                 HStack(spacing: 0) {
                     holePage(title: "Front 9", holes: 1...9, round: round, showsHeader: false)
                     Rectangle()
-                        .fill(Color(.separator))
-                        .frame(width: 1)
+                        .fill(spineEmphasis ? Color.primary.opacity(0.35) : Color(.separator))
+                        .frame(width: spineEmphasis ? 2 : 1)
                         .padding(.vertical, 12)
                     holePage(title: "Back 9", holes: 10...18, round: round, showsHeader: false)
                 }
@@ -335,6 +346,25 @@ struct BookletView: View {
         // Give the page a moment to appear before the sheet slides over it.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
             selectedHole = nextIndex + 1
+        }
+    }
+}
+
+// MARK: - Fold feedback
+
+private extension View {
+    /// Runs `effect` and taps the haptic engine when the device's hinge status changes.
+    /// Only iOS 27.1 reports hinge changes; earlier systems simply skip the effect.
+    @ViewBuilder
+    func hingeFeedback(_ effect: @escaping () -> Void) -> some View {
+        if #available(iOS 27.1, *) {
+            self.onHingeChange { oldContext, newContext in
+                guard oldContext.hinge?.status != newContext.hinge?.status else { return }
+                UIImpactFeedbackGenerator(style: .soft).impactOccurred()
+                effect()
+            }
+        } else {
+            self
         }
     }
 }

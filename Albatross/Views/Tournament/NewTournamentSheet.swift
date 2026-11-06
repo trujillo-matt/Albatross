@@ -170,6 +170,7 @@ struct NewTournamentSheet: View {
                     }
                     .padding(.horizontal, 16)
                 }
+                .clippedToHorizontalSafeArea()
                 .padding(.bottom, 12)
             }
 
