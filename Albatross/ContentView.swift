@@ -13,31 +13,38 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            HomeView()
-                .tabItem {
-                    Label("Clubhouse", systemImage: "house.fill")
-                }
-                .tag(0)
+            Tab("Clubhouse", systemImage: "house.fill", value: 0) {
+                HomeView()
+            }
 
-            ScorecardsView(pendingRoundID: $pendingRoundID, pendingNewRound: $pendingNewRound)
-                .tabItem {
-                    Label("Scorecards", systemImage: "list.clipboard.fill")
-                }
-                .tag(1)
+            Tab("Scorecards", systemImage: "list.clipboard.fill", value: 1) {
+                ScorecardsView(pendingRoundID: $pendingRoundID, pendingNewRound: $pendingNewRound)
+            }
 
-            StatsView()
-                .tabItem {
-                    Label("Stats", systemImage: "chart.bar.fill")
-                }
-                .tag(2)
+            Tab("Stats", systemImage: "chart.bar.fill", value: 2) {
+                StatsView()
+            }
 
-            ProfileView()
-                .tabItem {
-                    Label("Profile", systemImage: "person.crop.circle.fill")
-                }
-                .tag(3)
+            Tab("Profile", systemImage: "person.crop.circle.fill", value: 3) {
+                ProfileView()
+            }
         }
+        .tabViewStyle(.sidebarAdaptable)
+        .sidebarByDefaultWhereAvailable()
         .tint(.accentColor)
+    }
+}
+
+private extension View {
+    /// On iOS 27 the tabs start in the sidebar, which suits the wide inner display.
+    /// The user can still switch to the tab bar; earlier systems keep the automatic choice.
+    @ViewBuilder
+    func sidebarByDefaultWhereAvailable() -> some View {
+        if #available(iOS 27.0, *) {
+            self.defaultTabBarPlacement(.sidebar)
+        } else {
+            self
+        }
     }
 }
 
