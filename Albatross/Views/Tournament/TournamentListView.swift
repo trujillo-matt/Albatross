@@ -15,6 +15,9 @@ struct TournamentListView: View {
                 Text("Tournaments")
                     .font(.custom("Baskerville-Bold", size: 18))
                     .foregroundStyle(.primary)
+                    // A single word should shrink before it breaks across lines.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
 
                 Spacer()
 

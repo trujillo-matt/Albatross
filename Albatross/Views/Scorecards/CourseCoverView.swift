@@ -144,7 +144,7 @@ struct CourseCoverView: View {
             logo(width: width)
 
             Text(round.courseName.uppercased())
-                .font(.custom("Baskerville-SemiBold", size: width * 0.075))
+                .font(.custom("Baskerville-SemiBold", fixedSize: width * 0.075))
                 .tracking(width * 0.006)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
@@ -152,7 +152,7 @@ struct CourseCoverView: View {
                 .foregroundStyle(style.ink)
 
             Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                .font(.custom("Baskerville", size: width * 0.065))
+                .font(.custom("Baskerville", fixedSize: width * 0.065))
                 .foregroundStyle(style.ink.opacity(0.75))
 
             Spacer(minLength: 0)
@@ -190,13 +190,13 @@ struct CourseCoverView: View {
             VStack(spacing: 0) {
                 HStack(alignment: .firstTextBaseline, spacing: width * 0.025) {
                     Text("\(round.totalScore)")
-                        .font(.custom(BookletStyle.pencilFontName, size: width * 0.21))
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: width * 0.21))
                     Text(differenceText)
-                        .font(.custom(BookletStyle.pencilFontName, size: width * 0.085))
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: width * 0.085))
                 }
                 if round.status == .inProgress {
                     Text("thru \(round.holesPlayed)")
-                        .font(.custom(BookletStyle.pencilFontName, size: width * 0.07))
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: width * 0.07))
                 }
             }
             .foregroundStyle(BookletStyle.pencilGraphite)

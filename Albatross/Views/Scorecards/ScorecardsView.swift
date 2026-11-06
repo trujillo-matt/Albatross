@@ -21,7 +21,9 @@ struct ScorecardsView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var coverNamespace
-    @ScaledMetric(relativeTo: .body) private var coverWidth: CGFloat = 170
+    /// A cover is a picture of an object, so it keeps its size at every text size.
+    /// Its text scales with the cover, and VoiceOver reads the full description.
+    private let coverWidth: CGFloat = 170
 
     private var inProgress: [Round] {
         store.rounds.filter { $0.status == .inProgress && $0.tournamentMatchupID == nil }
@@ -199,6 +201,7 @@ struct ScorecardsView: View {
         .scrollTargetBehavior(.viewAligned)
         .scrollIndicators(.hidden)
         .contentMargins(.horizontal, 20, for: .scrollContent)
+        .clippedToHorizontalSafeArea()
     }
 
     // MARK: - Empty state

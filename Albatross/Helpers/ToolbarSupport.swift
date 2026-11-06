@@ -16,6 +16,22 @@ extension ToolbarItemPlacement {
     }
 }
 
+/// Scroll views draw under the vertical bar on the sides of the screen.
+/// This keeps scrolling content out of that strip by clipping it to the safe area.
+private struct HorizontalSafeAreaClip: ViewModifier {
+    func body(content: Content) -> some View {
+        // A mask is laid out inside the safe area even when the scroll view draws beyond it,
+        // so a plain rectangle is exactly the safe area on every side.
+        content.mask(Rectangle())
+    }
+}
+
+extension View {
+    func clippedToHorizontalSafeArea() -> some View {
+        modifier(HorizontalSafeAreaClip())
+    }
+}
+
 extension ToolbarContent {
     /// Marks a frequently used action so it is the last to collapse into the overflow menu.
     @ToolbarContentBuilder

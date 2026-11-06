@@ -124,6 +124,7 @@ struct BookletView: View {
         .scrollTargetBehavior(.paging)
         .scrollPosition(id: $page)
         .scrollIndicators(.hidden)
+        .clippedToHorizontalSafeArea()
         .accessibilityAction(named: "Open scorecard") { withAnimation { page = .front } }
         .accessibilityAction(named: "Next page") { turnPage(by: 1) }
         .accessibilityAction(named: "Previous page") { turnPage(by: -1) }
@@ -345,38 +346,51 @@ private struct RoundHeader: View {
     var onCourseTap: () -> Void
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Button(action: onCourseTap) {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text(round.courseName)
-                            .font(.custom("Baskerville-Bold", size: 18))
-                            .foregroundStyle(.primary)
-                            .multilineTextAlignment(.leading)
-                            .accessibilityAddTraits(.isHeader)
-                        Image(systemName: "chevron.right")
-                            .font(.caption2.weight(.semibold))
-                            .foregroundStyle(.tertiary)
-                    }
-                    Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                        .font(.custom("Baskerville", size: 13))
-                        .foregroundStyle(.secondary)
-                }
+        // Side by side when the name fits beside the total, stacked at large text sizes.
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                courseButton
+                Spacer(minLength: 8)
+                totalView(alignment: .trailing)
             }
-            .buttonStyle(.plain)
-
-            Spacer(minLength: 8)
-
-            VStack(alignment: .trailing, spacing: 0) {
-                Text(round.holesPlayed > 0 ? "\(round.totalScore)" : "—")
-                    .font(.custom(BookletStyle.pencilFontName, size: 34))
-                    .foregroundStyle(round.holesPlayed > 0 ? BookletStyle.pencilGraphite : Color.secondary)
-                Text("total")
-                    .font(.custom("Baskerville", size: 12))
-                    .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 8) {
+                courseButton
+                totalView(alignment: .leading)
             }
         }
         .padding(.horizontal, 4)
+    }
+
+    private var courseButton: some View {
+        Button(action: onCourseTap) {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Text(round.courseName)
+                        .font(.custom("Baskerville-Bold", size: 18))
+                        .foregroundStyle(.primary)
+                        .multilineTextAlignment(.leading)
+                        .accessibilityAddTraits(.isHeader)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                Text(round.date.formatted(date: .abbreviated, time: .omitted))
+                    .font(.custom("Baskerville", size: 13))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func totalView(alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: 0) {
+            Text(round.holesPlayed > 0 ? "\(round.totalScore)" : "—")
+                .font(.custom(BookletStyle.pencilFontName, size: 34))
+                .foregroundStyle(round.holesPlayed > 0 ? BookletStyle.pencilGraphite : Color.secondary)
+            Text("total")
+                .font(.custom("Baskerville", size: 12))
+                .foregroundStyle(.secondary)
+        }
     }
 }
 
@@ -513,7 +527,8 @@ private struct BookletScoreCell: View {
                             .frame(width: height * 0.55, height: height * 0.55)
                     } else {
                         Text("\(score)")
-                            .font(.custom(BookletStyle.pencilFontName, size: height * 0.5))
+                            // The cell height already scales with Dynamic Type, so the digit must not scale twice.
+                            .font(.custom(BookletStyle.pencilFontName, fixedSize: height * 0.5))
                             .foregroundStyle(BookletStyle.pencilGraphite)
                     }
                 } else {
