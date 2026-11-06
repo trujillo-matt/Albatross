@@ -8,6 +8,7 @@ struct ScoreInputView: View {
     var onConfirm: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var inputText: String = ""
 
     @State private var viewportHeight: CGFloat = 0
@@ -100,6 +101,8 @@ struct ScoreInputView: View {
             }
         }
         .presentationDetents([.medium, .large])
+        // With room to spare the sheet slides in from the side, so the scorecard stays visible.
+        .sidePlacementWhenWide(horizontalSizeClass == .regular)
         .presentationDragIndicator(.visible)
         // Drag-to-dismiss also commits the score
         .onDisappear {
@@ -160,11 +163,11 @@ private struct NumberPadView: View {
                     ForEach(row, id: \.self) { key in
                         if key.isEmpty {
                             Color.clear
-                                .frame(maxWidth: .infinity, minHeight: keyMinHeight, maxHeight: .infinity)
+                                .frame(maxWidth: .infinity, minHeight: keyMinHeight, maxHeight: keyMinHeight * 1.8)
                         } else {
                             Button(action: { handleKey(key) }) {
                                 keyLabel(key)
-                                    .frame(maxWidth: .infinity, minHeight: keyMinHeight, maxHeight: .infinity)
+                                    .frame(maxWidth: .infinity, minHeight: keyMinHeight, maxHeight: keyMinHeight * 1.8)
                             }
                             .buttonStyle(KeyButtonStyle(key: key, par: par))
                         }
@@ -174,7 +177,9 @@ private struct NumberPadView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 20)
-        .frame(maxHeight: .infinity)
+        // Keys stay a tappable size in wide sheets instead of stretching with them.
+        .frame(maxWidth: 480)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     @ViewBuilder

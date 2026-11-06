@@ -31,6 +31,16 @@ extension View {
         modifier(HorizontalSafeAreaClip())
     }
 
+    /// Presents a sheet from the trailing side when there is room (iOS 27), and as usual otherwise.
+    @ViewBuilder
+    func sidePlacementWhenWide(_ isWide: Bool) -> some View {
+        if #available(iOS 27.0, *) {
+            self.presentationPlacement(isWide ? .trailing : .automatic)
+        } else {
+            self
+        }
+    }
+
     /// Keeps a column of content at a comfortable reading width and centres it,
     /// so cards and text don't stretch across a wide screen.
     func readableContentWidth(_ maxWidth: CGFloat = 680) -> some View {
