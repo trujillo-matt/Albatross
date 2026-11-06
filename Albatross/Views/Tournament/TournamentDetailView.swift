@@ -58,8 +58,7 @@ struct TournamentDetailView: View {
                             Label("Delete Tournament", systemImage: "trash")
                         }
                     } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 17, weight: .medium))
+                        Label("Tournament Options", systemImage: "ellipsis.circle")
                     }
                 }
             }
@@ -599,11 +598,18 @@ private struct InvitePlayersSheet: View {
             .navigationTitle("Invite Players")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button { dismiss() } label: {
+                        Label("Cancel", systemImage: "xmark")
+                    }
+                }
+                ToolbarItem(placement: .albatrossConfirm) {
                     Button(action: sendInvites) {
                         if isSending { ProgressView() }
-                        else { Text("Send (\(invitedProfiles.count))").font(.custom("Baskerville-SemiBold", size: 16)) }
+                        else {
+                            Label("Send (\(invitedProfiles.count))", systemImage: "paperplane")
+                                .labelStyle(.titleAndIcon)
+                        }
                     }
                     .disabled(invitedProfiles.isEmpty || isSending)
                 }

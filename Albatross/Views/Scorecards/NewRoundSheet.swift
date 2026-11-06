@@ -96,11 +96,12 @@ struct NewRoundSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
+                    Button {
                         courseStore.searchText = ""
                         dismiss()
+                    } label: {
+                        Label("Cancel", systemImage: "xmark")
                     }
-                    .font(.custom("Baskerville", size: 16))
                 }
 
                 if isManualEntry {
@@ -113,12 +114,8 @@ struct NewRoundSheet: View {
                             manualPars = [4, 4, 3, 4, 5, 3, 4, 4, 5,
                                           4, 3, 4, 5, 4, 3, 4, 5, 4]
                         }) {
-                            HStack(spacing: 4) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 13, weight: .semibold))
-                                Text("Search")
-                                    .font(.custom("Baskerville", size: 16))
-                            }
+                            Label("Search", systemImage: "chevron.left")
+                                .labelStyle(.titleAndIcon)
                         }
                     }
                 }

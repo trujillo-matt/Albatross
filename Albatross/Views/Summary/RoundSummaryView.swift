@@ -55,8 +55,7 @@ struct RoundSummaryView: View {
                         Label("Delete Round", systemImage: "trash")
                     }
                 } label: {
-                    Image(systemName: "ellipsis.circle")
-                        .font(.system(size: 17, weight: .medium))
+                    Label("Round Options", systemImage: "ellipsis.circle")
                 }
             }
         }

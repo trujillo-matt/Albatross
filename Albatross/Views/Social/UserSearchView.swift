@@ -56,8 +56,9 @@ struct UserSearchView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                        .font(.custom("Baskerville", size: 16))
+                    Button { dismiss() } label: {
+                        Label("Done", systemImage: "xmark")
+                    }
                 }
             }
             .sheet(item: $selectedProfile) { profile in

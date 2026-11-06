@@ -37,20 +37,23 @@ struct NewTournamentSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button { dismiss() } label: {
+                        Label("Cancel", systemImage: "xmark")
+                    }
                 }
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .albatrossConfirm) {
                     if step < 3 {
-                        Button("Next") { advanceStep() }
-                            .disabled(!canAdvance)
-                            .font(.custom("Baskerville-SemiBold", size: 16))
+                        Button { advanceStep() } label: {
+                            Label("Next", systemImage: "chevron.right")
+                                .labelStyle(.titleAndIcon)
+                        }
+                        .disabled(!canAdvance)
                     } else {
                         Button(action: createTournament) {
                             if isCreating {
                                 ProgressView()
                             } else {
-                                Text("Create")
-                                    .font(.custom("Baskerville-SemiBold", size: 16))
+                                Label("Create", systemImage: "checkmark")
                             }
                         }
                         .disabled(isCreating)

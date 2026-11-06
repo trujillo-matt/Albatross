@@ -68,8 +68,7 @@ struct ProfileView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showSettings = true }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 17, weight: .medium))
+                        Label("Settings", systemImage: "gearshape.fill")
                     }
                 }
             }
@@ -491,9 +490,10 @@ struct SettingsSheet: View {
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                        .font(.custom("Baskerville", size: 16))
+                ToolbarItem(placement: .albatrossConfirm) {
+                    Button { dismiss() } label: {
+                        Label("Done", systemImage: "checkmark")
+                    }
                 }
             }
         }

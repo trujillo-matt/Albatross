@@ -79,10 +79,10 @@ struct ScorecardsView: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
             Button(action: { showNewRound = true }) {
-                Image(systemName: "plus")
-                    .font(.system(size: 17, weight: .semibold))
+                Label("New Round", systemImage: "plus")
             }
         }
+        .frequentAction()
         ToolbarItem(placement: .topBarLeading) {
             if !completed.isEmpty { sortMenu }
         }
@@ -97,8 +97,7 @@ struct ScorecardsView: View {
                 }
             }
         } label: {
-            Image(systemName: "line.3.horizontal.decrease.circle")
-                .font(.system(size: 17, weight: .medium))
+            Label("Sort", systemImage: "line.3.horizontal.decrease.circle")
         }
     }
 

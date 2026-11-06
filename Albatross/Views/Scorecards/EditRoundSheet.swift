@@ -136,12 +136,14 @@ struct EditRoundSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .font(.custom("Baskerville", size: 16))
+                    Button { dismiss() } label: {
+                        Label("Cancel", systemImage: "xmark")
+                    }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .font(.custom("Baskerville-Bold", size: 16))
+                ToolbarItem(placement: .albatrossConfirm) {
+                    Button { save() } label: {
+                        Label("Save", systemImage: "checkmark")
+                    }
                 }
             }
             .onAppear {

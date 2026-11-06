@@ -53,8 +53,9 @@ struct ScannedScorecardReviewView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onCancel)
-                        .font(.custom("Baskerville", size: 16))
+                    Button(action: onCancel) {
+                        Label("Cancel", systemImage: "xmark")
+                    }
                 }
             }
             // ScoreInputView sheet for correcting individual cells

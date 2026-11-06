@@ -121,15 +121,17 @@ struct EditProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                        .font(.custom("Baskerville", size: 16))
+                    Button { dismiss() } label: {
+                        Label("Cancel", systemImage: "xmark")
+                    }
                 }
-                ToolbarItem(placement: .confirmationAction) {
+                ToolbarItem(placement: .albatrossConfirm) {
                     if isSaving {
                         ProgressView()
                     } else {
-                        Button("Save") { Task { await save() } }
-                            .font(.custom("Baskerville-Bold", size: 16))
+                        Button { Task { await save() } } label: {
+                            Label("Save", systemImage: "checkmark")
+                        }
                     }
                 }
             }

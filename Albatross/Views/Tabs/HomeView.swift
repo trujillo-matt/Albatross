@@ -25,8 +25,7 @@ struct HomeView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showUserSearch = true }) {
-                        Image(systemName: "person.badge.plus")
-                            .font(.system(size: 16, weight: .medium))
+                        Label("Find Friends", systemImage: "person.badge.plus")
                     }
                 }
             }
