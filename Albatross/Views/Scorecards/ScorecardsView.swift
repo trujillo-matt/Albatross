@@ -190,24 +190,23 @@ struct ScorecardsView: View {
                         .padding(.top, 16)
                         .padding(.bottom, 8)
 
-                    List {
+                    // Rows size to their content so large Dynamic Type never clips them.
+                    VStack(spacing: 0) {
                         ForEach(inProgress) { round in
                             inProgressRow(round)
-                                .listRowInsets(EdgeInsets())
-                                .listRowBackground(Color(.secondarySystemGroupedBackground))
-                                .listRowSeparatorTint(Color(.separator).opacity(0.5))
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                .contextMenu {
                                     Button(role: .destructive) {
                                         store.delete(round)
                                     } label: {
                                         Label("Delete", systemImage: "trash")
                                     }
                                 }
+                            if round.id != inProgress.last?.id {
+                                Divider().opacity(0.5)
+                            }
                         }
                     }
-                    .listStyle(.plain)
-                    .scrollDisabled(true)
-                    .frame(height: CGFloat(inProgress.count) * 72)
+                    .background(Color(.secondarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                     .padding(.horizontal, 16)
                 }

@@ -266,6 +266,7 @@ struct NewTournamentSheet: View {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 13))
                     .foregroundStyle(Color(.tertiaryLabel))
+                    .accessibilityLabel("Remove \(profile.displayName)")
             }
             .buttonStyle(.plain)
         }

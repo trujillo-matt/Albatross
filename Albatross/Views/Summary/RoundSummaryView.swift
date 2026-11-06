@@ -6,6 +6,7 @@ struct RoundSummaryView: View {
 
     @EnvironmentObject private var store: RoundStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.displayScale) private var displayScale
 
     @State private var selectedTemplate: ShareTemplate = .minimal
     @State private var showShareSheet = false
@@ -238,7 +239,7 @@ struct RoundSummaryView: View {
                 .frame(width: 360, height: 640)
                 .clipShape(RoundedRectangle(cornerRadius: 20))
         )
-        renderer.scale = 3.0
+        renderer.scale = displayScale
         return renderer.uiImage ?? UIImage()
     }
 

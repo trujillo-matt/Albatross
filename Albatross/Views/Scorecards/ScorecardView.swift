@@ -14,6 +14,10 @@ struct ScorecardView: View {
     @State private var showEditRound = false
     @State private var showCourseDetail = false
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .caption) private var labelColumnWidth: CGFloat = 56
+    @ScaledMetric(relativeTo: .body) private var cellHeight: CGFloat = 36
+
     private var pars: [Int] { round.effectivePars }
 
     var body: some View {
@@ -174,11 +178,41 @@ struct ScorecardView: View {
         // If no logo, renders nothing (zero width) so layout is unchanged
     }
 
+    @ViewBuilder
     private var scorecardGrid: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            accessibleHoleList
+        } else {
+            VStack(spacing: 0) {
+                nineHoleSection(title: "Front 9", holeRange: 1...9)
+                Divider().padding(.vertical, 8)
+                nineHoleSection(title: "Back 9", holeRange: 10...18)
+            }
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+    }
+
+    /// Nine columns cannot hold accessibility-size text, so each hole gets its own row.
+    private var accessibleHoleList: some View {
         VStack(spacing: 0) {
-            nineHoleSection(title: "Front 9", holeRange: 1...9)
-            Divider().padding(.vertical, 8)
-            nineHoleSection(title: "Back 9", holeRange: 10...18)
+            ForEach(1...18, id: \.self) { hole in
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Hole \(hole)")
+                            .font(.custom("Baskerville-SemiBold", size: 17))
+                        Text("Par \(pars[hole - 1])")
+                            .font(.custom("Baskerville", size: 15))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    scoreCell(hole: hole)
+                        .frame(maxWidth: 120)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                if hole < 18 { Divider() }
+            }
         }
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -190,7 +224,7 @@ struct ScorecardView: View {
                 Text(title)
                     .font(.custom("Baskerville-SemiBold", size: 11))
                     .foregroundStyle(.secondary)
-                    .frame(width: 56, alignment: .leading)
+                    .frame(width: labelColumnWidth, alignment: .leading)
                     .padding(.leading, 12)
 
                 ForEach(Array(holeRange), id: \.self) { hole in
@@ -207,7 +241,7 @@ struct ScorecardView: View {
                 Text("Par")
                     .font(.custom("Baskerville", size: 11))
                     .foregroundStyle(.secondary)
-                    .frame(width: 56, alignment: .leading)
+                    .frame(width: labelColumnWidth, alignment: .leading)
                     .padding(.leading, 12)
 
                 ForEach(Array(holeRange), id: \.self) { hole in
@@ -225,7 +259,7 @@ struct ScorecardView: View {
                 Text("Score")
                     .font(.custom("Baskerville", size: 11))
                     .foregroundStyle(.secondary)
-                    .frame(width: 56, alignment: .leading)
+                    .frame(width: labelColumnWidth, alignment: .leading)
                     .padding(.leading, 12)
 
                 ForEach(Array(holeRange), id: \.self) { hole in
@@ -247,7 +281,7 @@ struct ScorecardView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(cellBackground(diff: diff))
-                    .frame(height: 36)
+                    .frame(height: cellHeight)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .strokeBorder(cellBorder(diff: diff), lineWidth: score != nil ? 1.5 : 1)
@@ -273,6 +307,8 @@ struct ScorecardView: View {
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
+        .accessibilityLabel("Hole \(hole), par \(par)")
+        .accessibilityValue(score.map { "\($0)" } ?? "No score")
     }
 
     private func cellBackground(diff: Int?) -> Color {

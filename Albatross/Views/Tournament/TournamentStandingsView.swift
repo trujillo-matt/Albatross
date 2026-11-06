@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TournamentStandingsView: View {
     @EnvironmentObject private var tournamentStore: TournamentStore
+    @Environment(\.displayScale) private var displayScale
 
     let tournament: Tournament
 
@@ -225,7 +226,7 @@ struct TournamentStandingsView: View {
         guard let s = standings else { return }
         let shareCard = StandingsShareCard(tournament: current, standings: s)
         let renderer = ImageRenderer(content: shareCard)
-        renderer.scale = 3.0
+        renderer.scale = displayScale
         renderer.proposedSize = ProposedViewSize(width: 360, height: 640)
         if let uiImage = renderer.uiImage {
             shareImage = uiImage

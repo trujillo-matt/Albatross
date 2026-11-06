@@ -321,6 +321,7 @@ struct NewRoundSheet: View {
             // UP = increment
             Button(action: { if manualPars[index] < 5 { manualPars[index] += 1 } }) {
                 Image(systemName: "chevron.up")
+                    .accessibilityLabel("Increase par, hole \(index + 1)")
                     .font(.system(size: 8, weight: .bold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
@@ -341,6 +342,7 @@ struct NewRoundSheet: View {
             // DOWN = decrement
             Button(action: { if manualPars[index] > 3 { manualPars[index] -= 1 } }) {
                 Image(systemName: "chevron.down")
+                    .accessibilityLabel("Decrease par, hole \(index + 1)")
                     .font(.system(size: 8, weight: .bold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)

@@ -189,6 +189,7 @@ struct EditRoundSheet: View {
             // UP = increment
             Button(action: { if pars[index] < 5 { pars[index] += 1 } }) {
                 Image(systemName: "chevron.up")
+                    .accessibilityLabel("Increase par, hole \(index + 1)")
                     .font(.system(size: 9, weight: .bold))
                     .frame(width: 22, height: 16)
                     .background(Color(.tertiarySystemGroupedBackground))
@@ -207,6 +208,7 @@ struct EditRoundSheet: View {
             // DOWN = decrement
             Button(action: { if pars[index] > 3 { pars[index] -= 1 } }) {
                 Image(systemName: "chevron.down")
+                    .accessibilityLabel("Decrease par, hole \(index + 1)")
                     .font(.system(size: 9, weight: .bold))
                     .frame(width: 22, height: 16)
                     .background(Color(.tertiarySystemGroupedBackground))

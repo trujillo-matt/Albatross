@@ -46,6 +46,7 @@ struct ScoreInputView: View {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 22))
                                     .foregroundStyle(Color(.tertiaryLabel))
+                                    .accessibilityLabel("Clear Score")
                             }
                             .offset(y: 12)
                         }

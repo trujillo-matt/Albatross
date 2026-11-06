@@ -70,11 +70,15 @@ struct GeminiAPIClient {
     private func compress(_ image: UIImage) -> Data? {
         // Resize so longest edge ≤ 1568 px for optimal API performance
         let maxDim: CGFloat = 1568
-        let size  = image.size
+        // image.size is in points; the limit applies to pixels.
+        let size  = CGSize(width: image.size.width * image.scale, height: image.size.height * image.scale)
         let scale = min(maxDim / size.width, maxDim / size.height, 1.0)
         let newSize = CGSize(width: size.width * scale, height: size.height * scale)
 
-        let renderer = UIGraphicsImageRenderer(size: newSize)
+        // Scale 1 makes the output exactly newSize pixels, whatever the device's screen scale.
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let renderer = UIGraphicsImageRenderer(size: newSize, format: format)
         let resized  = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: newSize)) }
 
         // Reduce JPEG quality until under maxBytes

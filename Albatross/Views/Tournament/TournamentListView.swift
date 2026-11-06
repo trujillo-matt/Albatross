@@ -22,6 +22,7 @@ struct TournamentListView: View {
                     Image(systemName: "plus")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
+                        .accessibilityLabel("New Tournament")
                 }
             }
             .padding(.horizontal, 20)

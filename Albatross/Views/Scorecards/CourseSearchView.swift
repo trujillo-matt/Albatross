@@ -25,6 +25,7 @@ struct CourseSearchView: View {
                     Button(action: { courseStore.searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(Color(.tertiaryLabel))
+                            .accessibilityLabel("Clear Search")
                     }
                     .buttonStyle(.plain)
                 }

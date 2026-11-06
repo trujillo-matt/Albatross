@@ -314,6 +314,7 @@ struct ProfileView: View {
                 // Find Friends button
                 Button(action: { showUserSearch = true }) {
                     Image(systemName: "magnifyingglass")
+                        .accessibilityLabel("Find Friends")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                         .padding(8)

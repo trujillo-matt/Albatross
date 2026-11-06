@@ -29,6 +29,7 @@ struct UserSearchView: View {
                             Button(action: { query = "" }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .foregroundStyle(.secondary)
+                                    .accessibilityLabel("Clear Search")
                             }
                         }
                     }
