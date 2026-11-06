@@ -152,8 +152,8 @@ struct CourseCoverView: View {
                 .foregroundStyle(style.ink)
 
             Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                .font(.custom("Baskerville", size: width * 0.05))
-                .foregroundStyle(style.ink.opacity(0.7))
+                .font(.custom("Baskerville", size: width * 0.065))
+                .foregroundStyle(style.ink.opacity(0.75))
 
             Spacer(minLength: 0)
 
@@ -178,8 +178,8 @@ struct CourseCoverView: View {
             Image("black-browed-albatross")
                 .resizable()
                 .scaledToFit()
-                .frame(width: width * 0.22, height: width * 0.22)
-                .opacity(0.55)
+                .frame(width: width * 0.3, height: width * 0.3)
+                .opacity(0.6)
                 .blendMode(.multiply)
         }
     }

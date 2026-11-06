@@ -19,6 +19,7 @@ struct ScorecardsView: View {
     @State private var sortOrder: RoundSortOrder = .newest
     @State private var editingRound: Round? = nil
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var coverNamespace
     @ScaledMetric(relativeTo: .body) private var coverWidth: CGFloat = 170
 
@@ -165,7 +166,7 @@ struct ScorecardsView: View {
     /// A row of covers that scrolls sideways and settles on one at a time.
     private func shelf(_ rounds: [Round]) -> some View {
         ScrollView(.horizontal) {
-            LazyHStack(alignment: .bottom, spacing: 18) {
+            LazyHStack(alignment: .bottom, spacing: 16) {
                 ForEach(rounds) { round in
                     NavigationLink(value: RoundDestination.booklet(round.id, opensNextHole: false)) {
                         CourseCoverView(round: round)
@@ -175,9 +176,9 @@ struct ScorecardsView: View {
                     .matchedTransitionSource(id: round.id, in: coverNamespace)
                     .scrollTransition(axis: .horizontal) { view, phase in
                         view
-                            .scaleEffect(phase.isIdentity ? 1 : 0.95)
+                            .scaleEffect(phase.isIdentity || reduceMotion ? 1 : 0.95)
                             .rotation3DEffect(
-                                .degrees(phase.value * 10),
+                                .degrees(reduceMotion ? 0 : phase.value * 10),
                                 axis: (x: 0, y: 1, z: 0),
                                 perspective: 0.6
                             )

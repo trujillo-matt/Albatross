@@ -32,6 +32,8 @@ struct BookletView: View {
     @State private var showCourseDetail = false
     @State private var showFinishConfirm = false
     @State private var hasHandledOpeningHole = false
+    @State private var spreadViewportHeight: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var round: Round? { store.rounds.first { $0.id == roundID } }
 
@@ -58,7 +60,8 @@ struct BookletView: View {
             }
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
-        .navigationTitle(round.courseName)
+        // The course name already heads the page, so the bar stays quiet.
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent(round) }
         // An open booklet takes the whole screen; Back returns to the library.
@@ -104,9 +107,10 @@ struct BookletView: View {
                         .containerRelativeFrame(.horizontal)
                         .id(bookletPage)
                         .scrollTransition(axis: .horizontal) { view, phase in
+                            // Reduce Motion keeps the page change but drops the tilt.
                             view
                                 .rotation3DEffect(
-                                    .degrees(phase.value * -22),
+                                    .degrees(reduceMotion ? 0 : phase.value * -22),
                                     axis: (x: 0, y: 1, z: 0),
                                     anchor: .leading,
                                     perspective: 0.5
@@ -149,6 +153,7 @@ struct BookletView: View {
     private func spread(_ round: Round) -> some View {
         ScrollView(.vertical) {
             VStack(spacing: 12) {
+                Spacer(minLength: 0)
                 RoundHeader(round: round) { showCourseDetail = true }
                     .padding(.horizontal, 20)
                 HStack(spacing: 0) {
@@ -162,14 +167,19 @@ struct BookletView: View {
                 .background(BookletStyle.page)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .padding(.horizontal, 16)
+                Spacer(minLength: 0)
             }
             .padding(.vertical, 12)
+            // Centre the open booklet when the screen is taller than the card.
+            .frame(minHeight: spreadViewportHeight)
         }
+        .scrollBounceBehavior(.basedOnSize)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { spreadViewportHeight = $0 }
     }
 
     private func holePage(title: String, holes: ClosedRange<Int>, round: Round, showsHeader: Bool) -> some View {
         ScrollView(.vertical) {
-            VStack(spacing: 14) {
+            VStack(spacing: 16) {
                 if showsHeader {
                     RoundHeader(round: round) { showCourseDetail = true }
                 }
@@ -236,11 +246,14 @@ struct BookletView: View {
                     .padding(.vertical, 16)
                     .background(actionBackground(for: round))
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .disabled(round.status == .inProgress && round.holesPlayed == 0)
+            // On a wide screen the button stays a button, not a bar across the paper.
+            .frame(maxWidth: 480)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
             .background(Color(.systemGroupedBackground))
         }
     }
@@ -340,6 +353,7 @@ private struct RoundHeader: View {
                             .font(.custom("Baskerville-Bold", size: 18))
                             .foregroundStyle(.primary)
                             .multilineTextAlignment(.leading)
+                            .accessibilityAddTraits(.isHeader)
                         Image(systemName: "chevron.right")
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(.tertiary)
@@ -406,7 +420,7 @@ private struct HoleGridPage: View {
     // MARK: Holes across
 
     private var acrossGrid: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 8) {
             row(label: "Hole") { hole in
                 Text("\(hole)")
                     .font(.custom("Baskerville", size: 12))
