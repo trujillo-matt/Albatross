@@ -20,6 +20,21 @@ struct AlbatrossApp: App {
     @State private var pendingNewRound: Bool = false
     @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
 
+    /// Debug builds skip the sign-in screen so UI can be tested without credentials.
+    /// Cloud sync and social features stay inactive because no session exists.
+    /// Release builds always require sign-in.
+    private static let skipsSignIn: Bool = {
+        #if DEBUG
+        return true
+        #else
+        return false
+        #endif
+    }()
+
+    private func appStateAfterLanding() -> AppState {
+        (Self.skipsSignIn || authStore.isSignedIn) ? .signedIn : .signedOut
+    }
+
     private var preferredColorScheme: ColorScheme? {
         switch colorSchemePreference {
         case "light": return .light
@@ -38,7 +53,7 @@ struct AlbatrossApp: App {
                         get: { appState == .loading },
                         set: { stillShowing in
                             if !stillShowing {
-                                appState = authStore.isSignedIn ? .signedIn : .signedOut
+                                appState = appStateAfterLanding()
                             }
                         }
                     ))
@@ -76,7 +91,7 @@ struct AlbatrossApp: App {
             .onChange(of: authStore.isSignedIn) { _, signedIn in
                 if appState != .loading {
                     withAnimation(.easeIn(duration: 0.35)) {
-                        appState = signedIn ? .signedIn : .signedOut
+                        appState = appStateAfterLanding()
                     }
                 }
                 // Load social data when user signs in
