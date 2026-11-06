@@ -57,6 +57,8 @@ struct ScorecardsView: View {
         .onChange(of: pendingNewRound.wrappedValue) { _, trigger in
             guard trigger else { return }
             pendingNewRound.wrappedValue = false
+            // Start from the library so the sheet doesn't compete with an open booklet.
+            path.removeAll()
             showNewRound = true
         }
     }
