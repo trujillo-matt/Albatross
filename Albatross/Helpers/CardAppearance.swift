@@ -3,12 +3,14 @@ import SwiftUI
 
 /// The paper a scorecard is printed on. `club` lets each course keep its own stock on the shelf.
 enum PaperStock: String, CaseIterable, Identifiable {
-    case club, cream, white, sage, tan, fog
+    /// `inherit` only appears when styling one card: it means "use the default from Settings".
+    case inherit, club, cream, white, sage, tan, fog
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
+        case .inherit: return "Default"
         case .club:  return "Club"
         case .cream: return "Cream"
         case .white: return "White"
@@ -21,7 +23,7 @@ enum PaperStock: String, CaseIterable, Identifiable {
     /// nil for `club`, which takes its stock from the course.
     var color: Color? {
         switch self {
-        case .club:  return nil
+        case .inherit, .club: return nil
         case .cream: return Color(red: 0.985, green: 0.975, blue: 0.94)
         case .white: return Color(red: 0.99, green: 0.99, blue: 0.98)
         case .sage:  return Color(red: 0.90, green: 0.94, blue: 0.87)
@@ -34,12 +36,14 @@ enum PaperStock: String, CaseIterable, Identifiable {
 /// The printed ink: the card's header band, rules and cover lettering, and the accent of the whole app.
 /// `club` uses each course's own ink on the cover and card, and leaves the app on its default green.
 enum AccentInk: String, CaseIterable, Identifiable {
-    case club, fairway, navy, oxblood, plum, graphite
+    /// `inherit` only appears when styling one card: it means "use the default from Settings".
+    case inherit, club, fairway, navy, oxblood, plum, graphite
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
+        case .inherit:  return "Default"
         case .club:     return "Club"
         case .fairway:  return "Fairway"
         case .navy:     return "Navy"
@@ -52,7 +56,7 @@ enum AccentInk: String, CaseIterable, Identifiable {
     /// A lighter version of the ink for controls on a dark background, where the printed ink would sink.
     var lightTint: Color {
         switch self {
-        case .club, .fairway: return Color(red: 0.24, green: 0.78, blue: 0.54)
+        case .inherit, .club, .fairway: return Color(red: 0.24, green: 0.78, blue: 0.54)
         case .navy:           return Color(red: 0.48, green: 0.61, blue: 0.96)
         case .oxblood:        return Color(red: 0.96, green: 0.52, blue: 0.54)
         case .plum:           return Color(red: 0.79, green: 0.58, blue: 0.89)
@@ -69,7 +73,7 @@ enum AccentInk: String, CaseIterable, Identifiable {
 
     var color: Color? {
         switch self {
-        case .club:     return nil
+        case .inherit, .club: return nil
         case .fairway:  return CardAppearance.fairway
         case .navy:     return Color(red: 0.11, green: 0.17, blue: 0.35)
         case .oxblood:  return Color(red: 0.45, green: 0.12, blue: 0.14)
@@ -108,14 +112,28 @@ final class CardAppearance: ObservableObject {
     /// The tint for controls and highlights across the app.
     var tint: Color { accent.adaptiveTint }
 
-    /// Paper for the interior pages.
-    var pageColor: Color { paper.color ?? Self.cream }
+    // MARK: Per-card style
 
-    /// Ink for one course's card and cover.
-    func ink(for courseName: String) -> Color { accent.color ?? CoverStyle(courseName: courseName).ink }
+    /// The paper one card uses: its own choice, or the default from Settings.
+    func paperStock(for round: Round) -> PaperStock {
+        guard let raw = round.paper, let own = PaperStock(rawValue: raw), own != .inherit else { return paper }
+        return own
+    }
 
-    /// Paper for one course's cover.
-    func coverPaper(for courseName: String) -> Color { paper.color ?? CoverStyle(courseName: courseName).paper }
+    /// The ink one card uses: its own choice, or the default from Settings.
+    func accentInk(for round: Round) -> AccentInk {
+        guard let raw = round.ink, let own = AccentInk(rawValue: raw), own != .inherit else { return accent }
+        return own
+    }
+
+    /// Paper for one card's interior pages.
+    func pageColor(for round: Round) -> Color { paperStock(for: round).color ?? Self.cream }
+
+    /// Ink for one card and its cover.
+    func ink(for round: Round) -> Color { accentInk(for: round).color ?? CoverStyle(courseName: round.courseName).ink }
+
+    /// Paper for one card's cover.
+    func coverPaper(for round: Round) -> Color { paperStock(for: round).color ?? CoverStyle(courseName: round.courseName).paper }
 }
 
 /// A row of swatches for choosing paper or ink.
@@ -163,24 +181,70 @@ struct SwatchPicker<Value: Hashable & Identifiable>: View {
     }
 }
 
-/// Paper, ink and what the card records, with a live preview. Used from Settings and from a booklet.
+/// Paper, ink and what the card records, with a live preview.
+/// With a round it styles that one card; without one it sets the default for every card
+/// that has not been given its own style.
 struct CardStyleForm: View {
     @EnvironmentObject private var appearance: CardAppearance
+    @EnvironmentObject private var store: RoundStore
 
-    /// Shown in the preview. Falls back to a sample card when nil.
-    var sample: Round?
+    /// The card being styled. nil edits the default in Settings.
+    var round: Round?
+
+    private var current: Round? {
+        guard let round else { return nil }
+        return store.rounds.first { $0.id == round.id } ?? round
+    }
 
     private var previewRound: Round {
-        sample ?? {
-            var round = Round(courseName: "Great Waters")
-            round.scores = [5, 4, 3, 5, 4, 6, 4, 3, 5, 4, 4, 5, 3, 4, 5, 4, 3, 4]
-            round.status = .completed
-            return round
+        current ?? {
+            var sample = Round(courseName: "Great Waters")
+            sample.scores = [5, 4, 3, 5, 4, 6, 4, 3, 5, 4, 4, 5, 3, 4, 5, 4, 3, 4]
+            sample.status = .completed
+            return sample
         }()
+    }
+
+    private var paperValues: [PaperStock] {
+        PaperStock.allCases.filter { round != nil || $0 != .inherit }
+    }
+
+    private var inkValues: [AccentInk] {
+        AccentInk.allCases.filter { round != nil || $0 != .inherit }
+    }
+
+    private var paperBinding: Binding<PaperStock> {
+        if let current {
+            return Binding(
+                get: { current.paper.flatMap(PaperStock.init(rawValue:)) ?? .inherit },
+                set: { newValue in update { $0.paper = newValue == .inherit ? nil : newValue.rawValue } })
+        }
+        return $appearance.paper
+    }
+
+    private var inkBinding: Binding<AccentInk> {
+        if let current {
+            return Binding(
+                get: { current.ink.flatMap(AccentInk.init(rawValue:)) ?? .inherit },
+                set: { newValue in update { $0.ink = newValue == .inherit ? nil : newValue.rawValue } })
+        }
+        return $appearance.accent
+    }
+
+    private func update(_ change: (inout Round) -> Void) {
+        guard var updated = current else { return }
+        change(&updated)
+        store.update(updated)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
+            if round != nil {
+                Text("This card only. Other cards keep your default style, set in Settings.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
             CourseCoverView(round: previewRound)
                 .frame(height: 220)
                 .frame(maxWidth: .infinity)
@@ -188,45 +252,46 @@ struct CardStyleForm: View {
 
             SwatchPicker(
                 title: "Paper",
-                values: PaperStock.allCases,
-                selection: $appearance.paper,
+                values: paperValues,
+                selection: paperBinding,
                 label: { $0.label },
-                swatch: { stock in
-                    if let color = stock.color {
-                        AnyView(color)
-                    } else {
-                        AnyView(LinearGradient(
-                            colors: [Color(red: 0.96, green: 0.93, blue: 0.84), Color(red: 0.84, green: 0.90, blue: 0.78)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing))
-                    }
-                }
+                swatch: { stock in swatch(stock.color, club: [Color(red: 0.96, green: 0.93, blue: 0.84), Color(red: 0.84, green: 0.90, blue: 0.78)], isDefault: stock == .inherit) }
             )
 
             SwatchPicker(
                 title: "Ink and accent",
-                values: AccentInk.allCases,
-                selection: $appearance.accent,
+                values: inkValues,
+                selection: inkBinding,
                 label: { $0.label },
-                swatch: { ink in
-                    if let color = ink.color {
-                        AnyView(color)
-                    } else {
-                        AnyView(LinearGradient(
-                            colors: [Color(red: 0.10, green: 0.30, blue: 0.22), Color(red: 0.11, green: 0.17, blue: 0.35)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing))
-                    }
-                }
+                swatch: { ink in swatch(ink.color, club: [Color(red: 0.10, green: 0.30, blue: 0.22), Color(red: 0.11, green: 0.17, blue: 0.35)], isDefault: ink == .inherit) }
             )
 
-            Toggle(isOn: $appearance.tracksPuttsAndGreens) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Putts and greens")
-                        .font(.body)
-                    Text("Adds putts and green in regulation to the card and the entry strip")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            if round == nil {
+                Toggle(isOn: $appearance.tracksPuttsAndGreens) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Putts and greens")
+                            .font(.body)
+                        Text("Adds putts and green in regulation to the card and the entry strip")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
         }
+    }
+
+    /// A solid swatch, a two-tone one for "Club", or a ring for "Default".
+    private func swatch(_ color: Color?, club: [Color], isDefault: Bool) -> AnyView {
+        if isDefault {
+            return AnyView(
+                ZStack {
+                    Color(.secondarySystemFill)
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                })
+        }
+        if let color { return AnyView(color) }
+        return AnyView(LinearGradient(colors: club, startPoint: .topLeading, endPoint: .bottomTrailing))
     }
 }

@@ -19,8 +19,8 @@ struct ShareStyle {
 
     @MainActor
     init(appearance: CardAppearance, round: Round) {
-        paper = appearance.pageColor
-        ink = appearance.ink(for: round.courseName)
+        paper = appearance.pageColor(for: round)
+        ink = appearance.ink(for: round)
         includesPutts = appearance.tracksPuttsAndGreens && round.totalPutts != nil
     }
 }

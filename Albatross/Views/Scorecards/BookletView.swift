@@ -110,7 +110,7 @@ struct BookletView: View {
         .sheet(isPresented: $showCardStyle) {
             NavigationStack {
                 ScrollView {
-                    CardStyleForm(sample: round)
+                    CardStyleForm(round: round)
                         .padding(20)
                 }
                 .navigationTitle("Card Style")
@@ -230,8 +230,8 @@ struct BookletView: View {
             // The sidebar button floats over the top corner of an open spread.
             bannerInset: isSpread ? 56 : 0,
             opensCourse: showsHeader,
-            paper: appearance.pageColor,
-            ink: appearance.ink(for: round.courseName),
+            paper: appearance.pageColor(for: round),
+            ink: appearance.ink(for: round),
             tracks: appearance.tracksPuttsAndGreens,
             onCourseTap: { showCourseDetail = true },
             onSelect: { activeHole = $0 }

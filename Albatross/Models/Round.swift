@@ -35,6 +35,11 @@ struct Round: Identifiable, Codable {
     /// Green in regulation, when the player marked it. If it was not marked it is worked out from putts.
     var greens: [Bool?]?
 
+    /// This card's own paper and ink (raw values of `PaperStock` and `AccentInk`).
+    /// nil means "use the default from Settings". Local to the device, like putts.
+    var paper: String?
+    var ink: String?
+
     /// Resolved URL for the logo file, if one has been saved.
     var courseLogoURL: URL? {
         guard let filename = courseLogoFilename else { return nil }
@@ -63,7 +68,9 @@ struct Round: Identifiable, Codable {
         tournamentMatchupID: UUID? = nil,
         courseLogoFilename: String? = nil,
         putts: [Int?]? = nil,
-        greens: [Bool?]? = nil
+        greens: [Bool?]? = nil,
+        paper: String? = nil,
+        ink: String? = nil
     ) {
         self.id = id
         self.courseName = courseName
@@ -80,6 +87,8 @@ struct Round: Identifiable, Codable {
         self.courseLogoFilename = courseLogoFilename
         self.putts = putts
         self.greens = greens
+        self.paper = paper
+        self.ink = ink
     }
 
     var totalScore: Int {

@@ -92,8 +92,8 @@ struct CourseCoverView: View {
     @EnvironmentObject private var appearance: CardAppearance
 
     private var style: CoverStyle { CoverStyle(courseName: round.courseName) }
-    private var paper: Color { appearance.coverPaper(for: round.courseName) }
-    private var ink: Color { appearance.ink(for: round.courseName) }
+    private var paper: Color { appearance.coverPaper(for: round) }
+    private var ink: Color { appearance.ink(for: round) }
 
     private var parThroughPlayedHoles: Int {
         zip(round.scores, round.effectivePars).reduce(0) { $0 + ($1.0 == nil ? 0 : $1.1) }

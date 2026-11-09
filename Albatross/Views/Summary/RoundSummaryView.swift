@@ -67,7 +67,7 @@ struct RoundSummaryView: View {
         }
         .sheet(isPresented: $showCardStyle) {
             NavigationStack {
-                ScrollView { CardStyleForm(sample: round).padding(20) }
+                ScrollView { CardStyleForm(round: round).padding(20) }
                     .navigationTitle("Card Style")
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
