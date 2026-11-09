@@ -13,7 +13,7 @@ struct TournamentListView: View {
             // ── Section header ───────────────────────────────────────────
             HStack {
                 Text("Tournaments")
-                    .font(.custom("Baskerville-Bold", size: 18))
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(.primary)
                     // A single word should shrink before it breaks across lines.
                     .lineLimit(1)
@@ -73,7 +73,7 @@ struct TournamentListView: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Color.accentColor)
                 Text("\(tournamentStore.pendingInvites.count) pending invite\(tournamentStore.pendingInvites.count == 1 ? "" : "s")")
-                    .font(.custom("Baskerville", size: 13))
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 20)
@@ -89,10 +89,10 @@ struct TournamentListView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(tournament.name)
-                    .font(.custom("Baskerville-SemiBold", size: 14))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
                 Text(tournament.matchType.displayName)
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -103,7 +103,7 @@ struct TournamentListView: View {
                     Task { try? await tournamentStore.declineInvite(tournamentID: tournament.id) }
                 }) {
                     Text("Decline")
-                        .font(.custom("Baskerville", size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
@@ -116,7 +116,7 @@ struct TournamentListView: View {
                     Task { try? await tournamentStore.acceptInvite(tournamentID: tournament.id) }
                 }) {
                     Text("Accept")
-                        .font(.custom("Baskerville-SemiBold", size: 13))
+                        .font(.footnote.weight(.medium))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
@@ -169,7 +169,7 @@ struct TournamentListView: View {
                     .fill(statusColor(tournament.status))
                     .frame(width: 7, height: 7)
                 Text(statusLabel(tournament.status))
-                    .font(.custom("Baskerville", size: 11))
+                    .font(.caption2)
                     .foregroundStyle(statusColor(tournament.status))
             }
             .padding(.horizontal, 12)
@@ -179,17 +179,17 @@ struct TournamentListView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(tournament.name)
-                    .font(.custom("Baskerville-Bold", size: 15))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
 
                 Text(tournament.matchType.displayName)
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
 
                 Text("\(tournament.totalMatches) match\(tournament.totalMatches == 1 ? "" : "es")")
-                    .font(.custom("Baskerville", size: 11))
+                    .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 12)
@@ -213,7 +213,7 @@ struct TournamentListView: View {
                     .font(.system(size: 18))
                     .foregroundStyle(Color.accentColor.opacity(0.7))
                 Text("Create your first tournament")
-                    .font(.custom("Baskerville", size: 14))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Image(systemName: "chevron.right")

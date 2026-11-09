@@ -47,7 +47,7 @@ struct ScorecardView: View {
                 Divider()
                 Button(action: { showFinishConfirm = true }) {
                     Text(round.isComplete ? "Finish Round" : "Finish Round (\(round.holesPlayed)/18)")
-                        .font(.custom("Baskerville-Bold", size: 17))
+                        .font(.body.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(round.holesPlayed > 0 ? Color.accentColor : Color.accentColor.opacity(0.4))
@@ -136,14 +136,14 @@ struct ScorecardView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 4) {
                         Text(round.courseName)
-                            .font(.custom("Baskerville-Bold", size: 18))
+                            .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                         Image(systemName: "chevron.right")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Color(.tertiaryLabel))
                     }
                     Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -151,10 +151,10 @@ struct ScorecardView: View {
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(round.totalScore)")
-                    .font(.custom("Baskerville-Bold", size: 36))
+                    .font(.largeTitle.weight(.semibold))
                     .foregroundStyle(round.holesPlayed > 0 ? .primary : .tertiary)
                 Text("total")
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
@@ -200,9 +200,9 @@ struct ScorecardView: View {
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Hole \(hole)")
-                            .font(.custom("Baskerville-SemiBold", size: 17))
+                            .font(.body.weight(.semibold))
                         Text("Par \(pars[hole - 1])")
-                            .font(.custom("Baskerville", size: 15))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
@@ -222,14 +222,14 @@ struct ScorecardView: View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 Text(title)
-                    .font(.custom("Baskerville-SemiBold", size: 11))
+                    .font(.caption2.weight(.medium))
                     .foregroundStyle(.secondary)
                     .frame(width: labelColumnWidth, alignment: .leading)
                     .padding(.leading, 12)
 
                 ForEach(Array(holeRange), id: \.self) { hole in
                     Text("\(hole)")
-                        .font(.custom("Baskerville", size: 10))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
@@ -239,14 +239,14 @@ struct ScorecardView: View {
 
             HStack(spacing: 0) {
                 Text("Par")
-                    .font(.custom("Baskerville", size: 11))
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                     .frame(width: labelColumnWidth, alignment: .leading)
                     .padding(.leading, 12)
 
                 ForEach(Array(holeRange), id: \.self) { hole in
                     Text("\(pars[hole - 1])")
-                        .font(.custom("Baskerville", size: 11))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
@@ -257,7 +257,7 @@ struct ScorecardView: View {
 
             HStack(spacing: 0) {
                 Text("Score")
-                    .font(.custom("Baskerville", size: 11))
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                     .frame(width: labelColumnWidth, alignment: .leading)
                     .padding(.leading, 12)
@@ -294,7 +294,7 @@ struct ScorecardView: View {
                         .frame(width: 22, height: 22)
                 } else if let s = score {
                     Text("\(s)")
-                        .font(.custom("Baskerville-Bold", size: 13))
+                        .font(.footnote.weight(.semibold))
                         .foregroundStyle(cellForeground(diff: diff))
                 } else {
                     Image(systemName: "plus")
@@ -360,10 +360,10 @@ struct ScorecardView: View {
     private func totalColumn(label: String, value: Int, played: Int, isTotal: Bool = false) -> some View {
         VStack(spacing: 4) {
             Text(played > 0 ? "\(value)" : "—")
-                .font(.custom("Baskerville-Bold", size: isTotal ? 22 : 18))
+                .font(.system(size: isTotal ? 22 : 18, weight: .semibold))
                 .foregroundStyle(isTotal && played > 0 ? Color.accentColor : .primary)
             Text(label)
-                .font(.custom("Baskerville", size: 11))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

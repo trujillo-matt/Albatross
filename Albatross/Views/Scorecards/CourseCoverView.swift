@@ -9,6 +9,11 @@ enum BookletStyle {
     /// Interior page stock. Paper stays cream in Dark Mode, like real paper under a dark screen.
     static let page = Color(red: 0.985, green: 0.975, blue: 0.94)
 
+    /// The club's printed ink, the same one its cover uses. Rules and headers on the card use it.
+    static func printInk(for courseName: String) -> Color {
+        CoverStyle(courseName: courseName).ink
+    }
+
     /// Ink for a score, from its difference to par. Colours are chosen to read on cream paper.
     /// `onDark` gives lighter versions of the same inks for controls drawn on a dark surface.
     static func ink(forDifference difference: Int?, onDark: Bool = false) -> Color {
@@ -70,6 +75,20 @@ private struct CoverStyle {
     }
 }
 
+/// A cover keeps a booklet's proportions on the shelf, and fills whatever space it is given when open.
+private struct CoverProportions: ViewModifier {
+    let fillsSpace: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if fillsSpace {
+            content.frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            content.aspectRatio(0.72, contentMode: .fit)
+        }
+    }
+}
+
 /// A booklet cover generated from the round's course logo and name.
 /// Finished and in-progress rounds both show the score penciled in at the bottom.
 struct CourseCoverView: View {
@@ -109,7 +128,7 @@ struct CourseCoverView: View {
             .clipShape(shape)
             .shadow(color: .black.opacity(0.16), radius: width * 0.025, x: 0, y: width * 0.015)
         }
-        .aspectRatio(fillsSpace ? nil : 0.72, contentMode: .fit)
+        .modifier(CoverProportions(fillsSpace: fillsSpace))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityDescription)
     }
@@ -155,7 +174,7 @@ struct CourseCoverView: View {
             logo(width: width)
 
             Text(round.courseName.uppercased())
-                .font(.custom("Baskerville-SemiBold", fixedSize: width * 0.075))
+                .font(.system(size: width * 0.07, weight: .semibold))
                 .tracking(width * 0.006)
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
@@ -163,7 +182,7 @@ struct CourseCoverView: View {
                 .foregroundStyle(style.ink)
 
             Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                .font(.custom("Baskerville", fixedSize: width * 0.065))
+                .font(.system(size: width * 0.05))
                 .foregroundStyle(style.ink.opacity(0.75))
 
             Spacer(minLength: 0)

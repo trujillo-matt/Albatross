@@ -45,7 +45,7 @@ struct NewRoundSheet: View {
                         // Scan option — shown above the course search list
                         Button(action: { showScanner = true }) {
                             Label("Scan Paper Scorecard", systemImage: "camera.viewfinder")
-                                .font(.custom("Baskerville", size: 15))
+                                .font(.subheadline)
                                 .foregroundStyle(Color.accentColor)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
@@ -84,7 +84,7 @@ struct NewRoundSheet: View {
                         ProgressView()
                             .tint(.white)
                         Text("Reading scorecard with AI…")
-                            .font(.custom("Baskerville", size: 15))
+                            .font(.subheadline)
                             .foregroundStyle(.white)
                     }
                     .padding(28)
@@ -222,12 +222,12 @@ struct NewRoundSheet: View {
                 // Course name
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Course Name")
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 4)
 
                     TextField("e.g. Pebble Beach", text: $manualCourseName)
-                        .font(.custom("Baskerville", size: 17))
+                        .font(.body)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
                         .background(Color(.secondarySystemGroupedBackground))
@@ -241,7 +241,7 @@ struct NewRoundSheet: View {
                 // Hole pars grid
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Hole Pars")
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 4)
                         .padding(.horizontal, 20)
@@ -259,7 +259,7 @@ struct NewRoundSheet: View {
                 // Start button
                 Button(action: startManualRound) {
                     Text("Start Round")
-                        .font(.custom("Baskerville-Bold", size: 17))
+                        .font(.body.weight(.semibold))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(
@@ -284,11 +284,11 @@ struct NewRoundSheet: View {
         VStack(spacing: 8) {
             HStack {
                 Text(title)
-                    .font(.custom("Baskerville-SemiBold", size: 13))
+                    .font(.footnote.weight(.medium))
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("Par \(manualPars[range].reduce(0, +))")
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
                     .foregroundStyle(Color.accentColor)
             }
             .padding(.horizontal, 14)
@@ -298,7 +298,7 @@ struct NewRoundSheet: View {
             HStack(spacing: 0) {
                 ForEach(range, id: \.self) { i in
                     Text("\(i + 1)")
-                        .font(.custom("Baskerville", size: 10))
+                        .font(.caption2)
                         .foregroundStyle(Color(.tertiaryLabel))
                         .frame(maxWidth: .infinity)
                 }
@@ -322,7 +322,7 @@ struct NewRoundSheet: View {
             Button(action: { if manualPars[index] < 5 { manualPars[index] += 1 } }) {
                 Image(systemName: "chevron.up")
                     .accessibilityLabel("Increase par, hole \(index + 1)")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(.system(size: 8, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
                     .background(Color(.tertiarySystemGroupedBackground))
@@ -332,7 +332,7 @@ struct NewRoundSheet: View {
             .buttonStyle(.plain)
 
             Text("\(manualPars[index])")
-                .font(.custom("Baskerville-Bold", size: 15))
+                .font(.subheadline.weight(.semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 5)
                 .background(parCellBackground(manualPars[index]))
@@ -343,7 +343,7 @@ struct NewRoundSheet: View {
             Button(action: { if manualPars[index] > 3 { manualPars[index] -= 1 } }) {
                 Image(systemName: "chevron.down")
                     .accessibilityLabel("Decrease par, hole \(index + 1)")
-                    .font(.system(size: 8, weight: .bold))
+                    .font(.system(size: 8, weight: .semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
                     .background(Color(.tertiarySystemGroupedBackground))

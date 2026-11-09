@@ -98,7 +98,7 @@ struct HeadToHeadView: View {
                     .frame(width: 44, height: 44)
                     .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
                 Text("VS")
-                    .font(.custom("Baskerville-Bold", size: 13))
+                    .font(.footnote.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
             .zIndex(1)
@@ -128,7 +128,7 @@ struct HeadToHeadView: View {
                     .fill(Color.white.opacity(0.12))
                     .frame(width: 56, height: 64)
                 Text(initials.isEmpty ? "?" : initials)
-                    .font(.custom("Baskerville-Bold", size: 20))
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(.white.opacity(0.85))
             }
 
@@ -137,26 +137,26 @@ struct HeadToHeadView: View {
             VStack(spacing: 0) {
                 if parts.count == 2 {
                     Text(String(parts[0]))
-                        .font(.custom("Baskerville-Bold", size: 15))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
                     Text(String(parts[1]))
-                        .font(.custom("Baskerville-Bold", size: 15))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
                 } else {
                     Text(name)
-                        .font(.custom("Baskerville-Bold", size: 15))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
                 }
                 if let username, !username.isEmpty {
                     Text("@\(username)")
-                        .font(.custom("Baskerville", size: 11))
+                        .font(.caption2)
                         .foregroundStyle(.white.opacity(0.55))
                 }
             }
             .multilineTextAlignment(.center)
 
             Text("\(rounds) round\(rounds == 1 ? "" : "s")")
-                .font(.custom("Baskerville", size: 11))
+                .font(.caption2)
                 .foregroundStyle(.white.opacity(0.5))
         }
         .frame(maxWidth: .infinity)
@@ -206,7 +206,7 @@ struct HeadToHeadView: View {
             HStack {
                 Spacer()
                 Text(myValue)
-                    .font(.custom("Baskerville-Bold", size: 20))
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(myWins ? Color.accentColor : .primary)
                 if myWins {
                     Image(systemName: "trophy.fill")
@@ -219,7 +219,7 @@ struct HeadToHeadView: View {
             // Centre label
             VStack(spacing: 2) {
                 Text(label)
-                    .font(.custom("Baskerville", size: 11))
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -233,7 +233,7 @@ struct HeadToHeadView: View {
                         .foregroundStyle(Color.accentColor)
                 }
                 Text(theirValue)
-                    .font(.custom("Baskerville-Bold", size: 20))
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(theirWins ? Color.accentColor : .primary)
                 Spacer()
             }
@@ -248,22 +248,22 @@ struct HeadToHeadView: View {
     private var sharedCoursesList: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Shared Courses")
-                .font(.custom("Baskerville-Bold", size: 16))
+                .font(.callout.weight(.semibold))
                 .padding(.horizontal, 4)
 
             VStack(spacing: 0) {
                 // Header row
                 HStack(spacing: 0) {
                     Text("Course")
-                        .font(.custom("Baskerville", size: 11))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("You")
-                        .font(.custom("Baskerville", size: 11))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(width: 52, alignment: .center)
                     Text("Them")
-                        .font(.custom("Baskerville", size: 11))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(width: 52, alignment: .center)
                 }
@@ -292,11 +292,11 @@ struct HeadToHeadView: View {
             // Course name
             VStack(alignment: .leading, spacing: 1) {
                 Text(course.courseName)
-                    .font(.custom("Baskerville-SemiBold", size: 13))
+                    .font(.footnote.weight(.medium))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 Text("Par \(course.par)")
-                    .font(.custom("Baskerville", size: 11))
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -304,10 +304,10 @@ struct HeadToHeadView: View {
             // My best
             VStack(spacing: 1) {
                 Text("\(course.myBest)")
-                    .font(.custom("Baskerville-Bold", size: 16))
+                    .font(.callout.weight(.semibold))
                     .foregroundStyle(myWins ? Color.accentColor : .primary)
                 Text(myDiff == 0 ? "E" : myDiff > 0 ? "+\(myDiff)" : "\(myDiff)")
-                    .font(.custom("Baskerville", size: 10))
+                    .font(.caption2)
                     .foregroundStyle(scoreColor(myDiff))
             }
             .frame(width: 52, alignment: .center)
@@ -315,10 +315,10 @@ struct HeadToHeadView: View {
             // Their best
             VStack(spacing: 1) {
                 Text("\(course.theirBest)")
-                    .font(.custom("Baskerville-Bold", size: 16))
+                    .font(.callout.weight(.semibold))
                     .foregroundStyle(theirWins ? Color.accentColor : .primary)
                 Text(theirDiff == 0 ? "E" : theirDiff > 0 ? "+\(theirDiff)" : "\(theirDiff)")
-                    .font(.custom("Baskerville", size: 10))
+                    .font(.caption2)
                     .foregroundStyle(scoreColor(theirDiff))
             }
             .frame(width: 52, alignment: .center)
@@ -333,9 +333,9 @@ struct HeadToHeadView: View {
                 .font(.system(size: 36))
                 .foregroundStyle(.tertiary)
             Text("No Shared Courses")
-                .font(.custom("Baskerville-Bold", size: 16))
+                .font(.callout.weight(.semibold))
             Text("Play some of the same courses to see a comparison here.")
-                .font(.custom("Baskerville", size: 13))
+                .font(.footnote)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }

@@ -72,7 +72,7 @@ struct CourseDetailView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(courseName)
-                    .font(.custom("Baskerville-Bold", size: 26))
+                    .font(.title.weight(.semibold))
                     .foregroundStyle(.white)
                     .lineLimit(2)
 
@@ -82,7 +82,7 @@ struct CourseDetailView: View {
                             .font(.system(size: 12))
                             .foregroundStyle(.white.opacity(0.6))
                         Text(loc)
-                            .font(.custom("Baskerville", size: 14))
+                            .font(.subheadline)
                             .foregroundStyle(.white.opacity(0.75))
                     }
                 }
@@ -143,7 +143,7 @@ struct CourseDetailView: View {
                         .font(.system(size: 14))
                         .foregroundStyle(Color.accentColor)
                     Text(site)
-                        .font(.custom("Baskerville", size: 15))
+                        .font(.subheadline)
                         .foregroundStyle(Color.accentColor)
                     Spacer()
                     Image(systemName: "arrow.up.right")
@@ -165,20 +165,20 @@ struct CourseDetailView: View {
                 HStack(spacing: 0) {
                     // Tee name badge
                     Text(tee.name)
-                        .font(.custom("Baskerville-SemiBold", size: 14))
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(.primary)
                         .frame(width: 56, alignment: .leading)
                         .padding(.leading, 16)
 
                     Text("\(tee.totalYards.formatted()) yds")
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
 
                     Spacer()
 
                     if let rating = tee.rating, let slope = tee.slope {
                         Text(String(format: "%.1f / %d", rating, slope))
-                            .font(.custom("Baskerville", size: 13))
+                            .font(.footnote)
                             .foregroundStyle(.tertiary)
                             .padding(.trailing, 16)
                     }
@@ -199,7 +199,7 @@ struct CourseDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             if let title {
                 Text(title)
-                    .font(.custom("Baskerville-SemiBold", size: 13))
+                    .font(.footnote.weight(.medium))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
                     .padding(.bottom, 6)
@@ -218,11 +218,11 @@ struct CourseDetailView: View {
         VStack(spacing: 0) {
             HStack {
                 Text(label)
-                    .font(.custom("Baskerville", size: 15))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text(value)
-                    .font(.custom("Baskerville-SemiBold", size: 15))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
             }
             .padding(.vertical, 11)

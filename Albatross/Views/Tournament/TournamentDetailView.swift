@@ -36,7 +36,7 @@ struct TournamentDetailView: View {
                 // ── Error ────────────────────────────────────────────────
                 if let error = errorMessage {
                     Text(error)
-                        .font(.custom("Baskerville", size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.red)
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
@@ -90,7 +90,7 @@ struct TournamentDetailView: View {
                 statusBadge(current.status)
                 Spacer()
                 Text(current.matchType.displayName)
-                    .font(.custom("Baskerville", size: 13))
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
@@ -105,7 +105,7 @@ struct TournamentDetailView: View {
                     HStack(spacing: 8) {
                         ForEach(current.courses) { course in
                             Text("R\(course.roundNumber): \(course.courseName)")
-                                .font(.custom("Baskerville", size: 12))
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
@@ -128,10 +128,10 @@ struct TournamentDetailView: View {
     private func statItem(label: String, value: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.custom("Baskerville-Bold", size: 18))
+                .font(.body.weight(.semibold))
                 .foregroundStyle(.primary)
             Text(label)
-                .font(.custom("Baskerville", size: 11))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
     }
@@ -142,7 +142,7 @@ struct TournamentDetailView: View {
                 .fill(statusColor(status))
                 .frame(width: 8, height: 8)
             Text(status.rawValue.capitalized)
-                .font(.custom("Baskerville-SemiBold", size: 12))
+                .font(.caption.weight(.medium))
                 .foregroundStyle(statusColor(status))
         }
         .padding(.horizontal, 10)
@@ -166,7 +166,7 @@ struct TournamentDetailView: View {
                 VStack(spacing: 12) {
                     Button(action: { showInviteSearch = true }) {
                         Label("Invite Players", systemImage: "person.badge.plus")
-                            .font(.custom("Baskerville-SemiBold", size: 15))
+                            .font(.subheadline.weight(.medium))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
                             .background(Color(.secondarySystemGroupedBackground))
@@ -187,7 +187,7 @@ struct TournamentDetailView: View {
                                     .tint(.white)
                             } else {
                                 Label("Start Draft", systemImage: "play.circle.fill")
-                                    .font(.custom("Baskerville-SemiBold", size: 16))
+                                    .font(.callout.weight(.medium))
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -201,7 +201,7 @@ struct TournamentDetailView: View {
 
                     if acceptedCount < 2 {
                         Text("Need at least 2 accepted players to start the draft.")
-                            .font(.custom("Baskerville", size: 12))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -229,17 +229,17 @@ struct TournamentDetailView: View {
                 .frame(width: 36, height: 36)
                 .overlay(
                     Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                        .font(.custom("Baskerville-Bold", size: 15))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color.accentColor)
                 )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(player.profile?.displayName ?? "Player")
-                    .font(.custom("Baskerville-SemiBold", size: 14))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
                 if let username = player.profile?.username {
                     Text("@\(username)")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -261,7 +261,7 @@ struct TournamentDetailView: View {
 
     private func inviteStatusBadge(_ status: InviteStatus) -> some View {
         Text(status.rawValue.capitalized)
-            .font(.custom("Baskerville", size: 11))
+            .font(.caption2)
             .foregroundStyle(inviteStatusColor(status))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -284,10 +284,10 @@ struct TournamentDetailView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Enter Draft Room")
-                            .font(.custom("Baskerville-Bold", size: 16))
+                            .font(.callout.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text("Captain voting & snake draft in progress")
-                            .font(.custom("Baskerville", size: 13))
+                            .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
 
@@ -334,7 +334,7 @@ struct TournamentDetailView: View {
 
             NavigationLink(destination: TournamentStandingsView(tournament: current)) {
                 Label("Full Standings", systemImage: "chart.bar.fill")
-                    .font(.custom("Baskerville-SemiBold", size: 15))
+                    .font(.subheadline.weight(.medium))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(Color(.secondarySystemGroupedBackground))
@@ -351,29 +351,29 @@ struct TournamentDetailView: View {
         HStack {
             VStack(spacing: 4) {
                 Text(standings.teamA.name)
-                    .font(.custom("Baskerville-SemiBold", size: 13))
+                    .font(.footnote.weight(.medium))
                     .foregroundStyle(.primary)
                 Text(String(format: "%.1f", standings.pointsTeamA))
-                    .font(.custom("Baskerville-Bold", size: 32))
+                    .font(.largeTitle.weight(.semibold))
                     .foregroundStyle(standings.leader?.id == standings.teamA.id ? Color.accentColor : .primary)
             }
             .frame(maxWidth: .infinity)
 
             VStack(spacing: 2) {
                 Text("vs")
-                    .font(.custom("Baskerville", size: 14))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Text("to \(String(format: "%.1f", standings.pointsToWin))")
-                    .font(.custom("Baskerville", size: 11))
+                    .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
 
             VStack(spacing: 4) {
                 Text(standings.teamB.name)
-                    .font(.custom("Baskerville-SemiBold", size: 13))
+                    .font(.footnote.weight(.medium))
                     .foregroundStyle(.primary)
                 Text(String(format: "%.1f", standings.pointsTeamB))
-                    .font(.custom("Baskerville-Bold", size: 32))
+                    .font(.largeTitle.weight(.semibold))
                     .foregroundStyle(standings.leader?.id == standings.teamB.id ? Color.accentColor : .primary)
             }
             .frame(maxWidth: .infinity)
@@ -387,10 +387,10 @@ struct TournamentDetailView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Match \(matchup.matchupNumber)")
-                    .font(.custom("Baskerville-Bold", size: 14))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                 Text(matchup.matchType.displayName)
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -399,10 +399,10 @@ struct TournamentDetailView: View {
             if matchup.status == .complete {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("\(String(format: "%.1f", matchup.pointsTeamA)) – \(String(format: "%.1f", matchup.pointsTeamB))")
-                        .font(.custom("Baskerville-Bold", size: 14))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text("Complete")
-                        .font(.custom("Baskerville", size: 11))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             } else {
@@ -421,7 +421,7 @@ struct TournamentDetailView: View {
 
     private func matchupStatusBadge(_ status: MatchupStatus) -> some View {
         Text(status == .active ? "In Progress" : "Pending")
-            .font(.custom("Baskerville", size: 11))
+            .font(.caption2)
             .foregroundStyle(status == .active ? .green : .orange)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -446,7 +446,7 @@ struct TournamentDetailView: View {
                                 .font(.system(size: 28))
                                 .foregroundStyle(.yellow)
                             Text("\(winner.name) wins!")
-                                .font(.custom("Baskerville-Bold", size: 18))
+                                .font(.body.weight(.semibold))
                                 .foregroundStyle(.primary)
                         }
                         Spacer()
@@ -457,7 +457,7 @@ struct TournamentDetailView: View {
 
             NavigationLink(destination: TournamentStandingsView(tournament: current)) {
                 Label("View Full Standings", systemImage: "chart.bar.fill")
-                    .font(.custom("Baskerville-SemiBold", size: 15))
+                    .font(.subheadline.weight(.medium))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(Color.accentColor)
@@ -473,7 +473,7 @@ struct TournamentDetailView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.custom("Baskerville-Bold", size: 18))
+            .font(.body.weight(.semibold))
             .foregroundStyle(.primary)
     }
 
@@ -534,7 +534,7 @@ private struct InvitePlayersSheet: View {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
                     TextField("Search by name or username", text: $searchQuery)
-                        .font(.custom("Baskerville", size: 15))
+                        .font(.subheadline)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .onChange(of: searchQuery) { _, query in
@@ -575,14 +575,14 @@ private struct InvitePlayersSheet: View {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(profile.displayName)
-                                            .font(.custom("Baskerville-SemiBold", size: 15))
+                                            .font(.subheadline.weight(.medium))
                                         if let u = profile.username {
-                                            Text("@\(u)").font(.custom("Baskerville", size: 12)).foregroundStyle(.secondary)
+                                            Text("@\(u)").font(.caption).foregroundStyle(.secondary)
                                         }
                                     }
                                     Spacer()
                                     if alreadyInPool {
-                                        Text("Invited").font(.custom("Baskerville", size: 12)).foregroundStyle(.secondary)
+                                        Text("Invited").font(.caption).foregroundStyle(.secondary)
                                     } else if selected {
                                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
                                     }

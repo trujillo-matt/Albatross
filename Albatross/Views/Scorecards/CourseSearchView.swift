@@ -17,7 +17,7 @@ struct CourseSearchView: View {
                     .font(.system(size: 15))
 
                 TextField("Search courses…", text: $courseStore.searchText)
-                    .font(.custom("Baskerville", size: 16))
+                    .font(.callout)
                     .autocorrectionDisabled()
                     .submitLabel(.search)
 
@@ -74,7 +74,7 @@ struct CourseSearchView: View {
                         }
 
                         Text("Enter course name manually")
-                            .font(.custom("Baskerville", size: 15))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
 
                         Spacer()
@@ -113,12 +113,12 @@ struct CourseSearchView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(course.name)
-                        .font(.custom("Baskerville-Bold", size: 15))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
                     Text(course.locationDisplay)
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
@@ -126,10 +126,10 @@ struct CourseSearchView: View {
 
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("Par \(course.totalPar)")
-                        .font(.custom("Baskerville-Bold", size: 13))
+                        .font(.footnote.weight(.semibold))
                         .foregroundStyle(Color.accentColor)
                     Text("18 holes")
-                        .font(.custom("Baskerville", size: 10))
+                        .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
 
@@ -156,7 +156,7 @@ struct CourseSearchView: View {
                         .font(.system(size: 12))
                         .foregroundStyle(Color.accentColor)
                     Text("Suggested")
-                        .font(.custom("Baskerville-SemiBold", size: 13))
+                        .font(.footnote.weight(.medium))
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 4)
@@ -185,7 +185,7 @@ struct CourseSearchView: View {
                 .font(.system(size: 28))
                 .foregroundStyle(Color(.tertiaryLabel))
             Text("No courses found for \"\(courseStore.searchText)\"")
-                .font(.custom("Baskerville", size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }

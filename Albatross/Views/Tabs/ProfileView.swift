@@ -128,7 +128,7 @@ struct ProfileView: View {
                                 .frame(width: 110, height: 130)
                                 .overlay(
                                     Text(initialsFromName(name))
-                                        .font(.custom("Baskerville-Bold", size: 38))
+                                        .font(.largeTitle.weight(.semibold))
                                         .foregroundStyle(.white.opacity(0.85))
                                 )
                         }
@@ -141,21 +141,21 @@ struct ProfileView: View {
                         if parts.count == 2 {
                             VStack(alignment: .leading, spacing: 0) {
                                 Text(String(parts[0]))
-                                    .font(.custom("Baskerville-Bold", size: 26))
+                                    .font(.title.weight(.semibold))
                                     .foregroundStyle(.white)
                                 Text(String(parts[1]))
-                                    .font(.custom("Baskerville-Bold", size: 26))
+                                    .font(.title.weight(.semibold))
                                     .foregroundStyle(.white)
                             }
                         } else {
                             Text(name.isEmpty ? "—" : name)
-                                .font(.custom("Baskerville-Bold", size: 26))
+                                .font(.title.weight(.semibold))
                                 .foregroundStyle(.white)
                         }
 
                         if !username.isEmpty {
                             Text("@\(username)")
-                                .font(.custom("Baskerville", size: 13))
+                                .font(.footnote)
                                 .foregroundStyle(.white.opacity(0.6))
                         }
 
@@ -165,7 +165,7 @@ struct ProfileView: View {
                                     .font(.system(size: 11))
                                     .foregroundStyle(.white.opacity(0.5))
                                 Text(location)
-                                    .font(.custom("Baskerville", size: 12))
+                                    .font(.caption)
                                     .foregroundStyle(.white.opacity(0.55))
                             }
                             .padding(.top, 2)
@@ -188,7 +188,7 @@ struct ProfileView: View {
                             .foregroundStyle(.white.opacity(0.7))
                     }
                     Text(homeCourse.isEmpty ? "Home Course" : homeCourse)
-                        .font(.custom("Baskerville", size: 9))
+                        .font(.caption2)
                         .foregroundStyle(.white.opacity(homeCourse.isEmpty ? 0.35 : 0.65))
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
@@ -206,7 +206,7 @@ struct ProfileView: View {
             // ── Edit Profile pill (below card) ───────────────────────────
             Button(action: { showEditProfile = true }) {
                 Text("Edit Profile")
-                    .font(.custom("Baskerville", size: 14))
+                    .font(.subheadline)
                     .foregroundStyle(Color.accentColor)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 7)
@@ -236,10 +236,10 @@ struct ProfileView: View {
     private func statItem(label: String, value: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.custom("Baskerville-Bold", size: 20))
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(.primary)
             Text(label)
-                .font(.custom("Baskerville", size: 12))
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -250,24 +250,24 @@ struct ProfileView: View {
     private var handicapCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Handicap Index")
-                .font(.custom("Baskerville", size: 13))
+                .font(.footnote)
                 .foregroundStyle(.secondary)
 
             HStack(alignment: .lastTextBaseline, spacing: 6) {
                 if let hcp = handicapIndex {
                     Text(String(format: "%.1f", hcp))
-                        .font(.custom("Baskerville-Bold", size: 40))
+                        .font(.system(size: 40, weight: .semibold))
                         .foregroundStyle(.primary)
                     Text("HCP")
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.bottom, 4)
                 } else {
                     Text("—")
-                        .font(.custom("Baskerville-Bold", size: 40))
+                        .font(.system(size: 40, weight: .semibold))
                         .foregroundStyle(.secondary)
                     Text(completedRounds.count < 3 ? "Need \(3 - completedRounds.count) more rounds" : "HCP")
-                        .font(.custom("Baskerville", size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.tertiary)
                         .padding(.bottom, 4)
                 }
@@ -288,7 +288,7 @@ struct ProfileView: View {
             // Header
             HStack {
                 Text("Friends")
-                    .font(.custom("Baskerville-Bold", size: 18))
+                    .font(.body.weight(.semibold))
 
                 Spacer()
 
@@ -296,18 +296,18 @@ struct ProfileView: View {
                 HStack(spacing: 12) {
                     VStack(spacing: 0) {
                         Text("\(socialStore.followers.count)")
-                            .font(.custom("Baskerville-Bold", size: 14))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text("Followers")
-                            .font(.custom("Baskerville", size: 10))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                     VStack(spacing: 0) {
                         Text("\(socialStore.following.count)")
-                            .font(.custom("Baskerville-Bold", size: 14))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text("Following")
-                            .font(.custom("Baskerville", size: 10))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -334,11 +334,11 @@ struct ProfileView: View {
                         .font(.system(size: 32))
                         .foregroundStyle(Color.accentColor.opacity(0.35))
                     Text("Follow friends to see them here")
-                        .font(.custom("Baskerville", size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                     Button(action: { showUserSearch = true }) {
                         Text("Find Friends")
-                            .font(.custom("Baskerville-Bold", size: 13))
+                            .font(.footnote.weight(.semibold))
                             .foregroundStyle(Color.accentColor)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
@@ -380,17 +380,17 @@ struct ProfileView: View {
                     .fill(Color.accentColor.opacity(0.15))
                     .frame(width: 40, height: 40)
                 Text(initials(for: profile.displayName))
-                    .font(.custom("Baskerville-Bold", size: 14))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.accentColor)
             }
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(profile.displayName)
-                    .font(.custom("Baskerville-SemiBold", size: 14))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.primary)
                 if let username = profile.username, !username.isEmpty {
                     Text("@\(username)")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -402,10 +402,10 @@ struct ProfileView: View {
                 let diff = latest.round.totalScore - latest.round.effectivePars.reduce(0, +)
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("\(latest.round.totalScore)")
-                        .font(.custom("Baskerville-Bold", size: 16))
+                        .font(.callout.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(diff == 0 ? "E" : diff > 0 ? "+\(diff)" : "\(diff)")
-                        .font(.custom("Baskerville", size: 10))
+                        .font(.caption2)
                         .foregroundStyle(diff < 0 ? .green : diff == 0 ? .secondary : .red)
                 }
             }
@@ -432,7 +432,7 @@ struct ProfileView: View {
                 HStack {
                     Spacer()
                     Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                        .font(.custom("Baskerville", size: 16))
+                        .font(.callout)
                     Spacer()
                 }
                 .padding(.vertical, 15)
@@ -473,7 +473,7 @@ struct SettingsSheet: View {
                 Section {
                     HStack {
                         Label("Dark Mode", systemImage: "moon.fill")
-                            .font(.custom("Baskerville", size: 16))
+                            .font(.callout)
                         Spacer()
                         Picker("", selection: $colorSchemePreference) {
                             Text("Off").tag("light")
@@ -485,7 +485,7 @@ struct SettingsSheet: View {
                     }
                 } header: {
                     Text("Appearance")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                 }
             }
             .listStyle(.insetGrouped)

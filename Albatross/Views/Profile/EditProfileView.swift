@@ -61,28 +61,28 @@ struct EditProfileView: View {
                             HStack {
                                 Spacer()
                                 Text("Remove Photo")
-                                    .font(.custom("Baskerville", size: 15))
+                                    .font(.subheadline)
                                 Spacer()
                             }
                         }
                     }
                 } header: {
                     Text("Photo")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                 }
 
                 // MARK: Profile info
                 Section {
                     LabeledContent("First Name") {
                         TextField("Your name", text: $displayName)
-                            .font(.custom("Baskerville", size: 16))
+                            .font(.callout)
                             .multilineTextAlignment(.trailing)
                     }
-                    .font(.custom("Baskerville", size: 16))
+                    .font(.callout)
 
                     LabeledContent("Username") {
                         TextField("username", text: $username)
-                            .font(.custom("Baskerville", size: 16))
+                            .font(.callout)
                             .multilineTextAlignment(.trailing)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
@@ -91,30 +91,30 @@ struct EditProfileView: View {
                                 if cleaned != val { username = cleaned }
                             }
                     }
-                    .font(.custom("Baskerville", size: 16))
+                    .font(.callout)
                 } header: {
                     Text("Profile Info")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                 }
 
                 // MARK: Golf info
                 Section {
                     LabeledContent("Home Course") {
                         TextField("Course name", text: $homeCourse)
-                            .font(.custom("Baskerville", size: 16))
+                            .font(.callout)
                             .multilineTextAlignment(.trailing)
                     }
-                    .font(.custom("Baskerville", size: 16))
+                    .font(.callout)
 
                     LabeledContent("Location") {
                         TextField("City, State", text: $location)
-                            .font(.custom("Baskerville", size: 16))
+                            .font(.callout)
                             .multilineTextAlignment(.trailing)
                     }
-                    .font(.custom("Baskerville", size: 16))
+                    .font(.callout)
                 } header: {
                     Text("Golf Info")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                 }
             }
             .navigationTitle("Edit Profile")
@@ -168,7 +168,7 @@ struct EditProfileView: View {
                 .frame(width: size, height: size)
                 .overlay(
                     Text(initials.isEmpty ? "?" : initials)
-                        .font(.custom("Baskerville-Bold", size: size * 0.38))
+                        .font(.system(size: size * 0.38, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                 )
         }

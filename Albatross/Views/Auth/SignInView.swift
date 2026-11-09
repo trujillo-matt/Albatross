@@ -32,12 +32,12 @@ struct SignInView: View {
                             .frame(width: 68, height: 68)
 
                         Text("ALBATROSS")
-                            .font(.custom("Baskerville-Bold", size: 30))
+                            .font(.title.weight(.semibold))
                             .foregroundStyle(.white)
                             .kerning(8)
 
                         Text("Track every round.")
-                            .font(.custom("Baskerville", size: 15))
+                            .font(.subheadline)
                             .foregroundStyle(.white.opacity(0.55))
                     }
                     .padding(.top, 72)
@@ -93,7 +93,7 @@ struct SignInView: View {
                         // Error message
                         if let error = authStore.errorMessage {
                             Text(error)
-                                .font(.custom("Baskerville", size: 13))
+                                .font(.footnote)
                                 .foregroundStyle(.red.opacity(0.9))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 4)
@@ -112,7 +112,7 @@ struct SignInView: View {
                                         .tint(Color(red: 0.141, green: 0.208, blue: 0.153))
                                 } else {
                                     Text(isSignUp ? "Create Account" : "Sign In")
-                                        .font(.custom("Baskerville-Bold", size: 17))
+                                        .font(.body.weight(.semibold))
                                         .foregroundStyle(Color(red: 0.141, green: 0.208, blue: 0.153))
                                 }
                             }
@@ -138,14 +138,14 @@ struct SignInView: View {
                                 Text("Don't have an account? **Create one**")
                             }
                         }
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.6))
                     }
                     .buttonStyle(.plain)
                     .padding(.top, 24)
 
                     Text("By continuing you agree to our\nTerms of Service and Privacy Policy.")
-                        .font(.custom("Baskerville", size: 11))
+                        .font(.caption2)
                         .foregroundStyle(.white.opacity(0.3))
                         .multilineTextAlignment(.center)
                         .padding(.top, 28)
@@ -176,13 +176,13 @@ struct SignInView: View {
 
             if secure {
                 SecureField(placeholder, text: text)
-                    .font(.custom("Baskerville", size: 16))
+                    .font(.callout)
                     .foregroundStyle(.white)
                     .tint(.white)
                     .autocorrectionDisabled()
             } else {
                 TextField(placeholder, text: text)
-                    .font(.custom("Baskerville", size: 16))
+                    .font(.callout)
                     .foregroundStyle(.white)
                     .tint(.white)
                     .keyboardType(keyboard)

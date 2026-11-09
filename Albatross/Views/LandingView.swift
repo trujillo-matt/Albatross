@@ -16,7 +16,7 @@ struct LandingView: View {
                 Spacer()
 
                 Text("ALBATROSS")
-                    .font(.custom("Baskerville", size: 32))
+                    .font(.system(size: 32, weight: .regular))
                     .foregroundStyle(.white)
                     .tracking(2)
 
@@ -27,7 +27,7 @@ struct LandingView: View {
                     .padding(.top, 12)
 
                 Text("Est. 2026")
-                    .font(.custom("Baskerville", size: 14))
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(.white.opacity(0.75))
                     .tracking(3)
                     .padding(.top, 16)

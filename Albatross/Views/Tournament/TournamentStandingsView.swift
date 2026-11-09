@@ -44,7 +44,7 @@ struct TournamentStandingsView: View {
                 // ── Share button ───────────────────────────────────────────
                 Button(action: generateAndShare) {
                     Label("Share Standings", systemImage: "square.and.arrow.up")
-                        .font(.custom("Baskerville-SemiBold", size: 15))
+                        .font(.subheadline.weight(.medium))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(Color.accentColor)
@@ -82,29 +82,29 @@ struct TournamentStandingsView: View {
             HStack(alignment: .center) {
                 VStack(spacing: 6) {
                     Text(s.teamA.name)
-                        .font(.custom("Baskerville-Bold", size: 16))
+                        .font(.callout.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(String(format: "%.1f", s.pointsTeamA))
-                        .font(.custom("Baskerville-Bold", size: 48))
+                        .font(.system(size: 48, weight: .semibold))
                         .foregroundStyle(s.leader?.id == s.teamA.id ? Color.accentColor : .primary)
                 }
                 .frame(maxWidth: .infinity)
 
                 VStack(spacing: 4) {
                     Text("vs")
-                        .font(.custom("Baskerville", size: 18))
+                        .font(.body)
                         .foregroundStyle(.secondary)
                     Text("first to \(String(format: "%.1f", s.pointsToWin))")
-                        .font(.custom("Baskerville", size: 11))
+                        .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
 
                 VStack(spacing: 6) {
                     Text(s.teamB.name)
-                        .font(.custom("Baskerville-Bold", size: 16))
+                        .font(.callout.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(String(format: "%.1f", s.pointsTeamB))
-                        .font(.custom("Baskerville-Bold", size: 48))
+                        .font(.system(size: 48, weight: .semibold))
                         .foregroundStyle(s.leader?.id == s.teamB.id ? Color.accentColor : .primary)
                 }
                 .frame(maxWidth: .infinity)
@@ -119,7 +119,7 @@ struct TournamentStandingsView: View {
                     Image(systemName: "trophy.fill")
                         .foregroundStyle(.yellow)
                     Text("\(winner.name) wins!")
-                        .font(.custom("Baskerville-Bold", size: 16))
+                        .font(.callout.weight(.semibold))
                         .foregroundStyle(.primary)
                 }
                 .padding(.horizontal, 20)
@@ -168,10 +168,10 @@ struct TournamentStandingsView: View {
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Match \(matchup.matchupNumber)")
-                    .font(.custom("Baskerville-Bold", size: 14))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                 Text(matchup.matchType.displayName)
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
@@ -185,7 +185,7 @@ struct TournamentStandingsView: View {
                         isWinner: matchup.pointsTeamA > matchup.pointsTeamB
                     )
                     Text("–")
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     resultScore(
                         name: teamBName,
@@ -195,7 +195,7 @@ struct TournamentStandingsView: View {
                 }
             } else {
                 Text(matchup.status == .active ? "In Progress" : "Pending")
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
                     .foregroundStyle(matchup.status == .active ? .green : .orange)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -212,10 +212,10 @@ struct TournamentStandingsView: View {
     private func resultScore(name: String, points: Double, isWinner: Bool) -> some View {
         VStack(spacing: 2) {
             Text(String(format: "%.1f", points))
-                .font(.custom("Baskerville-Bold", size: 16))
+                .font(.callout.weight(.semibold))
                 .foregroundStyle(isWinner ? Color.accentColor : .primary)
             Text(name)
-                .font(.custom("Baskerville", size: 10))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
     }
@@ -236,7 +236,7 @@ struct TournamentStandingsView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.custom("Baskerville-Bold", size: 18))
+            .font(.body.weight(.semibold))
             .foregroundStyle(.primary)
     }
 }
@@ -272,18 +272,18 @@ private struct StandingsShareCard: View {
                         .frame(width: 48, height: 48)
 
                     Text("ALBATROSS")
-                        .font(.custom("Baskerville-Bold", size: 13))
+                        .font(.footnote.weight(.semibold))
                         .tracking(4)
                         .foregroundStyle(brandGreen)
 
                     Text(tournament.name)
-                        .font(.custom("Baskerville-Bold", size: 22))
+                        .font(.title2.weight(.semibold))
                         .foregroundStyle(.primary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
 
                     Text(tournament.matchType.displayName)
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(Color(white: 0.5))
                 }
                 .padding(.top, 40)
@@ -294,10 +294,10 @@ private struct StandingsShareCard: View {
                 HStack(alignment: .center, spacing: 0) {
                     VStack(spacing: 8) {
                         Text(standings.teamA.name)
-                            .font(.custom("Baskerville-Bold", size: 18))
+                            .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text(String(format: "%.1f", standings.pointsTeamA))
-                            .font(.custom("Baskerville-Bold", size: 72))
+                            .font(.system(size: 72, weight: .semibold))
                             .foregroundStyle(standings.leader?.id == standings.teamA.id ? brandGreen : Color(white: 0.3))
                     }
                     .frame(maxWidth: .infinity)
@@ -308,10 +308,10 @@ private struct StandingsShareCard: View {
 
                     VStack(spacing: 8) {
                         Text(standings.teamB.name)
-                            .font(.custom("Baskerville-Bold", size: 18))
+                            .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text(String(format: "%.1f", standings.pointsTeamB))
-                            .font(.custom("Baskerville-Bold", size: 72))
+                            .font(.system(size: 72, weight: .semibold))
                             .foregroundStyle(standings.leader?.id == standings.teamB.id ? brandGreen : Color(white: 0.3))
                     }
                     .frame(maxWidth: .infinity)
@@ -320,7 +320,7 @@ private struct StandingsShareCard: View {
 
                 // Points to win
                 Text("First to \(String(format: "%.1f", standings.pointsToWin)) wins")
-                    .font(.custom("Baskerville", size: 14))
+                    .font(.subheadline)
                     .foregroundStyle(Color(white: 0.5))
                     .padding(.top, 12)
 
@@ -333,16 +333,16 @@ private struct StandingsShareCard: View {
                         let tBName = tournament.teams.first(where: { $0.id == m.teamBID })?.name ?? "B"
                         HStack {
                             Text("Match \(m.matchupNumber)")
-                                .font(.custom("Baskerville", size: 13))
+                                .font(.footnote)
                                 .foregroundStyle(Color(white: 0.5))
                             Spacer()
                             if m.status == .complete {
                                 Text("\(tAName) \(String(format: "%.1f", m.pointsTeamA)) – \(String(format: "%.1f", m.pointsTeamB)) \(tBName)")
-                                    .font(.custom("Baskerville-SemiBold", size: 13))
+                                    .font(.footnote.weight(.medium))
                                     .foregroundStyle(Color(white: 0.3))
                             } else {
                                 Text(m.status == .active ? "In Progress" : "Pending")
-                                    .font(.custom("Baskerville", size: 13))
+                                    .font(.footnote)
                                     .foregroundStyle(Color(white: 0.6))
                             }
                         }

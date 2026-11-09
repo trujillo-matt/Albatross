@@ -46,16 +46,16 @@ struct HomeView: View {
                 .font(.system(size: 56))
                 .foregroundStyle(Color.accentColor.opacity(0.4))
             Text("Follow friends to see their rounds here")
-                .font(.custom("Baskerville-Bold", size: 18))
+                .font(.body.weight(.semibold))
                 .multilineTextAlignment(.center)
             Text("Find golfers you know and follow them to see their scores in your feed.")
-                .font(.custom("Baskerville", size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             Button(action: { showUserSearch = true }) {
                 Text("Find Friends")
-                    .font(.custom("Baskerville-Bold", size: 15))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
@@ -73,9 +73,9 @@ struct HomeView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.tertiary)
             Text("No rounds yet")
-                .font(.custom("Baskerville-Bold", size: 18))
+                .font(.body.weight(.semibold))
             Text("Your friends haven't posted any completed rounds yet.")
-                .font(.custom("Baskerville", size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
@@ -131,7 +131,7 @@ struct FeedItemCard: View {
                             .fill(Color.accentColor.opacity(0.15))
                             .frame(width: 40, height: 40)
                         Text(initials.isEmpty ? "?" : initials)
-                            .font(.custom("Baskerville-Bold", size: 14))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.accentColor)
                     }
                 }
@@ -140,13 +140,13 @@ struct FeedItemCard: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Button(action: onTapProfile) {
                         Text(profile.displayName)
-                            .font(.custom("Baskerville-Bold", size: 15))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                     }
                     .buttonStyle(.plain)
 
                     Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
@@ -155,10 +155,10 @@ struct FeedItemCard: View {
                 // Score badge
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("\(round.totalScore)")
-                        .font(.custom("Baskerville-Bold", size: 24))
+                        .font(.title2.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(diff == 0 ? "E" : diff > 0 ? "+\(diff)" : "\(diff)")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                         .foregroundStyle(scoreColor(diff))
                 }
             }
@@ -172,7 +172,7 @@ struct FeedItemCard: View {
                     .font(.system(size: 10))
                     .foregroundStyle(Color.accentColor.opacity(0.7))
                 Text(round.courseName)
-                    .font(.custom("Baskerville-SemiBold", size: 13))
+                    .font(.footnote.weight(.medium))
                     .foregroundStyle(.primary)
                 Spacer()
             }
@@ -230,7 +230,7 @@ struct FeedItemCard: View {
                 .frame(height: 28)
             if let s = score {
                 Text("\(s)")
-                    .font(.custom("Baskerville-Bold", size: 11))
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(fg)
             }
         }

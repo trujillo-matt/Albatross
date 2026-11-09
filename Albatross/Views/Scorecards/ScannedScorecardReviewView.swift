@@ -102,12 +102,12 @@ struct ScannedScorecardReviewView: View {
     private var courseNameField: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Course Name")
-                .font(.custom("Baskerville", size: 13))
+                .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 4)
 
             TextField("e.g. Pebble Beach", text: $courseNameInput)
-                .font(.custom("Baskerville", size: 17))
+                .font(.body)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .background(Color(.secondarySystemGroupedBackground))
@@ -119,7 +119,7 @@ struct ScannedScorecardReviewView: View {
     private var playerPicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Select your row")
-                .font(.custom("Baskerville", size: 13))
+                .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 4)
 
@@ -140,7 +140,7 @@ struct ScannedScorecardReviewView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(.orange)
             Text("No scores detected — tap any cell to enter manually")
-                .font(.custom("Baskerville", size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 20)
@@ -153,12 +153,12 @@ struct ScannedScorecardReviewView: View {
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(title)
-                    .font(.custom("Baskerville-Bold", size: 15))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                 Spacer()
                 if filledCount > 0 {
                     Text("\(subtotal)")
-                        .font(.custom("Baskerville-Bold", size: 15))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color.accentColor)
                 }
             }
@@ -169,7 +169,7 @@ struct ScannedScorecardReviewView: View {
                 HStack(spacing: 4) {
                     ForEach(range, id: \.self) { i in
                         Text("\(i + 1)")
-                            .font(.custom("Baskerville", size: 11))
+                            .font(.caption2)
                             .foregroundStyle(Color(.tertiaryLabel))
                             .frame(maxWidth: .infinity)
                     }
@@ -179,7 +179,7 @@ struct ScannedScorecardReviewView: View {
                 HStack(spacing: 4) {
                     ForEach(range, id: \.self) { i in
                         Text("P\(effectivePars[i])")
-                            .font(.custom("Baskerville", size: 10))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity)
                     }
@@ -212,11 +212,11 @@ struct ScannedScorecardReviewView: View {
 
                 if let score {
                     Text("\(score)")
-                        .font(.custom("Baskerville-Bold", size: 15))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(cellForeground(score: score, par: par))
                 } else {
                     Text("—")
-                        .font(.custom("Baskerville-Bold", size: 15))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(Color(.tertiaryLabel))
                 }
             }
@@ -236,17 +236,17 @@ struct ScannedScorecardReviewView: View {
             if !filled.isEmpty {
                 HStack {
                     Text("\(filled.count) of 18 holes")
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
                     if filled.count == 18 {
                         let diffText = diff == 0 ? "E" : (diff > 0 ? "+\(diff)" : "\(diff)")
                         Text("Total: \(total)  (\(diffText))")
-                            .font(.custom("Baskerville-Bold", size: 14))
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.accentColor)
                     } else {
                         Text("Total so far: \(total)")
-                            .font(.custom("Baskerville", size: 14))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -258,7 +258,7 @@ struct ScannedScorecardReviewView: View {
     private var confirmButton: some View {
         Button(action: confirm) {
             Text("Confirm & Save Round")
-                .font(.custom("Baskerville-Bold", size: 17))
+                .font(.body.weight(.semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(isConfirmEnabled ? Color.accentColor : Color.accentColor.opacity(0.35))

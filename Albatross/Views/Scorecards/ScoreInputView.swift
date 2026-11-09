@@ -38,7 +38,7 @@ struct ScoreInputView: View {
                 VStack(spacing: 6) {
                     HStack(spacing: 12) {
                         Text("Hole \(holeNumber)")
-                            .font(.custom("Baskerville", size: 17))
+                            .font(.body)
                             .foregroundStyle(.secondary)
 
                         Circle()
@@ -46,13 +46,13 @@ struct ScoreInputView: View {
                             .frame(width: 4, height: 4)
 
                         Text("Par \(par)")
-                            .font(.custom("Baskerville-SemiBold", size: 17))
+                            .font(.body.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
 
                     HStack(alignment: .center, spacing: 6) {
                         Text(inputText.isEmpty ? (score.map { String($0) } ?? "—") : inputText)
-                            .font(.custom("Baskerville-Bold", size: 72))
+                            .font(.system(size: 72, weight: .semibold))
                             // The value is a large display figure; scaling it further only crowds the keys.
                             .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                             .foregroundStyle(scoreDisplayColor)
@@ -190,7 +190,7 @@ private struct NumberPadView: View {
                 .foregroundStyle(.primary)
         } else {
             Text(key)
-                .font(.custom("Baskerville", size: 24))
+                .font(.title2)
                 .foregroundStyle(keyTextColor(key))
         }
     }

@@ -72,17 +72,17 @@ struct NewTournamentSheet: View {
         Form {
             Section("Tournament Name") {
                 TextField("e.g. Ryder Cup 2025", text: $name)
-                    .font(.custom("Baskerville", size: 16))
+                    .font(.callout)
             }
 
             Section {
                 Stepper(value: $totalMatches, in: 1...18) {
                     HStack {
                         Text("Matches")
-                            .font(.custom("Baskerville", size: 16))
+                            .font(.callout)
                         Spacer()
                         Text("\(totalMatches)")
-                            .font(.custom("Baskerville-Bold", size: 16))
+                            .font(.callout.weight(.semibold))
                             .foregroundStyle(Color.accentColor)
                     }
                 }
@@ -90,7 +90,7 @@ struct NewTournamentSheet: View {
                 Text("Number of Matches")
             } footer: {
                 Text("Points to win: \(String(format: "%.1f", Double(totalMatches) / 2.0 + 0.5))")
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
             }
         }
     }
@@ -103,11 +103,11 @@ struct NewTournamentSheet: View {
                 ForEach(0..<totalMatches, id: \.self) { index in
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Match \(index + 1)")
-                            .font(.custom("Baskerville-SemiBold", size: 13))
+                            .font(.footnote.weight(.medium))
                             .foregroundStyle(.secondary)
 
                         TextField("Course name (optional)", text: courseNameBinding(for: index))
-                            .font(.custom("Baskerville", size: 16))
+                            .font(.callout)
 
                         Picker("Format", selection: matchTypeBinding(for: index)) {
                             ForEach(TournamentMatchType.allCases, id: \.self) { type in
@@ -122,7 +122,7 @@ struct NewTournamentSheet: View {
                 Text("Course & format for each match")
             } footer: {
                 Text("Course names can be updated later from the tournament detail page.")
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
             }
         }
     }
@@ -136,7 +136,7 @@ struct NewTournamentSheet: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                 TextField("Search by name or username", text: $searchQuery)
-                    .font(.custom("Baskerville", size: 15))
+                    .font(.subheadline)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
                     .onChange(of: searchQuery) { _, query in
@@ -196,11 +196,11 @@ struct NewTournamentSheet: View {
                                 avatarView(profile, size: 38)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(profile.displayName)
-                                        .font(.custom("Baskerville-SemiBold", size: 15))
+                                        .font(.subheadline.weight(.medium))
                                         .foregroundStyle(.primary)
                                     if let username = profile.username {
                                         Text("@\(username)")
-                                            .font(.custom("Baskerville", size: 12))
+                                            .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
                                 }
@@ -221,10 +221,10 @@ struct NewTournamentSheet: View {
                         .font(.system(size: 36))
                         .foregroundStyle(Color.accentColor.opacity(0.5))
                     Text("Search for players to invite")
-                        .font(.custom("Baskerville", size: 15))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Text("You can also invite players after creating the tournament.")
-                        .font(.custom("Baskerville", size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
@@ -237,7 +237,7 @@ struct NewTournamentSheet: View {
                         .font(.system(size: 28))
                         .foregroundStyle(.tertiary)
                     Text("No players found")
-                        .font(.custom("Baskerville", size: 15))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.top, 40)
@@ -247,7 +247,7 @@ struct NewTournamentSheet: View {
             // Error message
             if let error = errorMessage {
                 Text(error)
-                    .font(.custom("Baskerville", size: 13))
+                    .font(.footnote)
                     .foregroundStyle(.red)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
@@ -261,7 +261,7 @@ struct NewTournamentSheet: View {
     private func inviteChip(_ profile: UserProfile) -> some View {
         HStack(spacing: 6) {
             Text(profile.displayName)
-                .font(.custom("Baskerville", size: 13))
+                .font(.footnote)
                 .foregroundStyle(.primary)
             Button(action: { invitedProfiles.removeAll { $0.id == profile.id } }) {
                 Image(systemName: "xmark.circle.fill")
@@ -294,7 +294,7 @@ struct NewTournamentSheet: View {
                 .frame(width: size, height: size)
                 .overlay(
                     Text(String(profile.displayName.prefix(1)).uppercased())
-                        .font(.custom("Baskerville-Bold", size: size * 0.4))
+                        .font(.system(size: size * 0.4, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                 )
         }

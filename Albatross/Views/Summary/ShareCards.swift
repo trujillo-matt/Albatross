@@ -48,7 +48,7 @@ struct MinimalShareCard: View {
                                 .scaledToFit()
                                 .frame(width: 18, height: 18)
                             Text("Albatross")
-                                .font(.custom("Baskerville", size: 14))
+                                .font(.system(size: 14, weight: .regular))
                                 .foregroundStyle(Color(.secondaryLabel))
                         }
                     }
@@ -56,25 +56,25 @@ struct MinimalShareCard: View {
                     // Score
                     VStack(spacing: 8) {
                         Text("\(round.totalScore)")
-                            .font(.custom("Baskerville-Bold", size: 96))
+                            .font(.system(size: 96, weight: .semibold))
                             .foregroundStyle(.black)
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
 
                         Text("strokes")
-                            .font(.custom("Baskerville", size: 20))
+                            .font(.system(size: 20, weight: .regular))
                             .foregroundStyle(Color(.secondaryLabel))
                     }
 
                     // Course & date
                     VStack(spacing: 6) {
                         Text(round.courseName)
-                            .font(.custom("Baskerville-Bold", size: 22))
+                            .font(.system(size: 22, weight: .semibold))
                             .foregroundStyle(.black)
                             .multilineTextAlignment(.center)
 
                         Text(round.date.formatted(date: .long, time: .omitted))
-                            .font(.custom("Baskerville", size: 14))
+                            .font(.system(size: 14, weight: .regular))
                             .foregroundStyle(Color(.secondaryLabel))
                     }
                 }
@@ -98,10 +98,10 @@ struct MinimalShareCard: View {
     private func miniStat(label: String, value: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.custom("Baskerville-Bold", size: 17))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(.black)
             Text(label)
-                .font(.custom("Baskerville", size: 12))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundStyle(Color(.secondaryLabel))
         }
     }
@@ -145,7 +145,7 @@ struct BoldShareCard: View {
                                 .colorMultiply(.white)
                         }
                         Text("ALBATROSS")
-                            .font(.custom("Baskerville", size: 11))
+                            .font(.system(size: 11, weight: .regular))
                             .tracking(3)
                             .foregroundStyle(.white.opacity(0.7))
                     }
@@ -159,12 +159,12 @@ struct BoldShareCard: View {
                 VStack(alignment: .leading, spacing: 20) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("SCORE")
-                            .font(.custom("Baskerville", size: 11))
+                            .font(.system(size: 11, weight: .regular))
                             .tracking(4)
                             .foregroundStyle(.white.opacity(0.6))
 
                         Text("\(round.totalScore)")
-                            .font(.custom("Baskerville-Bold", size: 100))
+                            .font(.system(size: 100, weight: .semibold))
                             .foregroundStyle(.white)
                             .lineLimit(1)
                             .minimumScaleFactor(0.4)
@@ -176,13 +176,13 @@ struct BoldShareCard: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text(round.courseName.uppercased())
-                            .font(.custom("Baskerville-Bold", size: 20))
+                            .font(.system(size: 20, weight: .semibold))
                             .tracking(1)
                             .foregroundStyle(.white)
                             .multilineTextAlignment(.leading)
 
                         Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                            .font(.custom("Baskerville", size: 14))
+                            .font(.system(size: 14, weight: .regular))
                             .foregroundStyle(.white.opacity(0.5))
                     }
                 }
@@ -206,10 +206,10 @@ struct BoldShareCard: View {
     private func boldStat(label: String, value: String) -> some View {
         VStack(spacing: 4) {
             Text(value)
-                .font(.custom("Baskerville-Bold", size: 20))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.white)
             Text(label)
-                .font(.custom("Baskerville", size: 10))
+                .font(.system(size: 10, weight: .regular))
                 .tracking(2)
                 .foregroundStyle(.white.opacity(0.45))
         }
@@ -247,10 +247,10 @@ struct ScorecardShareCard: View {
 
                     VStack(alignment: logoImage != nil ? .leading : .center, spacing: 2) {
                         Text(round.courseName)
-                            .font(.custom("Baskerville-Bold", size: 18))
+                            .font(.system(size: 18, weight: .semibold))
                             .multilineTextAlignment(logoImage != nil ? .leading : .center)
                         Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                            .font(.custom("Baskerville", size: 10))
+                            .font(.system(size: 10, weight: .regular))
                             .foregroundStyle(.secondary)
                     }
 
@@ -293,7 +293,7 @@ struct ScorecardShareCard: View {
     private func scorecardRow(title: String, values: [String], isHeader: Bool, highlightScores: Bool = false) -> some View {
         HStack(spacing: 1) {
             Text(title)
-                .font(.custom(isHeader ? "Baskerville-Bold" : "Baskerville", size: 8))
+                .font(.system(size: 8, weight: isHeader ? .semibold : .regular))
                 .foregroundStyle(isHeader ? Color.white : Color(.secondaryLabel))
                 .frame(width: 30, alignment: .leading)
                 .padding(.leading, 4)
@@ -302,7 +302,7 @@ struct ScorecardShareCard: View {
 
             ForEach(Array(zip(values.indices, values)), id: \.0) { index, value in
                 Text(value)
-                    .font(.custom(isHeader ? "Baskerville-Bold" : "Baskerville", size: 9))
+                    .font(.system(size: 9, weight: isHeader ? .semibold : .regular))
                     .foregroundStyle(isHeader ? Color.white : scoreForeground(index: index, value: value))
                     .frame(maxWidth: .infinity)
                     .frame(height: 20)
@@ -342,10 +342,10 @@ struct ScorecardShareCard: View {
     private func totalBlock(label: String, value: String, highlight: Bool = false) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.custom("Baskerville-Bold", size: 20))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(highlight ? brandGreen : .primary)
             Text(label)
-                .font(.custom("Baskerville", size: 11))
+                .font(.system(size: 11, weight: .regular))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)

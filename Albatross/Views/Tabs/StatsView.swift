@@ -13,11 +13,11 @@ struct StatsView: View {
                         .foregroundStyle(Color.accentColor)
 
                     Text("Stats")
-                        .font(.custom("Baskerville-Bold", size: 22))
+                        .font(.title2.weight(.semibold))
                         .foregroundStyle(.secondary)
 
                     Text("Historical data coming soon")
-                        .font(.custom("Baskerville", size: 15))
+                        .font(.subheadline)
                         .foregroundStyle(.tertiary)
                 }
             }

@@ -92,7 +92,7 @@ struct TournamentDraftView: View {
 
                 if let error = errorMessage {
                     Text(error)
-                        .font(.custom("Baskerville", size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.red)
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
@@ -130,7 +130,7 @@ struct TournamentDraftView: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Color.accentColor)
                 Text("\(uniqueVoterCount) of \(acceptedPlayers.count) players voted")
-                    .font(.custom("Baskerville", size: 13))
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 20)
@@ -158,17 +158,17 @@ struct TournamentDraftView: View {
                             .frame(width: 36, height: 36)
                             .overlay(
                                 Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                    .font(.custom("Baskerville-Bold", size: 14))
+                                    .font(.subheadline.weight(.semibold))
                                     .foregroundStyle(isSelected ? .white : Color.accentColor)
                             )
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(player.profile?.displayName ?? "Player")
-                                .font(.custom("Baskerville-SemiBold", size: 14))
+                                .font(.subheadline.weight(.medium))
                                 .foregroundStyle(.primary)
                             if let username = player.profile?.username {
                                 Text("@\(username)")
-                                    .font(.custom("Baskerville", size: 12))
+                                    .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -179,7 +179,7 @@ struct TournamentDraftView: View {
                         let voteCount = tournamentStore.captainVotes.filter { $0.nomineeUserID == player.userID }.count
                         if voteCount > 0 {
                             Text("\(voteCount)")
-                                .font(.custom("Baskerville-Bold", size: 15))
+                                .font(.subheadline.weight(.semibold))
                                 .foregroundStyle(Color.accentColor)
                         }
 
@@ -206,7 +206,7 @@ struct TournamentDraftView: View {
                             ProgressView().tint(.white)
                         } else {
                             Text("Submit Votes (\(selectedNominees.count)/2)")
-                                .font(.custom("Baskerville-SemiBold", size: 16))
+                                .font(.callout.weight(.medium))
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -224,7 +224,7 @@ struct TournamentDraftView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                     Text("Your vote has been submitted")
-                        .font(.custom("Baskerville", size: 14))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 20)
@@ -237,7 +237,7 @@ struct TournamentDraftView: View {
                     Divider().padding(.top, 20)
 
                     Text("Commissioner Actions")
-                        .font(.custom("Baskerville-SemiBold", size: 13))
+                        .font(.footnote.weight(.medium))
                         .foregroundStyle(.secondary)
                         .padding(.top, 8)
 
@@ -247,7 +247,7 @@ struct TournamentDraftView: View {
                                 ProgressView().tint(.white)
                             } else {
                                 Text("Finalize Captains")
-                                    .font(.custom("Baskerville-SemiBold", size: 15))
+                                    .font(.subheadline.weight(.medium))
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -298,14 +298,14 @@ struct TournamentDraftView: View {
                                     .frame(width: 36, height: 36)
                                     .overlay(
                                         Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                            .font(.custom("Baskerville-Bold", size: 14))
+                                            .font(.subheadline.weight(.semibold))
                                             .foregroundStyle(Color.accentColor)
                                     )
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(player.profile?.displayName ?? "Player")
-                                        .font(.custom("Baskerville-SemiBold", size: 14))
+                                        .font(.subheadline.weight(.medium))
                                     if let u = player.profile?.username {
-                                        Text("@\(u)").font(.custom("Baskerville", size: 12)).foregroundStyle(.secondary)
+                                        Text("@\(u)").font(.caption).foregroundStyle(.secondary)
                                     }
                                 }
                                 Spacer()
@@ -325,7 +325,7 @@ struct TournamentDraftView: View {
                     HStack(spacing: 10) {
                         ProgressView()
                         Text("\(onClockTeam?.name ?? "Captain") is on the clock…")
-                            .font(.custom("Baskerville", size: 14))
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal, 20)
@@ -335,7 +335,7 @@ struct TournamentDraftView: View {
                     if isCommissioner {
                         Divider().padding(.horizontal, 16)
                         Text("Commissioner Override")
-                            .font(.custom("Baskerville-SemiBold", size: 13))
+                            .font(.footnote.weight(.medium))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 20)
                             .padding(.top, 12)
@@ -358,7 +358,7 @@ struct TournamentDraftView: View {
                             ProgressView().tint(.white)
                         } else {
                             Label("Start Tournament", systemImage: "flag.fill")
-                                .font(.custom("Baskerville-SemiBold", size: 16))
+                                .font(.callout.weight(.medium))
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -379,7 +379,7 @@ struct TournamentDraftView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text(team?.name ?? "Team")
-                    .font(.custom("Baskerville-Bold", size: 15))
+                    .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.primary)
                 if isOnClock {
                     // Pulsing green dot
@@ -396,7 +396,7 @@ struct TournamentDraftView: View {
             if let captain = team?.captainUserID,
                let captainPlayer = tournamentStore.draftPlayers.first(where: { $0.userID == captain }) {
                 Text("Captain: \(captainPlayer.profile?.displayName ?? "?")")
-                    .font(.custom("Baskerville", size: 11))
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
 
@@ -409,11 +409,11 @@ struct TournamentDraftView: View {
                         .frame(width: 28, height: 28)
                         .overlay(
                             Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                .font(.custom("Baskerville-Bold", size: 11))
+                                .font(.caption2.weight(.semibold))
                                 .foregroundStyle(Color.accentColor)
                         )
                     Text(player.profile?.displayName ?? "Player")
-                        .font(.custom("Baskerville", size: 13))
+                        .font(.footnote)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                 }
@@ -421,7 +421,7 @@ struct TournamentDraftView: View {
 
             if players.isEmpty {
                 Text("No players yet")
-                    .font(.custom("Baskerville", size: 12))
+                    .font(.caption)
                     .foregroundStyle(.tertiary)
                     .italic()
             }
@@ -443,13 +443,13 @@ struct TournamentDraftView: View {
     private func overridePickRow(_ player: TournamentPlayer) -> some View {
         HStack(spacing: 10) {
             Text(player.profile?.displayName ?? "Player")
-                .font(.custom("Baskerville", size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.primary)
             Spacer()
             if let tA = teamA {
                 Button(action: { overridePick(player, to: tA) }) {
                     Text(tA.name)
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
@@ -461,7 +461,7 @@ struct TournamentDraftView: View {
             if let tB = teamB {
                 Button(action: { overridePick(player, to: tB) }) {
                     Text(tB.name)
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
@@ -482,17 +482,17 @@ struct TournamentDraftView: View {
     private func phaseBanner(phase: String, title: String, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(phase)
-                .font(.custom("Baskerville", size: 12))
+                .font(.caption)
                 .foregroundStyle(Color.accentColor)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(Color.accentColor.opacity(0.12))
                 .clipShape(Capsule())
             Text(title)
-                .font(.custom("Baskerville-Bold", size: 20))
+                .font(.title3.weight(.semibold))
                 .foregroundStyle(.primary)
             Text(subtitle)
-                .font(.custom("Baskerville", size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 20)
@@ -502,7 +502,7 @@ struct TournamentDraftView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.custom("Baskerville-Bold", size: 16))
+            .font(.callout.weight(.semibold))
             .foregroundStyle(.primary)
     }
 

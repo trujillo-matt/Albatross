@@ -19,7 +19,7 @@ struct UserSearchView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(.secondary)
                         TextField("Search by name or @username", text: $query)
-                            .font(.custom("Baskerville", size: 16))
+                            .font(.callout)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
                             .onChange(of: query) { _, newValue in
@@ -77,9 +77,9 @@ struct UserSearchView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(Color.accentColor.opacity(0.4))
             Text("Search for golfers")
-                .font(.custom("Baskerville-Bold", size: 18))
+                .font(.body.weight(.semibold))
             Text("Find friends by their name or @username")
-                .font(.custom("Baskerville", size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             Spacer()
@@ -94,9 +94,9 @@ struct UserSearchView: View {
                 .font(.system(size: 40))
                 .foregroundStyle(.tertiary)
             Text("No golfers found")
-                .font(.custom("Baskerville-Bold", size: 18))
+                .font(.body.weight(.semibold))
             Text("Try a different name or username")
-                .font(.custom("Baskerville", size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
             Spacer()
         }
@@ -148,17 +148,17 @@ struct SearchResultRow: View {
                         .fill(Color.accentColor.opacity(0.15))
                         .frame(width: 44, height: 44)
                     Text(initials)
-                        .font(.custom("Baskerville-Bold", size: 16))
+                        .font(.callout.weight(.semibold))
                         .foregroundStyle(Color.accentColor)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(profile.displayName)
-                        .font(.custom("Baskerville-SemiBold", size: 15))
+                        .font(.subheadline.weight(.medium))
                         .foregroundStyle(.primary)
                     if let username = profile.username, !username.isEmpty {
                         Text("@\(username)")
-                            .font(.custom("Baskerville", size: 12))
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -193,7 +193,7 @@ struct FollowButton: View {
     var body: some View {
         Button(action: toggle) {
             Text(isFollowing ? "Following" : "Follow")
-                .font(.custom("Baskerville", size: 13))
+                .font(.footnote)
                 .foregroundStyle(isFollowing ? .secondary : Color.accentColor)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 6)

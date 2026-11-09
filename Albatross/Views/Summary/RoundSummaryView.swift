@@ -98,7 +98,7 @@ struct RoundSummaryView: View {
     private var templateSelector: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Style")
-                .font(.custom("Baskerville", size: 14))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 10) {
@@ -118,7 +118,7 @@ struct RoundSummaryView: View {
                                         .foregroundStyle(template.iconColor)
                                 )
                             Text(template.label)
-                                .font(.custom(selectedTemplate == template ? "Baskerville-SemiBold" : "Baskerville", size: 11))
+                                .font(.caption2.weight(selectedTemplate == template ? .medium : .regular))
                                 .foregroundStyle(selectedTemplate == template ? .primary : .secondary)
                         }
                     }
@@ -147,9 +147,9 @@ struct RoundSummaryView: View {
     private func statItem(label: String, value: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.custom("Baskerville-Bold", size: 17))
+                .font(.body.weight(.semibold))
             Text(label)
-                .font(.custom("Baskerville", size: 12))
+                .font(.caption)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -169,7 +169,7 @@ struct RoundSummaryView: View {
                         Image(systemName: "square.and.arrow.up")
                     }
                     Text(isRendering ? "Preparing…" : "Share")
-                        .font(.custom("Baskerville-Bold", size: 17))
+                        .font(.body.weight(.semibold))
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
@@ -183,7 +183,7 @@ struct RoundSummaryView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "photo.badge.arrow.down")
                     Text("Save to Photos")
-                        .font(.custom("Baskerville", size: 17))
+                        .font(.body)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
@@ -211,7 +211,7 @@ struct RoundSummaryView: View {
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(Color.accentColor)
                     Text("Saved to Photos")
-                        .font(.custom("Baskerville-SemiBold", size: 15))
+                        .font(.subheadline.weight(.medium))
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)

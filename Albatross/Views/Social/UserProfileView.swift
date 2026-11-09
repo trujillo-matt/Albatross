@@ -64,7 +64,7 @@ struct UserProfileView: View {
                                 .padding(.top, 20)
                         } else if completedRounds.isEmpty {
                             Text("No completed rounds yet")
-                                .font(.custom("Baskerville", size: 14))
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 20)
                         } else {
@@ -112,7 +112,7 @@ struct UserProfileView: View {
                         .fill(Color.white.opacity(0.12))
                         .frame(width: 90, height: 110)
                     Text(initials.isEmpty ? "?" : initials)
-                        .font(.custom("Baskerville-Bold", size: 32))
+                        .font(.largeTitle.weight(.semibold))
                         .foregroundStyle(.white.opacity(0.85))
                 }
 
@@ -121,21 +121,21 @@ struct UserProfileView: View {
                     if parts.count == 2 {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(String(parts[0]))
-                                .font(.custom("Baskerville-Bold", size: 24))
+                                .font(.title2.weight(.semibold))
                                 .foregroundStyle(.white)
                             Text(String(parts[1]))
-                                .font(.custom("Baskerville-Bold", size: 24))
+                                .font(.title2.weight(.semibold))
                                 .foregroundStyle(.white)
                         }
                     } else {
                         Text(profile.displayName)
-                            .font(.custom("Baskerville-Bold", size: 24))
+                            .font(.title2.weight(.semibold))
                             .foregroundStyle(.white)
                     }
 
                     if let username = profile.username, !username.isEmpty {
                         Text("@\(username)")
-                            .font(.custom("Baskerville", size: 13))
+                            .font(.footnote)
                             .foregroundStyle(.white.opacity(0.6))
                     }
 
@@ -145,7 +145,7 @@ struct UserProfileView: View {
                                 .font(.system(size: 11))
                                 .foregroundStyle(.white.opacity(0.5))
                             Text(location)
-                                .font(.custom("Baskerville", size: 12))
+                                .font(.caption)
                                 .foregroundStyle(.white.opacity(0.55))
                         }
                         .padding(.top, 2)
@@ -185,10 +185,10 @@ struct UserProfileView: View {
     private func statItem(label: String, value: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.custom("Baskerville-Bold", size: 18))
+                .font(.body.weight(.semibold))
                 .foregroundStyle(.primary)
             Text(label)
-                .font(.custom("Baskerville", size: 11))
+                .font(.caption2)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -200,7 +200,7 @@ struct UserProfileView: View {
                 Image(systemName: "arrow.left.arrow.right")
                     .font(.system(size: 14, weight: .semibold))
                 Text("Head to Head")
-                    .font(.custom("Baskerville-Bold", size: 15))
+                    .font(.subheadline.weight(.semibold))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
@@ -215,7 +215,7 @@ struct UserProfileView: View {
     private var roundsList: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Rounds")
-                .font(.custom("Baskerville-Bold", size: 16))
+                .font(.callout.weight(.semibold))
                 .padding(.horizontal, 4)
 
             VStack(spacing: 0) {
@@ -223,10 +223,10 @@ struct UserProfileView: View {
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(round.courseName)
-                                .font(.custom("Baskerville-SemiBold", size: 14))
+                                .font(.subheadline.weight(.medium))
                                 .foregroundStyle(.primary)
                             Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                                .font(.custom("Baskerville", size: 12))
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -235,10 +235,10 @@ struct UserProfileView: View {
                         let diff = round.totalScore - par
                         VStack(alignment: .trailing, spacing: 1) {
                             Text("\(round.totalScore)")
-                                .font(.custom("Baskerville-Bold", size: 18))
+                                .font(.body.weight(.semibold))
                                 .foregroundStyle(.primary)
                             Text(diff == 0 ? "E" : diff > 0 ? "+\(diff)" : "\(diff)")
-                                .font(.custom("Baskerville", size: 11))
+                                .font(.caption2)
                                 .foregroundStyle(scoreColor(diff))
                         }
                     }

@@ -74,21 +74,21 @@ struct EditRoundSheet: View {
                             HStack {
                                 Spacer()
                                 Text("Remove Logo")
-                                    .font(.custom("Baskerville", size: 15))
+                                    .font(.subheadline)
                                 Spacer()
                             }
                         }
                     }
                 } header: {
                     Text("Course Logo")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                 }
 
                 // MARK: Course info
                 Section {
                     LabeledContent("Course") {
                         TextField("Course name", text: $round.courseName)
-                            .font(.custom("Baskerville", size: 16))
+                            .font(.callout)
                             .multilineTextAlignment(.trailing)
                     }
 
@@ -97,10 +97,10 @@ struct EditRoundSheet: View {
                         selection: $round.date,
                         displayedComponents: .date
                     )
-                    .font(.custom("Baskerville", size: 16))
+                    .font(.callout)
                 } header: {
                     Text("Round Info")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                 }
 
                 // MARK: Per-hole pars
@@ -108,14 +108,14 @@ struct EditRoundSheet: View {
                     nineHolePars(range: 0..<9)
                 } header: {
                     Text("Front 9 Pars")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                 }
 
                 Section {
                     nineHolePars(range: 9..<18)
                 } header: {
                     Text("Back 9 Pars")
-                        .font(.custom("Baskerville", size: 12))
+                        .font(.caption)
                 }
 
                 if round.courseID != nil {
@@ -125,7 +125,7 @@ struct EditRoundSheet: View {
                                 .foregroundStyle(.secondary)
                                 .font(.system(size: 14))
                             Text("Pars were loaded from the course database. Any changes you make here will override them for this round only.")
-                                .font(.custom("Baskerville", size: 13))
+                                .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 2)
@@ -169,7 +169,7 @@ struct EditRoundSheet: View {
             HStack(spacing: 0) {
                 ForEach(range, id: \.self) { index in
                     Text("\(index + 1)")
-                        .font(.custom("Baskerville", size: 11))
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
@@ -190,7 +190,7 @@ struct EditRoundSheet: View {
             Button(action: { if pars[index] < 5 { pars[index] += 1 } }) {
                 Image(systemName: "chevron.up")
                     .accessibilityLabel("Increase par, hole \(index + 1)")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.system(size: 9, weight: .semibold))
                     .frame(width: 22, height: 16)
                     .background(Color(.tertiarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 4))
@@ -199,7 +199,7 @@ struct EditRoundSheet: View {
             .buttonStyle(.plain)
 
             Text("\(pars[index])")
-                .font(.custom("Baskerville-Bold", size: 14))
+                .font(.subheadline.weight(.semibold))
                 .frame(width: 22, height: 20)
                 .background(parBackground(pars[index]))
                 .clipShape(RoundedRectangle(cornerRadius: 4))
@@ -209,7 +209,7 @@ struct EditRoundSheet: View {
             Button(action: { if pars[index] > 3 { pars[index] -= 1 } }) {
                 Image(systemName: "chevron.down")
                     .accessibilityLabel("Decrease par, hole \(index + 1)")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.system(size: 9, weight: .semibold))
                     .frame(width: 22, height: 16)
                     .background(Color(.tertiarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 4))
