@@ -792,7 +792,6 @@ private struct DownTable: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
         .accessibilityLabel("Hole \(hole), par \(round.effectivePars[hole - 1])")
         .accessibilityValue(accessibilityValue(hole))
         .accessibilityAddTraits(isActive ? .isSelected : [])

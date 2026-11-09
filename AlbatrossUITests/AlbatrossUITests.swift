@@ -53,7 +53,9 @@ final class AlbatrossUITests: XCTestCase {
             app.swipeLeft()
         }
         XCTAssertTrue(hole.waitForExistence(timeout: 5))
-        XCTAssertTrue(hole.isHittable, "Hole 1 is not on screen")
+        // The page is still settling after the swipe, so wait until the row can be tapped.
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"), object: hole)
+        XCTAssertEqual(XCTWaiter().wait(for: [hittable], timeout: 6), .completed, "Hole 1 is not on screen")
         hole.tap()
 
         // The pencil strip writes the score in one tap: "Par 4" for a par 4.
