@@ -12,8 +12,9 @@ private enum BookletPage: Int, CaseIterable, Identifiable {
 }
 
 /// A round as a paper scorecard booklet.
-/// With a compact width it shows one page at a time (cover, front nine, back nine).
-/// With a regular width it opens flat as a two-page spread.
+/// At compact width it shows one full-screen page at a time (cover, front nine, back nine).
+/// At regular width it opens flat as a two-page spread.
+/// Scores are written with the pencil strip: one tap per hole, relative to par.
 struct BookletView: View {
     let roundID: UUID
     var opensNextHole = false
@@ -25,16 +26,16 @@ struct BookletView: View {
     @EnvironmentObject private var courseStore: CourseStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var page: BookletPage? = .cover
-    @State private var selectedHole: Int?
+    @State private var activeHole = 1
+    @State private var stripHeight: CGFloat = 0
     @State private var showEditRound = false
     @State private var showCourseDetail = false
     @State private var showFinishConfirm = false
-    @State private var hasHandledOpeningHole = false
-    @State private var spreadViewportHeight: CGFloat = 0
+    @State private var hasSetUp = false
     @State private var spineEmphasis = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var round: Round? { store.rounds.first { $0.id == roundID } }
 
@@ -47,21 +48,50 @@ struct BookletView: View {
         }
     }
 
+    private var isSpread: Bool { horizontalSizeClass == .regular }
+    private var showsStrip: Bool { isSpread || page != .cover }
+
     // MARK: - Layout
 
     private func content(_ round: Round) -> some View {
-        VStack(spacing: 0) {
-            if horizontalSizeClass == .regular {
-                spread(round)
-            } else {
-                pager(round)
+        // The pages run edge to edge, under the status area and the home indicator.
+        // The insets are read from the live layout and handed to each page as padding.
+        GeometryReader { proxy in
+            let insets = proxy.safeAreaInsets
+            let bottomReserve = showsStrip
+                ? stripHeight + max(insets.bottom, 12) + 12
+                : insets.bottom + 12
+
+            ZStack(alignment: .bottom) {
+                Color(.systemGroupedBackground)
+
+                Group {
+                    if isSpread {
+                        spread(round, insets: insets, bottomReserve: bottomReserve)
+                    } else {
+                        pager(round, insets: insets, bottomReserve: bottomReserve)
+                    }
+                }
+
+                if showsStrip {
+                    PencilStrip(
+                        hole: activeHole,
+                        par: round.effectivePars[activeHole - 1],
+                        score: round.scores[activeHole - 1],
+                        holesPlayed: round.holesPlayed,
+                        onScore: { record($0) },
+                        onFinish: { showFinishConfirm = true }
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, max(insets.bottom, 12))
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { stripHeight = $0 }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
-            if showsActionBar {
-                actionBar(round)
-            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+            .animation(reduceMotion ? nil : .snappy, value: showsStrip)
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
-        // The course name already heads the page, so the bar stays quiet.
+        .ignoresSafeArea(.container, edges: .vertical)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent(round) }
@@ -76,16 +106,6 @@ struct BookletView: View {
                 course: courseStore.allCourses.first(where: { $0.id == round.courseID })
             )
         }
-        .sheet(isPresented: Binding(get: { selectedHole != nil }, set: { if !$0 { selectedHole = nil } })) {
-            if let hole = selectedHole {
-                ScoreInputView(
-                    holeNumber: hole,
-                    par: round.effectivePars[hole - 1],
-                    score: scoreBinding(for: hole - 1),
-                    onConfirm: { scoreWasEntered() }
-                )
-            }
-        }
         .confirmationDialog("Finish Round?", isPresented: $showFinishConfirm, titleVisibility: .visible) {
             Button("Finish Round") { finishRound() }
             Button("Cancel", role: .cancel) {}
@@ -96,26 +116,25 @@ struct BookletView: View {
                 Text("You've entered scores for \(round.holesPlayed) of 18 holes. You can still finish early.")
             }
         }
-        .onAppear { openNextHoleIfRequested(round) }
+        .onAppear { setUp(round) }
+        .onChange(of: activeHole) { _, hole in
+            // Keep the page that holds the active hole in view.
+            guard !isSpread, page != .cover else { return }
+            let target: BookletPage = hole > 9 ? .back : .front
+            if page != target {
+                withAnimation(reduceMotion ? nil : .easeInOut) { page = target }
+            }
+        }
         .hingeFeedback { pulseSpine() }
     }
 
-    /// A brief emphasis on the spine when the device opens or closes. Effect only: layout never depends on it.
-    private func pulseSpine() {
-        guard !reduceMotion else { return }
-        withAnimation(.easeOut(duration: 0.3)) { spineEmphasis = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            withAnimation(.easeIn(duration: 0.4)) { spineEmphasis = false }
-        }
-    }
-
     /// One page at a time. Paging gives the flip between cover and interior pages.
-    private func pager(_ round: Round) -> some View {
+    private func pager(_ round: Round, insets: EdgeInsets, bottomReserve: CGFloat) -> some View {
         ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
                 ForEach(BookletPage.allCases) { bookletPage in
-                    pageContent(bookletPage, round: round)
-                        .containerRelativeFrame(.horizontal)
+                    pageContent(bookletPage, round: round, insets: insets, bottomReserve: bottomReserve)
+                        .containerRelativeFrame([.horizontal, .vertical])
                         .id(bookletPage)
                         .scrollTransition(axis: .horizontal) { view, phase in
                             // Reduce Motion keeps the page change but drops the tilt.
@@ -142,142 +161,51 @@ struct BookletView: View {
     }
 
     @ViewBuilder
-    private func pageContent(_ bookletPage: BookletPage, round: Round) -> some View {
+    private func pageContent(_ bookletPage: BookletPage, round: Round, insets: EdgeInsets, bottomReserve: CGFloat) -> some View {
         switch bookletPage {
         case .cover:
-            VStack(spacing: 16) {
-                CourseCoverView(round: round)
-                    .frame(maxWidth: 360)
-                    .padding(.horizontal, 32)
-                Label("Swipe to open", systemImage: "chevron.left.2")
-                    .font(.custom("Baskerville", size: 14))
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxHeight: .infinity)
+            CourseCoverView(round: round, fillsSpace: true)
+                .padding(.horizontal, 12)
+                .padding(.top, insets.top + 12)
+                // Room under the cover for the hint.
+                .padding(.bottom, insets.bottom + 56)
+                .overlay(alignment: .bottom) {
+                    Label("Swipe to open", systemImage: "chevron.left.2")
+                        .font(.custom("Baskerville", size: 14))
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, insets.bottom + 18)
+                }
         case .front:
-            holePage(title: "Front 9", holes: 1...9, round: round, showsHeader: true)
+            paper(title: "Front 9", holes: 1...9, round: round, insets: insets, bottomReserve: bottomReserve, showsHeader: true)
         case .back:
-            holePage(title: "Back 9", holes: 10...18, round: round, showsHeader: false)
+            paper(title: "Back 9", holes: 10...18, round: round, insets: insets, bottomReserve: bottomReserve, showsHeader: false)
         }
     }
 
     /// Both interior pages side by side, like an open booklet.
-    private func spread(_ round: Round) -> some View {
-        ScrollView(.vertical) {
-            VStack(spacing: 12) {
-                Spacer(minLength: 0)
-                RoundHeader(round: round) { showCourseDetail = true }
-                    .padding(.horizontal, 20)
-                HStack(spacing: 0) {
-                    holePage(title: "Front 9", holes: 1...9, round: round, showsHeader: false)
-                    Rectangle()
-                        .fill(spineEmphasis ? Color.primary.opacity(0.35) : Color(.separator))
-                        .frame(width: spineEmphasis ? 2 : 1)
-                        .padding(.vertical, 12)
-                    holePage(title: "Back 9", holes: 10...18, round: round, showsHeader: false)
-                }
-                .background(BookletStyle.page)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-                .padding(.horizontal, 16)
-                Spacer(minLength: 0)
-            }
-            .padding(.vertical, 12)
-            // Centre the open booklet when the screen is taller than the card.
-            .frame(minHeight: spreadViewportHeight)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { spreadViewportHeight = $0 }
-    }
-
-    private func holePage(title: String, holes: ClosedRange<Int>, round: Round, showsHeader: Bool) -> some View {
-        ScrollView(.vertical) {
-            VStack(spacing: 16) {
-                if showsHeader {
-                    RoundHeader(round: round) { showCourseDetail = true }
-                }
-                HoleGridPage(title: title, holes: holes, round: round) { hole in
-                    selectedHole = hole
-                }
-                // As on a printed card: Out ends the front page, In and Total close the back.
-                totalsRow(round, onBackPage: holes.upperBound == 18)
-            }
-            .padding(16)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .background(horizontalSizeClass == .regular ? Color.clear : BookletStyle.page)
-        .clipShape(RoundedRectangle(cornerRadius: horizontalSizeClass == .regular ? 0 : 16))
-        .padding(.horizontal, horizontalSizeClass == .regular ? 0 : 16)
-        .padding(.vertical, horizontalSizeClass == .regular ? 0 : 8)
-    }
-
-    private func totalsRow(_ round: Round, onBackPage: Bool) -> some View {
+    private func spread(_ round: Round, insets: EdgeInsets, bottomReserve: CGFloat) -> some View {
         HStack(spacing: 0) {
-            if onBackPage {
-                total("In", value: round.backNineTotal, played: round.scores.suffix(9).compactMap { $0 }.count)
-                Divider().frame(height: 36)
-                total("Total", value: round.totalScore, played: round.holesPlayed)
-            } else {
-                total("Out", value: round.frontNineTotal, played: round.scores.prefix(9).compactMap { $0 }.count)
-            }
+            paper(title: "Front 9", holes: 1...9, round: round, insets: insets, bottomReserve: bottomReserve, showsHeader: true)
+            Rectangle()
+                .fill(Color.black.opacity(spineEmphasis ? 0.35 : 0.14))
+                .frame(width: spineEmphasis ? 2 : 1)
+            paper(title: "Back 9", holes: 10...18, round: round, insets: insets, bottomReserve: bottomReserve, showsHeader: false)
         }
-        .padding(.top, 4)
+        .clippedToHorizontalSafeArea()
     }
 
-    private func total(_ label: String, value: Int, played: Int) -> some View {
-        VStack(spacing: 2) {
-            Text(played > 0 ? "\(value)" : "—")
-                .font(.custom(BookletStyle.pencilFontName, size: 24))
-                .foregroundStyle(played > 0 ? BookletStyle.pencilGraphite : Color.secondary)
-            Text(label)
-                .font(.custom("Baskerville", size: 12))
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .accessibilityElement(children: .combine)
-    }
-
-    // MARK: - Action bar
-
-    private var showsActionBar: Bool {
-        horizontalSizeClass == .regular || page != .cover
-    }
-
-    private func actionBar(_ round: Round) -> some View {
-        VStack(spacing: 0) {
-            Divider()
-            Button {
-                if round.status == .completed {
-                    onShowSummary(roundID, false)
-                } else {
-                    showFinishConfirm = true
-                }
-            } label: {
-                Text(actionTitle(for: round))
-                    .font(.custom("Baskerville-Bold", size: 17))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(actionBackground(for: round))
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-            .disabled(round.status == .inProgress && round.holesPlayed == 0)
-            // On a wide screen the button stays a button, not a bar across the paper.
-            .frame(maxWidth: 480)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity)
-            .background(Color(.systemGroupedBackground))
-        }
-    }
-
-    private func actionTitle(for round: Round) -> String {
-        if round.status == .completed { return "Round Summary" }
-        return round.isComplete ? "Finish Round" : "Finish Round (\(round.holesPlayed)/18)"
-    }
-
-    private func actionBackground(for round: Round) -> Color {
-        if round.status == .completed || round.holesPlayed > 0 { return .accentColor }
-        return Color.accentColor.opacity(0.4)
+    private func paper(title: String, holes: ClosedRange<Int>, round: Round, insets: EdgeInsets, bottomReserve: CGFloat, showsHeader: Bool) -> some View {
+        PaperPage(
+            title: title,
+            holes: holes,
+            round: round,
+            activeHole: activeHole,
+            topInset: insets.top,
+            bottomReserve: bottomReserve,
+            showsHeader: showsHeader,
+            onCourseTap: { showCourseDetail = true },
+            onSelect: { activeHole = $0 }
+        )
     }
 
     // MARK: - Toolbar
@@ -291,6 +219,12 @@ struct BookletView: View {
                 }
                 Button { onShowSummary(roundID, false) } label: {
                     Label("Share Round", systemImage: "square.and.arrow.up")
+                }
+                if round.status == .inProgress {
+                    Button { showFinishConfirm = true } label: {
+                        Label("Finish Round", systemImage: "flag.checkered")
+                    }
+                    .disabled(round.holesPlayed == 0)
                 }
                 Divider()
                 Button(role: .destructive) {
@@ -307,27 +241,40 @@ struct BookletView: View {
 
     // MARK: - Actions
 
+    private func setUp(_ round: Round) {
+        guard !hasSetUp else { return }
+        hasSetUp = true
+        // The pencil starts on the next empty hole.
+        let nextIndex = round.scores.firstIndex(where: { $0 == nil }) ?? 0
+        activeHole = nextIndex + 1
+        if opensNextHole {
+            page = nextIndex >= 9 ? .back : .front
+        }
+    }
+
     private func turnPage(by offset: Int) {
         let current = page?.rawValue ?? 0
         guard let target = BookletPage(rawValue: current + offset) else { return }
         withAnimation { page = target }
     }
 
-    private func scoreBinding(for index: Int) -> Binding<Int?> {
-        Binding(
-            get: { round?.scores[index] ?? nil },
-            set: { newValue in
-                guard var updated = round else { return }
-                updated.scores[index] = newValue
-                store.update(updated)
-            }
-        )
-    }
+    /// Writes a score (or clears it) for the active hole, then moves the pencil on.
+    private func record(_ value: Int?) {
+        guard var updated = round else { return }
+        updated.scores[activeHole - 1] = value
+        store.update(updated)
+        // Writing a score is what starts the Live Activity, not merely opening the booklet.
+        LiveActivityManager.shared.updateActivity(for: updated)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
 
-    /// Writing the first score is what starts the Live Activity, not merely opening the booklet.
-    private func scoreWasEntered() {
-        guard let round else { return }
-        LiveActivityManager.shared.updateActivity(for: round)
+        guard value != nil else { return }
+        for offset in 1...18 {
+            let index = (activeHole - 1 + offset) % 18
+            if updated.scores[index] == nil {
+                activeHole = index + 1
+                break
+            }
+        }
     }
 
     private func finishRound() {
@@ -338,14 +285,12 @@ struct BookletView: View {
         onShowSummary(roundID, true)
     }
 
-    private func openNextHoleIfRequested(_ round: Round) {
-        guard opensNextHole, !hasHandledOpeningHole else { return }
-        hasHandledOpeningHole = true
-        let nextIndex = round.scores.firstIndex(where: { $0 == nil }) ?? 0
-        page = nextIndex >= 9 ? .back : .front
-        // Give the page a moment to appear before the sheet slides over it.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            selectedHole = nextIndex + 1
+    /// A brief emphasis on the spine when the device opens or closes. Effect only: layout never depends on it.
+    private func pulseSpine() {
+        guard !reduceMotion else { return }
+        withAnimation(.easeOut(duration: 0.3)) { spineEmphasis = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+            withAnimation(.easeIn(duration: 0.4)) { spineEmphasis = false }
         }
     }
 }
@@ -369,6 +314,365 @@ private extension View {
     }
 }
 
+// MARK: - The pencil strip
+
+/// The way scores are written: the active hole's par and one button per result, relative to par.
+private struct PencilStrip: View {
+    let hole: Int
+    let par: Int
+    let score: Int?
+    let holesPlayed: Int
+    var onScore: (Int?) -> Void
+    var onFinish: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
+    @ScaledMetric(relativeTo: .title2) private var buttonHeight: CGFloat = 52
+
+    private var choices: [(title: String, value: Int)] {
+        [("Birdie", par - 1), ("Par", par), ("Bogey", par + 1), ("Double", par + 2)]
+            .filter { $0.1 >= 1 }
+            .map { (title: $0.0, value: $0.1) }
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text("Hole \(hole)")
+                    .font(.custom("Baskerville-SemiBold", size: 20))
+                Text("Par \(par)")
+                    .font(.custom("Baskerville", size: 16))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 8)
+                moreMenu
+                if holesPlayed > 0 {
+                    Button(action: onFinish) {
+                        Label("Finish \(holesPlayed)/18", systemImage: "flag.checkered")
+                            .font(.custom("Baskerville-SemiBold", size: 14))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.accentColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 8)], spacing: 8) {
+                ForEach(choices, id: \.title) { choice in
+                    scoreButton(title: choice.title, value: choice.value)
+                }
+            }
+        }
+        .padding(12)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
+        .frame(maxWidth: 560)
+    }
+
+    private func scoreButton(title: String, value: Int) -> some View {
+        let ink = BookletStyle.ink(forDifference: value - par, onDark: colorScheme == .dark)
+        let isCurrent = score == value
+        return Button { onScore(value) } label: {
+            VStack(spacing: 0) {
+                Text(title)
+                    .font(.custom("Baskerville", size: 13))
+                Text("\(value)")
+                    .font(.custom(BookletStyle.pencilFontName, size: 28))
+            }
+            .foregroundStyle(isCurrent ? (colorScheme == .dark ? Color.black : Color.white) : ink)
+            .frame(maxWidth: .infinity, minHeight: buttonHeight)
+            .background(isCurrent ? ink : ink.opacity(0.14), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title) \(value)")
+        .accessibilityHint("Writes \(value) for hole \(hole)")
+    }
+
+    private var moreMenu: some View {
+        Menu {
+            ForEach(1...12, id: \.self) { value in
+                Button("\(value)") { onScore(value) }
+            }
+            if score != nil {
+                Divider()
+                Button(role: .destructive) { onScore(nil) } label: {
+                    Label("Clear Score", systemImage: "eraser")
+                }
+            }
+        } label: {
+            Label("Other score", systemImage: "number")
+                .labelStyle(.iconOnly)
+                .font(.system(size: 17, weight: .medium))
+                .frame(width: 36, height: 32)
+        }
+        .tint(.primary)
+    }
+}
+
+// MARK: - A full-bleed interior page
+
+/// Nine holes on cream paper. The rows stretch to the height of the screen.
+/// Holes run down the page, or across it when the page is wider than it is tall.
+/// The choice follows the measured size, never the device.
+private struct PaperPage: View {
+    let title: String
+    let holes: ClosedRange<Int>
+    let round: Round
+    let activeHole: Int
+    let topInset: CGFloat
+    let bottomReserve: CGFloat
+    let showsHeader: Bool
+    var onCourseTap: () -> Void
+    var onSelect: (Int) -> Void
+
+    @State private var size: CGSize = .zero
+    @State private var viewportHeight: CGFloat = 0
+    @ScaledMetric(relativeTo: .body) private var minimumRowHeight: CGFloat = 38
+    @ScaledMetric(relativeTo: .caption) private var labelWidth: CGFloat = 52
+
+    private var holesAcross: Bool { size.width > size.height * 1.15 }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            if showsHeader {
+                RoundHeader(round: round, onCourseTap: onCourseTap)
+            }
+            titleRow
+            if holesAcross {
+                acrossGrid
+            } else {
+                downRows
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, topInset + 12)
+        .padding(.bottom, bottomReserve)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(BookletStyle.page)
+        // The paper is always light, so its text and marks read the same in Dark Mode.
+        .environment(\.colorScheme, .light)
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
+    }
+
+    private var titleRow: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(title)
+                .font(.custom("Baskerville-SemiBold", size: 14))
+                .foregroundStyle(.secondary)
+                .accessibilityAddTraits(.isHeader)
+            Spacer()
+            Group {
+                if holes.upperBound == 9 {
+                    subtotal("Out", round.frontNineTotal, played: round.scores.prefix(9).compactMap { $0 }.count)
+                } else {
+                    subtotal("In", round.backNineTotal, played: round.scores.suffix(9).compactMap { $0 }.count)
+                    subtotal("Total", round.totalScore, played: round.holesPlayed)
+                }
+            }
+        }
+    }
+
+    private func subtotal(_ label: String, _ value: Int, played: Int) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            Text(label)
+                .font(.custom("Baskerville", size: 12))
+                .foregroundStyle(.secondary)
+            Text(played > 0 ? "\(value)" : "—")
+                .font(.custom(BookletStyle.pencilFontName, fixedSize: 22))
+                .foregroundStyle(BookletStyle.pencilGraphite)
+        }
+        .padding(.leading, 8)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: Holes down
+
+    /// Nine equal rows share the measured height, so the page fills the screen.
+    /// When text is large the rows keep a readable minimum and the page scrolls.
+    private var rowHeight: CGFloat {
+        max(minimumRowHeight, (viewportHeight - 8) / CGFloat(holes.count))
+    }
+
+    private var downRows: some View {
+        ScrollView(.vertical) {
+            VStack(spacing: 0) {
+                ForEach(Array(holes), id: \.self) { hole in
+                    HoleRow(round: round, hole: hole, isActive: hole == activeHole) { onSelect(hole) }
+                        .frame(height: rowHeight)
+                    if hole < holes.upperBound { Divider() }
+                }
+            }
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { viewportHeight = $0 }
+    }
+
+    // MARK: Holes across
+
+    private var acrossGrid: some View {
+        HStack(spacing: 0) {
+            VStack(spacing: 8) {
+                Text("Hole").frame(height: 24)
+                Text("Par").frame(height: 24)
+                Text("Score").frame(maxHeight: .infinity)
+            }
+            .font(.custom("Baskerville", size: 12))
+            .foregroundStyle(.secondary)
+            .frame(width: labelWidth, alignment: .leading)
+
+            ForEach(Array(holes), id: \.self) { hole in
+                HoleColumn(round: round, hole: hole, isActive: hole == activeHole) { onSelect(hole) }
+            }
+        }
+        .frame(maxHeight: .infinity)
+    }
+}
+
+// MARK: - Rows and columns
+
+private func holeDetail(_ round: Round, hole: Int) -> String {
+    let index = hole - 1
+    var parts = ["Par \(round.effectivePars[index])"]
+    if let yards = round.courseYardages, yards.indices.contains(index), yards[index] > 0 {
+        parts.append("\(yards[index]) yd")
+    }
+    if let handicaps = round.courseHandicaps, handicaps.indices.contains(index), handicaps[index] > 0 {
+        parts.append("Hcp \(handicaps[index])")
+    }
+    return parts.joined(separator: " · ")
+}
+
+private struct HoleRow: View {
+    let round: Round
+    let hole: Int
+    let isActive: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            GeometryReader { proxy in
+                let side = min(max(proxy.size.height * 0.78, 28), 64)
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Hole \(hole)")
+                            .font(.custom("Baskerville-SemiBold", size: 18))
+                            .foregroundStyle(.primary)
+                        Text(holeDetail(round, hole: hole))
+                            .font(.custom("Baskerville", size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    ScoreMark(score: round.scores[hole - 1], par: round.effectivePars[hole - 1], side: side, isActive: isActive)
+                }
+                .padding(.horizontal, 10)
+                .frame(width: proxy.size.width, height: proxy.size.height)
+                .background(isActive ? Color.accentColor.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .contentShape(Rectangle())
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Hole \(hole), par \(round.effectivePars[hole - 1])")
+        .accessibilityValue(round.scores[hole - 1].map { "\($0)" } ?? "No score")
+        .accessibilityAddTraits(isActive ? .isSelected : [])
+    }
+}
+
+private struct HoleColumn: View {
+    let round: Round
+    let hole: Int
+    let isActive: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Text("\(hole)")
+                    .font(.custom("Baskerville", size: 13))
+                    .foregroundStyle(.secondary)
+                    .frame(height: 24)
+                Text("\(round.effectivePars[hole - 1])")
+                    .font(.custom("Baskerville", size: 14))
+                    .foregroundStyle(.primary)
+                    .frame(height: 24)
+                GeometryReader { proxy in
+                    ScoreMark(
+                        score: round.scores[hole - 1],
+                        par: round.effectivePars[hole - 1],
+                        side: min(proxy.size.width * 0.9, proxy.size.height * 0.9, 64),
+                        isActive: isActive
+                    )
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(isActive ? Color.accentColor.opacity(0.12) : Color.clear, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Hole \(hole), par \(round.effectivePars[hole - 1])")
+        .accessibilityValue(round.scores[hole - 1].map { "\($0)" } ?? "No score")
+        .accessibilityAddTraits(isActive ? .isSelected : [])
+    }
+}
+
+// MARK: - A score as it would be written on paper
+
+/// Circle for under par, square for over par, doubled for two or more either way,
+/// in ink that reads at a glance: gold, green, graphite, orange, red.
+private struct ScoreMark: View {
+    let score: Int?
+    let par: Int
+    let side: CGFloat
+    let isActive: Bool
+
+    var body: some View {
+        ZStack {
+            if let score {
+                let difference = score - par
+                let ink = BookletStyle.ink(forDifference: difference)
+                marks(for: difference, ink: ink)
+                if score == 2 && par == 5 {
+                    Image("black-browed-albatross")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: side * 0.6, height: side * 0.6)
+                } else {
+                    Text("\(score)")
+                        // The size already follows the row, so the digit must not scale a second time.
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: side * 0.56))
+                        .foregroundStyle(ink)
+                }
+            } else {
+                Image(systemName: "plus")
+                    .font(.system(size: side * 0.32, weight: .medium))
+                    .foregroundStyle(isActive ? Color.accentColor : Color(.tertiaryLabel))
+            }
+        }
+        .frame(width: side, height: side)
+    }
+
+    @ViewBuilder
+    private func marks(for difference: Int, ink: Color) -> some View {
+        switch difference {
+        case ...(-2):
+            ZStack {
+                Circle().strokeBorder(ink, lineWidth: 1.4)
+                Circle().strokeBorder(ink, lineWidth: 1.4).padding(4)
+            }
+        case -1:
+            Circle().strokeBorder(ink, lineWidth: 1.6)
+        case 0:
+            EmptyView()
+        case 1:
+            Rectangle().strokeBorder(ink, lineWidth: 1.6)
+        default:
+            ZStack {
+                Rectangle().strokeBorder(ink, lineWidth: 1.4)
+                Rectangle().strokeBorder(ink, lineWidth: 1.4).padding(4)
+            }
+        }
+    }
+}
+
 // MARK: - Header
 
 private struct RoundHeader: View {
@@ -388,7 +692,6 @@ private struct RoundHeader: View {
                 totalView(alignment: .leading)
             }
         }
-        .padding(.horizontal, 4)
     }
 
     private var courseButton: some View {
@@ -396,7 +699,7 @@ private struct RoundHeader: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
                     Text(round.courseName)
-                        .font(.custom("Baskerville-Bold", size: 18))
+                        .font(.custom("Baskerville-SemiBold", size: 20))
                         .foregroundStyle(.primary)
                         .multilineTextAlignment(.leading)
                         .accessibilityAddTraits(.isHeader)
@@ -420,186 +723,6 @@ private struct RoundHeader: View {
             Text("total")
                 .font(.custom("Baskerville", size: 12))
                 .foregroundStyle(.secondary)
-        }
-    }
-}
-
-// MARK: - One page of nine holes
-
-/// Nine holes. The holes run across the page when each has room for a cell,
-/// and run down the page otherwise. The choice follows the measured width, never the device.
-private struct HoleGridPage: View {
-    let title: String
-    let holes: ClosedRange<Int>
-    let round: Round
-    var onSelect: (Int) -> Void
-
-    @State private var width: CGFloat = 0
-    @ScaledMetric(relativeTo: .body) private var minimumCellWidth: CGFloat = 34
-    @ScaledMetric(relativeTo: .caption) private var labelWidth: CGFloat = 50
-    @ScaledMetric(relativeTo: .body) private var cellHeight: CGFloat = 40
-
-    private var holesAcross: Bool {
-        // Before the first measurement assume there is room, so the grid doesn't flash.
-        guard width > 0 else { return true }
-        return (width - labelWidth) / CGFloat(holes.count) >= minimumCellWidth
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.custom("Baskerville-SemiBold", size: 13))
-                .foregroundStyle(.secondary)
-                .accessibilityAddTraits(.isHeader)
-
-            if holesAcross {
-                acrossGrid
-            } else {
-                downList
-            }
-        }
-        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
-    }
-
-    // MARK: Holes across
-
-    private var acrossGrid: some View {
-        VStack(spacing: 8) {
-            row(label: "Hole") { hole in
-                Text("\(hole)")
-                    .font(.custom("Baskerville", size: 12))
-                    .foregroundStyle(.secondary)
-            }
-            row(label: "Par") { hole in
-                Text("\(round.effectivePars[hole - 1])")
-                    .font(.custom("Baskerville", size: 13))
-                    .foregroundStyle(.primary)
-            }
-            Divider()
-            row(label: "Score") { hole in
-                BookletScoreCell(round: round, hole: hole, height: cellHeight) { onSelect(hole) }
-            }
-        }
-    }
-
-    private func row<Cell: View>(label: String, @ViewBuilder cell: @escaping (Int) -> Cell) -> some View {
-        HStack(spacing: 0) {
-            Text(label)
-                .font(.custom("Baskerville", size: 12))
-                .foregroundStyle(.secondary)
-                .frame(width: labelWidth, alignment: .leading)
-            ForEach(Array(holes), id: \.self) { hole in
-                cell(hole).frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    // MARK: Holes down
-
-    private func holeLabel(_ hole: Int) -> some View {
-        Text("Hole \(hole)")
-            .font(.custom("Baskerville-SemiBold", size: 17))
-    }
-
-    private func parLabel(_ hole: Int) -> some View {
-        Text("Par \(round.effectivePars[hole - 1])")
-            .font(.custom("Baskerville", size: 14))
-            .foregroundStyle(.secondary)
-    }
-
-    private var downList: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(holes), id: \.self) { hole in
-                HStack(spacing: 12) {
-                    // One line when it fits; two lines at large text sizes.
-                    ViewThatFits(in: .horizontal) {
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            holeLabel(hole)
-                            parLabel(hole)
-                        }
-                        VStack(alignment: .leading, spacing: 2) {
-                            holeLabel(hole)
-                            parLabel(hole)
-                        }
-                    }
-                    Spacer(minLength: 8)
-                    BookletScoreCell(round: round, hole: hole, height: cellHeight) { onSelect(hole) }
-                        .frame(maxWidth: 96)
-                }
-                .padding(.vertical, 2)
-                if hole < holes.upperBound { Divider() }
-            }
-        }
-    }
-}
-
-// MARK: - A score as it would be written on paper
-
-/// Circle for under par, square for over par, double for two or more either way.
-private struct BookletScoreCell: View {
-    let round: Round
-    let hole: Int
-    let height: CGFloat
-    var action: () -> Void
-
-    private var score: Int? { round.scores[hole - 1] }
-    private var par: Int { round.effectivePars[hole - 1] }
-
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                if let score {
-                    marks(for: score - par)
-                    if score == 2 && par == 5 {
-                        Image("black-browed-albatross")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: height * 0.55, height: height * 0.55)
-                    } else {
-                        Text("\(score)")
-                            // The cell height already scales with Dynamic Type, so the digit must not scale twice.
-                            .font(.custom(BookletStyle.pencilFontName, fixedSize: height * 0.5))
-                            .foregroundStyle(BookletStyle.pencilGraphite)
-                    }
-                } else {
-                    Image(systemName: "plus")
-                        .font(.system(size: height * 0.28, weight: .medium))
-                        .foregroundStyle(Color(.tertiaryLabel))
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: height)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Hole \(hole), par \(par)")
-        .accessibilityValue(score.map { "\($0)" } ?? "No score")
-    }
-
-    @ViewBuilder
-    private func marks(for difference: Int) -> some View {
-        let side = height * 0.78
-        let line = Color.primary.opacity(0.55)
-        switch difference {
-        case ...(-2):
-            ZStack {
-                Circle().strokeBorder(line, lineWidth: 1)
-                Circle().strokeBorder(line, lineWidth: 1).padding(3)
-            }
-            .frame(width: side, height: side)
-        case -1:
-            Circle().strokeBorder(line, lineWidth: 1.2)
-                .frame(width: side, height: side)
-        case 0:
-            EmptyView()
-        case 1:
-            Rectangle().strokeBorder(line, lineWidth: 1.2)
-                .frame(width: side, height: side)
-        default:
-            ZStack {
-                Rectangle().strokeBorder(line, lineWidth: 1)
-                Rectangle().strokeBorder(line, lineWidth: 1).padding(3)
-            }
-            .frame(width: side, height: side)
         }
     }
 }
@@ -639,13 +762,14 @@ private func previewStore() -> RoundStore {
     .environmentObject(CourseStore())
 }
 
-#Preview("Regular, 820 pt") {
+#Preview("Regular, 820 pt, dark") {
     let store = previewStore()
     NavigationStack {
         BookletView(roundID: store.rounds[0].id) { _, _ in }
     }
     .frame(width: 820)
     .environment(\.horizontalSizeClass, .regular)
+    .preferredColorScheme(.dark)
     .environmentObject(store)
     .environmentObject(CourseStore())
 }

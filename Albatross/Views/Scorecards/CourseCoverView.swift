@@ -6,12 +6,21 @@ enum BookletStyle {
     static let pencilFontName = "BradleyHandITCTT-Bold"
     static let pencilGraphite = Color(white: 0.24)
 
-    /// Interior page stock. Stays paper-like in Dark Mode, only darker.
-    static let page = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark
-            ? UIColor(white: 0.15, alpha: 1)
-            : UIColor(red: 0.985, green: 0.975, blue: 0.94, alpha: 1)
-    })
+    /// Interior page stock. Paper stays cream in Dark Mode, like real paper under a dark screen.
+    static let page = Color(red: 0.985, green: 0.975, blue: 0.94)
+
+    /// Ink for a score, from its difference to par. Colours are chosen to read on cream paper.
+    /// `onDark` gives lighter versions of the same inks for controls drawn on a dark surface.
+    static func ink(forDifference difference: Int?, onDark: Bool = false) -> Color {
+        guard let difference else { return onDark ? Color(white: 0.85) : pencilGraphite }
+        switch difference {
+        case ...(-2): return onDark ? Color(red: 0.95, green: 0.78, blue: 0.30) : Color(red: 0.70, green: 0.48, blue: 0.02)
+        case -1:      return onDark ? Color(red: 0.36, green: 0.80, blue: 0.54) : Color(red: 0.04, green: 0.45, blue: 0.24)
+        case 0:       return onDark ? Color(white: 0.85) : pencilGraphite
+        case 1:       return onDark ? Color(red: 1.00, green: 0.62, blue: 0.30) : Color(red: 0.82, green: 0.38, blue: 0.08)
+        default:      return onDark ? Color(red: 1.00, green: 0.45, blue: 0.45) : Color(red: 0.72, green: 0.10, blue: 0.12)
+        }
+    }
 }
 
 /// Loads saved course logos once and keeps them, so scrolling a shelf of covers stays smooth.
@@ -65,6 +74,8 @@ private struct CoverStyle {
 /// Finished and in-progress rounds both show the score penciled in at the bottom.
 struct CourseCoverView: View {
     let round: Round
+    /// When true the cover stretches to fill the space it is given instead of keeping a booklet's proportions.
+    var fillsSpace = false
 
     private var style: CoverStyle { CoverStyle(courseName: round.courseName) }
 
@@ -98,7 +109,7 @@ struct CourseCoverView: View {
             .clipShape(shape)
             .shadow(color: .black.opacity(0.16), radius: width * 0.025, x: 0, y: width * 0.015)
         }
-        .aspectRatio(0.72, contentMode: .fit)
+        .aspectRatio(fillsSpace ? nil : 0.72, contentMode: .fit)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityDescription)
     }

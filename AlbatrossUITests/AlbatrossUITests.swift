@@ -56,15 +56,12 @@ final class AlbatrossUITests: XCTestCase {
         XCTAssertTrue(hole.isHittable, "Hole 1 is not on screen")
         hole.tap()
 
-        // Number pad: a single digit waits, and tapping the large figure commits it.
-        let four = app.buttons["4"].firstMatch
-        XCTAssertTrue(four.waitForExistence(timeout: 5))
-        four.tap()
-        let figure = app.staticTexts["4"].firstMatch
-        XCTAssertTrue(figure.waitForExistence(timeout: 3))
-        figure.tap()
+        // The pencil strip writes the score in one tap: "Par 4" for a par 4.
+        let par = app.buttons["Par 4"].firstMatch
+        XCTAssertTrue(par.waitForExistence(timeout: 5))
+        par.tap()
 
-        // The button label is the visible proof that one hole was recorded.
+        // The button label is the visible proof that one hole was recorded (the strip's Finish button).
         let finish = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS '1/18'")).firstMatch
         XCTAssertTrue(finish.waitForExistence(timeout: 8), "Finish Round (1/18) not found\n\(app.debugDescription)")
