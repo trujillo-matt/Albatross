@@ -29,6 +29,12 @@ struct Round: Identifiable, Codable {
     /// Old saved rounds decode safely because this field is optional.
     var courseLogoFilename: String?
 
+    /// Putts on each hole, when the player tracks them. Rounds saved before this existed decode as nil.
+    /// Putts and greens stay on the device: the cloud rounds table has no columns for them yet.
+    var putts: [Int?]?
+    /// Green in regulation, when the player marked it. If it was not marked it is worked out from putts.
+    var greens: [Bool?]?
+
     /// Resolved URL for the logo file, if one has been saved.
     var courseLogoURL: URL? {
         guard let filename = courseLogoFilename else { return nil }
@@ -55,7 +61,9 @@ struct Round: Identifiable, Codable {
         courseRating: Double? = nil,
         slopeRating: Int? = nil,
         tournamentMatchupID: UUID? = nil,
-        courseLogoFilename: String? = nil
+        courseLogoFilename: String? = nil,
+        putts: [Int?]? = nil,
+        greens: [Bool?]? = nil
     ) {
         self.id = id
         self.courseName = courseName
@@ -70,6 +78,8 @@ struct Round: Identifiable, Codable {
         self.slopeRating = slopeRating
         self.tournamentMatchupID = tournamentMatchupID
         self.courseLogoFilename = courseLogoFilename
+        self.putts = putts
+        self.greens = greens
     }
 
     var totalScore: Int {
@@ -82,6 +92,51 @@ struct Round: Identifiable, Codable {
 
     var backNineTotal: Int {
         scores.suffix(9).compactMap { $0 }.reduce(0, +)
+    }
+
+    // MARK: Putts and greens
+
+    func putts(on hole: Int) -> Int? {
+        guard let putts, putts.indices.contains(hole - 1) else { return nil }
+        return putts[hole - 1]
+    }
+
+    /// Whether the green was hit in regulation: what the player marked, otherwise worked out
+    /// from the score and putts (green reached in two strokes fewer than par or better).
+    func greenInRegulation(on hole: Int) -> Bool? {
+        if let greens, greens.indices.contains(hole - 1), let marked = greens[hole - 1] { return marked }
+        guard let score = scores[hole - 1], let putts = putts(on: hole) else { return nil }
+        return score - putts <= effectivePars[hole - 1] - 2
+    }
+
+    var totalPutts: Int? {
+        let recorded = (1...18).compactMap { putts(on: $0) }
+        return recorded.isEmpty ? nil : recorded.reduce(0, +)
+    }
+
+    func puttsTotal(_ holes: ClosedRange<Int>) -> Int? {
+        let recorded = holes.compactMap { putts(on: $0) }
+        return recorded.isEmpty ? nil : recorded.reduce(0, +)
+    }
+
+    var holesWithPutts: Int { (1...18).filter { putts(on: $0) != nil }.count }
+
+    /// Greens hit and holes where that is known.
+    func greens(_ holes: ClosedRange<Int> = 1...18) -> (hit: Int, known: Int) {
+        let known = holes.compactMap { greenInRegulation(on: $0) }
+        return (known.filter { $0 }.count, known.count)
+    }
+
+    mutating func setPutts(_ value: Int?, on hole: Int) {
+        var array = putts ?? Array(repeating: nil, count: 18)
+        array[hole - 1] = value
+        putts = array
+    }
+
+    mutating func setGreen(_ value: Bool?, on hole: Int) {
+        var array = greens ?? Array(repeating: nil, count: 18)
+        array[hole - 1] = value
+        greens = array
     }
 
     var holesPlayed: Int {

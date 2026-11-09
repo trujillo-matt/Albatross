@@ -1,9 +1,5 @@
 import SwiftUI
 
-// Shared brand color used in rendered share cards
-// (Color.accentColor doesn't resolve in ImageRenderer, so we use the explicit value)
-private let brandGreen = Color(red: 0.141, green: 0.208, blue: 0.153)
-
 // MARK: - Logo loader helper
 
 /// Loads the course logo UIImage from disk synchronously.
@@ -14,26 +10,239 @@ func loadCourseLogo(for round: Round) -> UIImage? {
     return UIImage(data: data)
 }
 
-// MARK: - Template 1: Minimal / Clean
+/// The player's paper and ink, resolved once so a rendered image never depends on the environment.
+/// Color.accentColor does not resolve inside ImageRenderer, so every color here is explicit.
+struct ShareStyle {
+    let paper: Color
+    let ink: Color
+    let includesPutts: Bool
 
-struct MinimalShareCard: View {
+    @MainActor
+    init(appearance: CardAppearance, round: Round) {
+        paper = appearance.pageColor
+        ink = appearance.ink(for: round.courseName)
+        includesPutts = appearance.tracksPuttsAndGreens && round.totalPutts != nil
+    }
+}
+
+private func toPar(_ round: Round) -> String {
+    let played = zip(round.scores, round.effectivePars).reduce(0) { $0 + ($1.0 == nil ? 0 : $1.1) }
+    let difference = round.totalScore - played
+    if difference == 0 { return "E" }
+    return difference > 0 ? "+\(difference)" : "−\(abs(difference))"
+}
+
+private struct ShareFooter: View {
+    var color: Color = Color(.secondaryLabel)
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image("black-browed-albatross")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 14, height: 14)
+            Text("Albatross")
+                .font(.system(size: 12, weight: .regular))
+                .foregroundStyle(color)
+        }
+    }
+}
+
+// MARK: - Template 1: the cover
+
+/// The booklet cover on a quiet table, the way it sits on the shelf.
+struct CoverShareCard: View {
     let round: Round
+    let style: ShareStyle
+    let appearance: CardAppearance
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.93, green: 0.93, blue: 0.91)
+            VStack(spacing: 0) {
+                Spacer(minLength: 0)
+                CourseCoverView(round: round)
+                    .environmentObject(appearance)
+                    .frame(width: 296, height: 411)
+                Spacer(minLength: 0)
+                ShareFooter()
+                    .padding(.bottom, 28)
+            }
+        }
+    }
+}
+
+// MARK: - Template 2: the scorecard
+
+/// Both nines on the club's printed card, with putts and greens when they were recorded.
+struct ScorecardShareCard: View {
+    let round: Round
+    let style: ShareStyle
+    var logoImage: UIImage? = nil
+
+    private var pars: [Int] { round.effectivePars }
+
+    var body: some View {
+        ZStack {
+            style.paper
+            VStack(spacing: 20) {
+                banner
+                nine(1...9, totalLabel: "Out")
+                nine(10...18, totalLabel: "In")
+                summary
+                Spacer(minLength: 0)
+                ShareFooter()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 28)
+        }
+    }
+
+    private var banner: some View {
+        VStack(spacing: 4) {
+            Text(round.courseName)
+                .font(.system(size: 15, weight: .semibold))
+                .tracking(1.5)
+                .textCase(.uppercase)
+                .foregroundStyle(style.ink)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+            Text(round.date.formatted(date: .long, time: .omitted))
+                .font(.system(size: 11, weight: .regular))
+                .foregroundStyle(Color(.secondaryLabel))
+            VStack(spacing: 2) {
+                Rectangle().fill(style.ink).frame(height: 1.5)
+                Rectangle().fill(style.ink.opacity(0.5)).frame(height: 0.5)
+            }
+            .padding(.top, 4)
+        }
+    }
+
+    private func nine(_ holes: ClosedRange<Int>, totalLabel: String) -> some View {
+        VStack(spacing: 0) {
+            line("Hole", holes: holes, background: style.ink, height: 28) { hole in
+                Text("\(hole)").font(.system(size: 11, weight: .semibold)).foregroundStyle(.white)
+            } total: {
+                Text(totalLabel).font(.system(size: 10, weight: .semibold)).textCase(.uppercase).foregroundStyle(.white)
+            }
+            line("Par", holes: holes, height: 28) { hole in
+                Text("\(pars[hole - 1])").font(.system(size: 11)).foregroundStyle(.primary)
+            } total: {
+                Text("\(holes.reduce(0) { $0 + pars[$1 - 1] })").font(.system(size: 11)).foregroundStyle(.primary)
+            }
+            line("Score", holes: holes, height: 46) { hole in
+                ScoreMark(score: round.scores[hole - 1], par: pars[hole - 1], side: 26, isActive: false, accent: style.ink)
+            } total: {
+                Text(total(holes).map(String.init) ?? "—")
+                    .font(.custom(BookletStyle.pencilFontName, fixedSize: 17))
+                    .foregroundStyle(BookletStyle.pencilGraphite)
+            }
+            if style.includesPutts {
+                line("Putt", holes: holes, height: 28) { hole in
+                    Text(round.putts(on: hole).map(String.init) ?? "")
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: 13))
+                        .foregroundStyle(BookletStyle.pencilGraphite)
+                } total: {
+                    Text(round.puttsTotal(holes).map(String.init) ?? "—")
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: 13))
+                        .foregroundStyle(BookletStyle.pencilGraphite)
+                }
+                line("GIR", holes: holes, height: 28) { hole in
+                    Group {
+                        switch round.greenInRegulation(on: hole) {
+                        case true?:  Circle().fill(style.ink).frame(width: 8, height: 8)
+                        case false?: Circle().strokeBorder(style.ink.opacity(0.45), lineWidth: 1).frame(width: 8, height: 8)
+                        case nil:    Color.clear.frame(width: 8, height: 8)
+                        }
+                    }
+                } total: {
+                    let greens = round.greens(holes)
+                    Text(greens.known > 0 ? "\(greens.hit)" : "—")
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: 13))
+                        .foregroundStyle(BookletStyle.pencilGraphite)
+                }
+            }
+        }
+        .overlay(Rectangle().strokeBorder(style.ink, lineWidth: 1))
+    }
+
+    private func total(_ holes: ClosedRange<Int>) -> Int? {
+        let played = holes.compactMap { round.scores[$0 - 1] }
+        return played.isEmpty ? nil : played.reduce(0, +)
+    }
+
+    private func line<Cell: View, Total: View>(
+        _ label: String,
+        holes: ClosedRange<Int>,
+        background: Color = .clear,
+        height: CGFloat,
+        @ViewBuilder cell: @escaping (Int) -> Cell,
+        @ViewBuilder total: () -> Total
+    ) -> some View {
+        HStack(spacing: 0) {
+            Text(label)
+                .font(.system(size: 9, weight: .semibold))
+                .textCase(.uppercase)
+                .tracking(0.6)
+                .foregroundStyle(background == .clear ? style.ink : Color.white)
+                .frame(width: 46)
+            ForEach(Array(holes), id: \.self) { hole in
+                cell(hole)
+                    .frame(maxWidth: .infinity)
+                    .frame(maxHeight: .infinity)
+                    .overlay(alignment: .leading) { Rectangle().fill(style.ink.opacity(0.25)).frame(width: 0.5) }
+            }
+            total()
+                .frame(width: 40, height: height)
+                .overlay(alignment: .leading) { Rectangle().fill(style.ink.opacity(0.25)).frame(width: 0.5) }
+        }
+        .frame(height: height)
+        .background(background)
+        .overlay(alignment: .bottom) { Rectangle().fill(style.ink.opacity(0.25)).frame(height: 0.5) }
+    }
+
+    private var summary: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Text("\(round.totalScore)")
+                .font(.custom(BookletStyle.pencilFontName, fixedSize: 64))
+                .foregroundStyle(BookletStyle.pencilGraphite)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(toPar(round))
+                    .font(.custom(BookletStyle.pencilFontName, fixedSize: 22))
+                    .foregroundStyle(BookletStyle.pencilGraphite)
+                Text(detail)
+                    .font(.system(size: 11))
+                    .foregroundStyle(Color(.secondaryLabel))
+            }
+            Spacer()
+        }
+    }
+
+    private var detail: String {
+        var parts = ["\(round.holesPlayed) holes"]
+        if style.includesPutts, let putts = round.totalPutts { parts.append("\(putts) putts") }
+        let greens = round.greens()
+        if style.includesPutts, greens.known > 0 { parts.append("\(greens.hit)/\(greens.known) greens") }
+        return parts.joined(separator: " · ")
+    }
+}
+
+// MARK: - Template 3: the score
+
+/// One number, big, with where and when.
+struct ScoreShareCard: View {
+    let round: Round
+    let style: ShareStyle
     var logoImage: UIImage? = nil
 
     var body: some View {
         ZStack {
-            Color.white
-
+            style.paper
             VStack(spacing: 0) {
-                // Top accent bar
-                Rectangle()
-                    .fill(brandGreen)
-                    .frame(height: 6)
-
+                Rectangle().fill(style.ink).frame(height: 8)
                 Spacer()
-
-                VStack(spacing: 28) {
-                    // Course logo or app brand mark
+                VStack(spacing: 20) {
                     if let logo = logoImage {
                         Image(uiImage: logo)
                             .resizable()
@@ -41,354 +250,57 @@ struct MinimalShareCard: View {
                             .frame(width: 56, height: 56)
                             .clipShape(Circle())
                             .overlay(Circle().strokeBorder(Color.black.opacity(0.08), lineWidth: 0.5))
-                    } else {
-                        HStack(spacing: 6) {
-                            Image("black-browed-albatross")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 18, height: 18)
-                            Text("Albatross")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundStyle(Color(.secondaryLabel))
-                        }
                     }
-
-                    // Score
-                    VStack(spacing: 8) {
+                    VStack(spacing: 0) {
                         Text("\(round.totalScore)")
-                            .font(.system(size: 96, weight: .semibold))
-                            .foregroundStyle(.black)
+                            .font(.custom(BookletStyle.pencilFontName, fixedSize: 150))
+                            .foregroundStyle(BookletStyle.pencilGraphite)
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
-
-                        Text("strokes")
-                            .font(.system(size: 20, weight: .regular))
-                            .foregroundStyle(Color(.secondaryLabel))
+                        Text(toPar(round))
+                            .font(.custom(BookletStyle.pencilFontName, fixedSize: 32))
+                            .foregroundStyle(BookletStyle.pencilGraphite)
                     }
-
-                    // Course & date
                     VStack(spacing: 6) {
                         Text(round.courseName)
-                            .font(.system(size: 22, weight: .semibold))
-                            .foregroundStyle(.black)
-                            .multilineTextAlignment(.center)
-
-                        Text(round.date.formatted(date: .long, time: .omitted))
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundStyle(Color(.secondaryLabel))
-                    }
-                }
-
-                Spacer()
-
-                // Bottom row
-                HStack {
-                    miniStat(label: "Front", value: round.frontNineTotal > 0 ? "\(round.frontNineTotal)" : "—")
-                    Spacer()
-                    miniStat(label: "Holes", value: "\(round.holesPlayed)/18")
-                    Spacer()
-                    miniStat(label: "Back", value: round.backNineTotal > 0 ? "\(round.backNineTotal)" : "—")
-                }
-                .padding(.horizontal, 32)
-                .padding(.bottom, 32)
-            }
-        }
-    }
-
-    private func miniStat(label: String, value: String) -> some View {
-        VStack(spacing: 3) {
-            Text(value)
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(.black)
-            Text(label)
-                .font(.system(size: 12, weight: .regular))
-                .foregroundStyle(Color(.secondaryLabel))
-        }
-    }
-}
-
-// MARK: - Template 2: Bold / Dark
-
-struct BoldShareCard: View {
-    let round: Round
-    var logoImage: UIImage? = nil
-
-    var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.08, green: 0.12, blue: 0.08),
-                    Color(red: 0.141, green: 0.208, blue: 0.153)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            Rectangle()
-                .fill(.white.opacity(0.03))
-
-            VStack(spacing: 0) {
-                // Top branding
-                HStack {
-                    HStack(spacing: 8) {
-                        if let logo = logoImage {
-                            Image(uiImage: logo)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 28, height: 28)
-                                .clipShape(Circle())
-                        } else {
-                            Image("black-browed-albatross")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 20, height: 20)
-                                .colorMultiply(.white)
-                        }
-                        Text("ALBATROSS")
-                            .font(.system(size: 11, weight: .regular))
-                            .tracking(3)
-                            .foregroundStyle(.white.opacity(0.7))
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 28)
-                .padding(.top, 36)
-
-                Spacer()
-
-                VStack(alignment: .leading, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("SCORE")
-                            .font(.system(size: 11, weight: .regular))
-                            .tracking(4)
-                            .foregroundStyle(.white.opacity(0.6))
-
-                        Text("\(round.totalScore)")
-                            .font(.system(size: 100, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.4)
-                    }
-
-                    Rectangle()
-                        .fill(.white.opacity(0.15))
-                        .frame(height: 1)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(round.courseName.uppercased())
                             .font(.system(size: 20, weight: .semibold))
                             .tracking(1)
-                            .foregroundStyle(.white)
-                            .multilineTextAlignment(.leading)
-
-                        Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundStyle(.white.opacity(0.5))
+                            .textCase(.uppercase)
+                            .foregroundStyle(style.ink)
+                            .multilineTextAlignment(.center)
+                        Text(round.date.formatted(date: .long, time: .omitted))
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color(.secondaryLabel))
                     }
+                    .padding(.horizontal, 32)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 28)
-
                 Spacer()
-
                 HStack(spacing: 0) {
-                    boldStat(label: "FRONT", value: round.frontNineTotal > 0 ? "\(round.frontNineTotal)" : "—")
-                    boldStat(label: "BACK", value: round.backNineTotal > 0 ? "\(round.backNineTotal)" : "—")
-                    boldStat(label: "HOLES", value: "\(round.holesPlayed)/18")
+                    stat("Out", round.frontNineTotal > 0 ? "\(round.frontNineTotal)" : "—")
+                    stat("In", round.backNineTotal > 0 ? "\(round.backNineTotal)" : "—")
+                    if style.includesPutts, let putts = round.totalPutts { stat("Putts", "\(putts)") }
+                    let greens = round.greens()
+                    if style.includesPutts, greens.known > 0 { stat("Greens", "\(greens.hit)/\(greens.known)") }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 20)
-                .background(.white.opacity(0.07))
-            }
-        }
-    }
-
-    private func boldStat(label: String, value: String) -> some View {
-        VStack(spacing: 4) {
-            Text(value)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.white)
-            Text(label)
-                .font(.system(size: 10, weight: .regular))
-                .tracking(2)
-                .foregroundStyle(.white.opacity(0.45))
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Template 3: Scorecard style
-
-struct ScorecardShareCard: View {
-    let round: Round
-    var logoImage: UIImage? = nil
-
-    private var pars: [Int] { round.effectivePars }
-
-    var body: some View {
-        ZStack {
-            Color(red: 0.96, green: 0.97, blue: 0.95) // Aged paper tint
-
-            VStack(spacing: 0) {
-                // Header
-                HStack(spacing: 12) {
-                    if let logo = logoImage {
-                        Image(uiImage: logo)
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 40, height: 40)
-                            .clipShape(Circle())
-                    } else {
-                        Image("black-browed-albatross")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 14, height: 14)
-                    }
-
-                    VStack(alignment: logoImage != nil ? .leading : .center, spacing: 2) {
-                        Text(round.courseName)
-                            .font(.system(size: 18, weight: .semibold))
-                            .multilineTextAlignment(logoImage != nil ? .leading : .center)
-                        Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 10, weight: .regular))
-                            .foregroundStyle(.secondary)
-                    }
-
-                    if logoImage != nil { Spacer() }
-                }
-                .frame(maxWidth: .infinity, alignment: logoImage != nil ? .leading : .center)
-                .padding(.horizontal, logoImage != nil ? 16 : 0)
                 .padding(.vertical, 16)
-                .background(Color.white)
-                .overlay(alignment: .bottom) {
-                    Rectangle().fill(brandGreen).frame(height: 2)
-                }
-
-                // Scorecard grid
-                VStack(spacing: 0) {
-                    scorecardRow(title: "Hole", values: Array(1...18).map { "\($0)" }, isHeader: true)
-                    scorecardRow(title: "Par", values: pars.map { "\($0)" }, isHeader: false)
-                    scorecardRow(title: "Score", values: round.scores.map { $0.map { "\($0)" } ?? "·" }, isHeader: false, highlightScores: true)
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 12)
-
-                Divider()
-                    .padding(.horizontal, 16)
-
-                // Totals
-                HStack(spacing: 0) {
-                    totalBlock(label: "Front 9", value: round.frontNineTotal > 0 ? "\(round.frontNineTotal)" : "—")
-                    totalBlock(label: "Back 9", value: round.backNineTotal > 0 ? "\(round.backNineTotal)" : "—")
-                    totalBlock(label: "Total", value: round.holesPlayed > 0 ? "\(round.totalScore)" : "—", highlight: true)
-                }
-                .padding(.vertical, 12)
-                .padding(.horizontal, 16)
-
-                Spacer()
+                .overlay(alignment: .top) { Rectangle().fill(style.ink.opacity(0.3)).frame(height: 0.5) }
+                .padding(.horizontal, 24)
+                ShareFooter()
+                    .padding(.vertical, 22)
             }
         }
     }
 
-    private func scorecardRow(title: String, values: [String], isHeader: Bool, highlightScores: Bool = false) -> some View {
-        HStack(spacing: 1) {
-            Text(title)
-                .font(.system(size: 8, weight: isHeader ? .semibold : .regular))
-                .foregroundStyle(isHeader ? Color.white : Color(.secondaryLabel))
-                .frame(width: 30, alignment: .leading)
-                .padding(.leading, 4)
-                .frame(height: 20)
-                .background(isHeader ? brandGreen : Color.clear)
-
-            ForEach(Array(zip(values.indices, values)), id: \.0) { index, value in
-                Text(value)
-                    .font(.system(size: 9, weight: isHeader ? .semibold : .regular))
-                    .foregroundStyle(isHeader ? Color.white : scoreForeground(index: index, value: value))
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 20)
-                    .background(isHeader ? brandGreen.opacity(0.85) : scoreBackground(index: index, value: value))
-                    .overlay(
-                        Rectangle()
-                            .stroke(Color.black.opacity(0.08), lineWidth: 0.5)
-                    )
-            }
-        }
-    }
-
-    private func scoreForeground(index: Int, value: String) -> Color {
-        guard let score = Int(value), let par = pars[safe: index] else { return .primary }
-        let diff = score - par
-        switch diff {
-        case ..<(-1): return Color(red: 0.7, green: 0.55, blue: 0.0)
-        case -1:      return brandGreen
-        case 1:       return Color.orange
-        case 2...:    return Color.red
-        default:      return .primary
-        }
-    }
-
-    private func scoreBackground(index: Int, value: String) -> Color {
-        guard let score = Int(value), let par = pars[safe: index] else { return Color.clear }
-        let diff = score - par
-        switch diff {
-        case ..<(-1): return Color.yellow.opacity(0.2)
-        case -1:      return brandGreen.opacity(0.2)
-        case 1:       return Color.orange.opacity(0.15)
-        case 2...:    return Color.red.opacity(0.15)
-        default:      return Color.clear
-        }
-    }
-
-    private func totalBlock(label: String, value: String, highlight: Bool = false) -> some View {
+    private func stat(_ label: String, _ value: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(highlight ? brandGreen : .primary)
+                .monospacedDigit()
+                .foregroundStyle(.primary)
             Text(label)
-                .font(.system(size: 11, weight: .regular))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 11))
+                .foregroundStyle(Color(.secondaryLabel))
         }
         .frame(maxWidth: .infinity)
     }
-}
-
-// MARK: - Array safe subscript
-
-private extension Array {
-    subscript(safe index: Int) -> Element? {
-        indices.contains(index) ? self[index] : nil
-    }
-}
-
-#Preview("Minimal") {
-    MinimalShareCard(round: {
-        var r = Round(courseName: "Augusta National")
-        r.scores = [5, 4, 4, 6, 5, 3, 4, 5, 6,
-                    5, 3, 5, 6, 4, 3, 5, 6, 4]
-        return r
-    }())
-    .frame(width: 280, height: 497)
-    .clipShape(RoundedRectangle(cornerRadius: 20))
-}
-
-#Preview("Bold") {
-    BoldShareCard(round: {
-        var r = Round(courseName: "Augusta National")
-        r.scores = [5, 4, 4, 6, 5, 3, 4, 5, 6,
-                    5, 3, 5, 6, 4, 3, 5, 6, 4]
-        return r
-    }())
-    .frame(width: 280, height: 497)
-    .clipShape(RoundedRectangle(cornerRadius: 20))
-}
-
-#Preview("Scorecard") {
-    ScorecardShareCard(round: {
-        var r = Round(courseName: "Pebble Beach Golf Links")
-        r.scores = [5, 4, 4, 6, 5, 3, 4, 5, 6,
-                    5, 3, 5, 6, 4, 3, 5, 6, 4]
-        return r
-    }())
-    .frame(width: 280, height: 497)
-    .clipShape(RoundedRectangle(cornerRadius: 20))
 }

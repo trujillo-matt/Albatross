@@ -6,13 +6,6 @@ enum BookletStyle {
     static let pencilFontName = "BradleyHandITCTT-Bold"
     static let pencilGraphite = Color(white: 0.24)
 
-    /// Interior page stock. Paper stays cream in Dark Mode, like real paper under a dark screen.
-    static let page = Color(red: 0.985, green: 0.975, blue: 0.94)
-
-    /// The club's printed ink, the same one its cover uses. Rules and headers on the card use it.
-    static func printInk(for courseName: String) -> Color {
-        CoverStyle(courseName: courseName).ink
-    }
 
     /// Ink for a score, from its difference to par. Colours are chosen to read on cream paper.
     /// `onDark` gives lighter versions of the same inks for controls drawn on a dark surface.
@@ -46,7 +39,7 @@ enum CourseLogoCache {
 }
 
 /// How a cover looks. Chosen from the course name so the same course always gets the same cover.
-private struct CoverStyle {
+struct CoverStyle {
     enum Border { case none, rule, doubleRule }
 
     let paper: Color
@@ -96,7 +89,11 @@ struct CourseCoverView: View {
     /// When true the cover stretches to fill the space it is given instead of keeping a booklet's proportions.
     var fillsSpace = false
 
+    @EnvironmentObject private var appearance: CardAppearance
+
     private var style: CoverStyle { CoverStyle(courseName: round.courseName) }
+    private var paper: Color { appearance.coverPaper(for: round.courseName) }
+    private var ink: Color { appearance.ink(for: round.courseName) }
 
     private var parThroughPlayedHoles: Int {
         zip(round.scores, round.effectivePars).reduce(0) { $0 + ($1.0 == nil ? 0 : $1.1) }
@@ -120,7 +117,7 @@ struct CourseCoverView: View {
             )
 
             ZStack {
-                shape.fill(style.paper)
+                shape.fill(paper)
                 spine(width: width)
                 border(width: width, corner: corner)
                 content(width: width)
@@ -139,7 +136,7 @@ struct CourseCoverView: View {
     private func spine(width: CGFloat) -> some View {
         HStack(spacing: 0) {
             Rectangle()
-                .fill(style.ink.opacity(0.12))
+                .fill(ink.opacity(0.12))
                 .frame(width: width * 0.035)
             Spacer(minLength: 0)
         }
@@ -153,15 +150,15 @@ struct CourseCoverView: View {
             EmptyView()
         case .rule:
             RoundedRectangle(cornerRadius: corner * 0.5)
-                .strokeBorder(style.ink.opacity(0.55), lineWidth: max(0.5, width * 0.004))
+                .strokeBorder(ink.opacity(0.55), lineWidth: max(0.5, width * 0.004))
                 .padding(inset)
         case .doubleRule:
             ZStack {
                 RoundedRectangle(cornerRadius: corner * 0.6)
-                    .strokeBorder(style.ink.opacity(0.6), lineWidth: max(0.5, width * 0.005))
+                    .strokeBorder(ink.opacity(0.6), lineWidth: max(0.5, width * 0.005))
                     .padding(inset)
                 RoundedRectangle(cornerRadius: corner * 0.45)
-                    .strokeBorder(style.ink.opacity(0.4), lineWidth: max(0.5, width * 0.003))
+                    .strokeBorder(ink.opacity(0.4), lineWidth: max(0.5, width * 0.003))
                     .padding(inset + width * 0.022)
             }
         }
@@ -179,11 +176,11 @@ struct CourseCoverView: View {
                 .multilineTextAlignment(.center)
                 .lineLimit(3)
                 .minimumScaleFactor(0.6)
-                .foregroundStyle(style.ink)
+                .foregroundStyle(ink)
 
             Text(round.date.formatted(date: .abbreviated, time: .omitted))
                 .font(.system(size: width * 0.05))
-                .foregroundStyle(style.ink.opacity(0.75))
+                .foregroundStyle(ink.opacity(0.75))
 
             Spacer(minLength: 0)
 

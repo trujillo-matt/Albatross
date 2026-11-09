@@ -487,6 +487,20 @@ struct SettingsSheet: View {
                     Text("Appearance")
                         .font(.caption)
                 }
+
+                Section {
+                    NavigationLink {
+                        ScrollView { CardStyleForm().padding(20) }
+                            .navigationTitle("Scorecard")
+                            .navigationBarTitleDisplayMode(.inline)
+                    } label: {
+                        Label("Paper, ink and putts", systemImage: "paintpalette")
+                            .font(.callout)
+                    }
+                } header: {
+                    Text("Scorecard")
+                        .font(.caption)
+                }
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Settings")
@@ -499,7 +513,7 @@ struct SettingsSheet: View {
                 }
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
     }
 }

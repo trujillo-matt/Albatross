@@ -13,6 +13,7 @@ struct AlbatrossApp: App {
     @StateObject private var courseStore      = CourseStore()
     @StateObject private var socialStore      = SocialStore()
     @StateObject private var tournamentStore  = TournamentStore()
+    @StateObject private var appearance       = CardAppearance()
 
     @State private var appState: AppState = .loading
     @State private var selectedTab: Int = 1
@@ -79,6 +80,9 @@ struct AlbatrossApp: App {
             .environmentObject(courseStore)
             .environmentObject(socialStore)
             .environmentObject(tournamentStore)
+            .environmentObject(appearance)
+            // The chosen ink tints controls and highlights across the app.
+            .tint(appearance.tint)
             .onAppear {
                 // Wire stores together so RoundStore can check auth state
                 roundStore.authStore = authStore

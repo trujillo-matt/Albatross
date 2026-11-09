@@ -31,7 +31,6 @@ struct ContentView: View {
         }
         .tabViewStyle(.sidebarAdaptable)
         .sidebarByDefaultWhereAvailable()
-        .tint(.accentColor)
     }
 }
 

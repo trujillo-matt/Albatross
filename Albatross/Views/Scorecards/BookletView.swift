@@ -24,6 +24,7 @@ struct BookletView: View {
 
     @EnvironmentObject private var store: RoundStore
     @EnvironmentObject private var courseStore: CourseStore
+    @EnvironmentObject private var appearance: CardAppearance
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -33,6 +34,7 @@ struct BookletView: View {
     @State private var stripHeight: CGFloat = 0
     @State private var showEditRound = false
     @State private var showCourseDetail = false
+    @State private var showCardStyle = false
     @State private var showFinishConfirm = false
     @State private var hasSetUp = false
     @State private var spineEmphasis = false
@@ -79,7 +81,12 @@ struct BookletView: View {
                         par: round.effectivePars[activeHole - 1],
                         score: round.scores[activeHole - 1],
                         holesPlayed: round.holesPlayed,
+                        tracks: appearance.tracksPuttsAndGreens,
+                        putts: round.putts(on: activeHole),
+                        greenInRegulation: round.greenInRegulation(on: activeHole),
                         onScore: { record($0) },
+                        onPutts: { recordPutts($0) },
+                        onGreen: { recordGreen($0) },
                         onFinish: { showFinishConfirm = true }
                     )
                     .padding(.horizontal, 12)
@@ -99,6 +106,22 @@ struct BookletView: View {
         .toolbarVisibility(.hidden, for: .tabBar)
         .sheet(isPresented: $showEditRound) {
             EditRoundSheet(round: round) { _ in }
+        }
+        .sheet(isPresented: $showCardStyle) {
+            NavigationStack {
+                ScrollView {
+                    CardStyleForm(sample: round)
+                        .padding(20)
+                }
+                .navigationTitle("Card Style")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .albatrossConfirm) {
+                        Button { showCardStyle = false } label: { Label("Done", systemImage: "checkmark") }
+                    }
+                }
+            }
+            .presentationDetents([.large])
         }
         .sheet(isPresented: $showCourseDetail) {
             CourseDetailView(
@@ -198,7 +221,7 @@ struct BookletView: View {
         PaperPage(
             // The front names the club; the back says which nine it is.
             title: showsHeader ? round.courseName : "Back nine",
-            subtitle: showsHeader ? round.date.formatted(date: .abbreviated, time: .omitted) : round.courseName,
+            subtitle: showsHeader ? round.date.formatted(date: .abbreviated, time: .omitted) : backSubtitle(round),
             holes: holes,
             round: round,
             activeHole: activeHole,
@@ -207,6 +230,9 @@ struct BookletView: View {
             // The sidebar button floats over the top corner of an open spread.
             bannerInset: isSpread ? 56 : 0,
             opensCourse: showsHeader,
+            paper: appearance.pageColor,
+            ink: appearance.ink(for: round.courseName),
+            tracks: appearance.tracksPuttsAndGreens,
             onCourseTap: { showCourseDetail = true },
             onSelect: { activeHole = $0 }
         )
@@ -220,6 +246,9 @@ struct BookletView: View {
             Menu {
                 Button { showEditRound = true } label: {
                     Label("Edit Round", systemImage: "pencil")
+                }
+                Button { showCardStyle = true } label: {
+                    Label("Card Style", systemImage: "paintpalette")
                 }
                 Button { onShowSummary(roundID, false) } label: {
                     Label("Share Round", systemImage: "square.and.arrow.up")
@@ -281,6 +310,33 @@ struct BookletView: View {
         }
     }
 
+    /// The back page's line under the banner: where the round stands.
+    private func backSubtitle(_ round: Round) -> String {
+        guard round.holesPlayed > 0 else { return round.courseName }
+        var parts = ["Total \(round.totalScore)"]
+        if appearance.tracksPuttsAndGreens {
+            if let putts = round.totalPutts { parts.append("\(putts) putts") }
+            let greens = round.greens()
+            if greens.known > 0 { parts.append("\(greens.hit)/\(greens.known) greens") }
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    /// Putts are written before the score and leave the pencil where it is.
+    private func recordPutts(_ value: Int?) {
+        guard var updated = round else { return }
+        updated.setPutts(value, on: activeHole)
+        store.update(updated)
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    private func recordGreen(_ hit: Bool) {
+        guard var updated = round else { return }
+        updated.setGreen(hit, on: activeHole)
+        store.update(updated)
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
     private func finishRound() {
         guard var finished = round else { return }
         finished.status = .completed
@@ -321,16 +377,24 @@ private extension View {
 // MARK: - The pencil strip
 
 /// The way scores are written: the active hole's par and one button per result, relative to par.
+/// With putts and greens switched on, a second line takes putts and the green before the score,
+/// so the score tap that moves the pencil on is always the last one.
 private struct PencilStrip: View {
     let hole: Int
     let par: Int
     let score: Int?
     let holesPlayed: Int
+    let tracks: Bool
+    let putts: Int?
+    let greenInRegulation: Bool?
     var onScore: (Int?) -> Void
+    var onPutts: (Int?) -> Void
+    var onGreen: (Bool) -> Void
     var onFinish: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
     @ScaledMetric(relativeTo: .title2) private var buttonHeight: CGFloat = 52
+    @ScaledMetric(relativeTo: .body) private var chipSize: CGFloat = 34
 
     private var choices: [(title: String, value: Int)] {
         [("Birdie", par - 1), ("Par", par), ("Bogey", par + 1), ("Double", par + 2)]
@@ -360,6 +424,8 @@ private struct PencilStrip: View {
                 }
             }
 
+            if tracks { greenLine }
+
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 8)], spacing: 8) {
                 ForEach(choices, id: \.title) { choice in
                     scoreButton(title: choice.title, value: choice.value)
@@ -370,6 +436,43 @@ private struct PencilStrip: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: .black.opacity(0.12), radius: 12, y: 4)
         .frame(maxWidth: 560)
+    }
+
+    /// Putts, then the green: both are optional and neither moves the pencil.
+    private var greenLine: some View {
+        HStack(spacing: 8) {
+            Text("Putts")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            ForEach(0...4, id: \.self) { count in
+                Button { onPutts(putts == count ? nil : count) } label: {
+                    Text(count == 4 ? "4+" : "\(count)")
+                        .font(.subheadline.monospacedDigit().weight(.medium))
+                        .foregroundStyle(putts == count ? (colorScheme == .dark ? Color.black : Color.white) : Color.primary)
+                        .frame(width: chipSize, height: chipSize * 0.88)
+                        .background(
+                            putts == count ? Color.accentColor : Color.primary.opacity(0.08),
+                            in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(count) putts")
+                .accessibilityAddTraits(putts == count ? .isSelected : [])
+            }
+            Spacer(minLength: 0)
+            Button { onGreen(!(greenInRegulation ?? false)) } label: {
+                Label("GIR", systemImage: greenInRegulation == true ? "checkmark.circle.fill" : "circle")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(greenInRegulation == true ? Color.accentColor : Color.secondary)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .padding(.horizontal, 10)
+                    .frame(height: chipSize * 0.88)
+                    .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Green in regulation")
+            .accessibilityValue(greenInRegulation == true ? "Yes" : "No")
+        }
     }
 
     private func scoreButton(title: String, value: Int) -> some View {
@@ -428,12 +531,14 @@ private struct PaperPage: View {
     /// Space kept clear at the sides of the banner, for the floating sidebar button.
     let bannerInset: CGFloat
     let opensCourse: Bool
+    let paper: Color
+    let ink: Color
+    let tracks: Bool
     var onCourseTap: () -> Void
     var onSelect: (Int) -> Void
 
     @State private var size: CGSize = .zero
 
-    private var ink: Color { BookletStyle.printInk(for: round.courseName) }
     private var holesAcross: Bool { size.width > size.height * 1.15 }
 
     var body: some View {
@@ -441,16 +546,16 @@ private struct PaperPage: View {
             banner
                 .padding(.horizontal, bannerInset)
             if holesAcross {
-                AcrossTable(round: round, holes: holes, activeHole: activeHole, ink: ink, onSelect: onSelect)
+                AcrossTable(round: round, holes: holes, activeHole: activeHole, ink: ink, tracks: tracks, onSelect: onSelect)
             } else {
-                DownTable(round: round, holes: holes, activeHole: activeHole, ink: ink, onSelect: onSelect)
+                DownTable(round: round, holes: holes, activeHole: activeHole, ink: ink, tracks: tracks, onSelect: onSelect)
             }
         }
         .padding(.horizontal, 16)
         .padding(.top, topInset + 12)
         .padding(.bottom, bottomReserve)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(BookletStyle.page)
+        .background(paper)
         // The paper is always light, so its text and marks read the same in Dark Mode.
         .environment(\.colorScheme, .light)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
@@ -518,19 +623,55 @@ private extension Round {
     }
 }
 
-/// The columns a card has depends on what the course data holds. Manual rounds get hole, par and score.
-private struct CardColumns {
-    let yards: Bool
-    let handicap: Bool
+/// One column of the printed card.
+private enum CardColumn {
+    case hole, yards, handicap, par, score, putts, green
 
-    init(_ round: Round) {
-        yards = round.hasYards
-        handicap = round.hasHandicaps
+    var heading: String {
+        switch self {
+        case .hole:     return "Hole"
+        case .yards:    return "Yds"
+        case .handicap: return "Hcp"
+        case .par:      return "Par"
+        case .score:    return "Score"
+        case .putts:    return "Putt"
+        case .green:    return "GIR"
+        }
     }
 
-    /// Width shares of the narrow columns. The score column takes whatever is left.
-    var shares: (hole: CGFloat, yards: CGFloat, handicap: CGFloat, par: CGFloat) {
-        (0.16, yards ? 0.2 : 0, handicap ? 0.14 : 0, 0.14)
+    /// Width as a share of the table. The score column takes whatever is left.
+    var share: CGFloat {
+        switch self {
+        case .hole:     return 0.13
+        case .yards:    return 0.14
+        case .handicap: return 0.10
+        case .par:      return 0.10
+        case .putts:    return 0.12
+        case .green:    return 0.10
+        case .score:    return 0
+        }
+    }
+}
+
+/// Which columns a card has depends on the course data and on what the player tracks.
+/// A manual round gets hole, par and score; putts and greens are added when switched on.
+private struct CardLayout {
+    let columns: [CardColumn]
+
+    init(round: Round, tracks: Bool) {
+        var columns: [CardColumn] = [.hole]
+        if round.hasYards { columns.append(.yards) }
+        if round.hasHandicaps { columns.append(.handicap) }
+        columns.append(.par)
+        columns.append(.score)
+        if tracks { columns.append(contentsOf: [.putts, .green]) }
+        self.columns = columns
+    }
+
+    func width(of column: CardColumn, in total: CGFloat) -> CGFloat {
+        if column != .score { return total * column.share }
+        let used = columns.filter { $0 != .score }.reduce(CGFloat(0)) { $0 + total * $1.share }
+        return max(0, total - used)
     }
 }
 
@@ -541,40 +682,37 @@ private struct DownTable: View {
     let holes: ClosedRange<Int>
     let activeHole: Int
     let ink: Color
+    let tracks: Bool
     var onSelect: (Int) -> Void
 
     @ScaledMetric(relativeTo: .body) private var minimumRowHeight: CGFloat = 28
     @ScaledMetric(relativeTo: .caption) private var bandHeight: CGFloat = 28
     @ScaledMetric(relativeTo: .body) private var totalRowHeight: CGFloat = 36
 
-    private var columns: CardColumns { CardColumns(round) }
+    private var layout: CardLayout { CardLayout(round: round, tracks: tracks) }
     private var totalRowCount: Int { holes.upperBound == 9 ? 1 : 2 }
-
-    private typealias Widths = (hole: CGFloat, yards: CGFloat, handicap: CGFloat, par: CGFloat, score: CGFloat)
-
-    private func widths(for width: CGFloat) -> Widths {
-        let share = columns.shares
-        let hole = width * share.hole, yards = width * share.yards
-        let handicap = width * share.handicap, par = width * share.par
-        return (hole, yards, handicap, par, max(0, width - hole - yards - handicap - par))
-    }
 
     var body: some View {
         // The table is sized from the space the page offers, never from its own content,
         // so it fills the page exactly and cannot overflow it.
         GeometryReader { proxy in
-            let w = widths(for: proxy.size.width)
+            let total = proxy.size.width
             // Both pages reserve two footer rows, so front and back rows are the same height.
             let rowsHeight = max(0, proxy.size.height - bandHeight - totalRowHeight * 2)
             let rowHeight = max(minimumRowHeight, rowsHeight / CGFloat(holes.count))
 
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    band("Hole", width: w.hole)
-                    if columns.yards { band("Yds", width: w.yards) }
-                    if columns.handicap { band("Hcp", width: w.handicap) }
-                    band("Par", width: w.par)
-                    band("Score", width: w.score)
+                    ForEach(layout.columns, id: \.self) { column in
+                        Text(column.heading)
+                            .font(.caption2.weight(.semibold))
+                            .tracking(1)
+                            .textCase(.uppercase)
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                            .frame(width: layout.width(of: column, in: total))
+                    }
                 }
                 .frame(height: bandHeight)
                 .background(ink, ignoresSafeAreaEdges: [])
@@ -583,7 +721,7 @@ private struct DownTable: View {
                 ScrollView(.vertical) {
                     VStack(spacing: 0) {
                         ForEach(Array(holes), id: \.self) { hole in
-                            row(hole, widths: w)
+                            row(hole, total: total)
                                 .frame(height: rowHeight)
                         }
                     }
@@ -591,20 +729,11 @@ private struct DownTable: View {
                 .scrollBounceBehavior(.basedOnSize)
                 .frame(height: rowsHeight)
 
-                totals(widths: w)
+                totals(total: total)
             }
             .overlay(Rectangle().strokeBorder(ink, lineWidth: 1))
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
-    }
-
-    private func band(_ text: String, width: CGFloat) -> some View {
-        Text(text)
-            .font(.caption2.weight(.semibold))
-            .tracking(1)
-            .textCase(.uppercase)
-            .foregroundStyle(.white)
-            .frame(width: width)
     }
 
     private func cell(_ text: String, width: CGFloat, emphasis: Bool = false) -> some View {
@@ -617,69 +746,135 @@ private struct DownTable: View {
             .overlay(alignment: .trailing) { Rectangle().fill(ink.opacity(0.25)).frame(width: 0.5) }
     }
 
-    private func row(_ hole: Int, widths w: Widths) -> some View {
+    @ViewBuilder
+    private func cell(_ column: CardColumn, hole: Int, width: CGFloat, isActive: Bool) -> some View {
+        switch column {
+        case .hole:     cell("\(hole)", width: width, emphasis: true)
+        case .yards:    cell(round.yards(hole).map(String.init) ?? "", width: width)
+        case .handicap: cell(round.handicap(hole).map(String.init) ?? "", width: width)
+        case .par:      cell("\(round.effectivePars[hole - 1])", width: width)
+        case .score:
+            GeometryReader { proxy in
+                ScoreMark(
+                    score: round.scores[hole - 1],
+                    par: round.effectivePars[hole - 1],
+                    side: min(max(proxy.size.height * 0.78, 24), 56),
+                    isActive: isActive,
+                    accent: ink
+                )
+                .frame(width: proxy.size.width, height: proxy.size.height)
+            }
+            .frame(width: width)
+        case .putts:
+            Text(round.putts(on: hole).map(String.init) ?? "")
+                .font(.custom(BookletStyle.pencilFontName, fixedSize: 18))
+                .foregroundStyle(BookletStyle.pencilGraphite)
+                .frame(width: width)
+                .frame(maxHeight: .infinity)
+                .overlay(alignment: .leading) { Rectangle().fill(ink.opacity(0.25)).frame(width: 0.5) }
+        case .green:
+            GreenDot(hit: round.greenInRegulation(on: hole), ink: ink)
+                .frame(width: width)
+                .frame(maxHeight: .infinity)
+        }
+    }
+
+    private func row(_ hole: Int, total: CGFloat) -> some View {
         let isActive = hole == activeHole
         return Button { onSelect(hole) } label: {
             HStack(spacing: 0) {
-                cell("\(hole)", width: w.hole, emphasis: true)
-                if columns.yards { cell(round.yards(hole).map(String.init) ?? "", width: w.yards) }
-                if columns.handicap { cell(round.handicap(hole).map(String.init) ?? "", width: w.handicap) }
-                cell("\(round.effectivePars[hole - 1])", width: w.par)
-                GeometryReader { proxy in
-                    ScoreMark(
-                        score: round.scores[hole - 1],
-                        par: round.effectivePars[hole - 1],
-                        side: min(max(proxy.size.height * 0.78, 24), 56),
-                        isActive: isActive
-                    )
-                    .frame(width: proxy.size.width, height: proxy.size.height)
+                ForEach(layout.columns, id: \.self) { column in
+                    cell(column, hole: hole, width: layout.width(of: column, in: total), isActive: isActive)
                 }
-                .frame(width: w.score)
             }
-            .background(isActive ? Color.accentColor.opacity(0.16) : (hole % 2 == 0 ? ink.opacity(0.05) : Color.clear))
+            .background(isActive ? ink.opacity(0.16) : (hole % 2 == 0 ? ink.opacity(0.05) : Color.clear))
             .overlay(alignment: .bottom) { Rectangle().fill(ink.opacity(0.25)).frame(height: 0.5) }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel("Hole \(hole), par \(round.effectivePars[hole - 1])")
-        .accessibilityValue(round.scores[hole - 1].map { "\($0)" } ?? "No score")
+        .accessibilityValue(accessibilityValue(hole))
         .accessibilityAddTraits(isActive ? .isSelected : [])
+    }
+
+    private func accessibilityValue(_ hole: Int) -> String {
+        var parts = [round.scores[hole - 1].map { "\($0)" } ?? "No score"]
+        if let putts = round.putts(on: hole) { parts.append("\(putts) putts") }
+        if round.greenInRegulation(on: hole) == true { parts.append("green in regulation") }
+        return parts.joined(separator: ", ")
     }
 
     /// Out on the front page; In and Total on the back, as printed on a card.
     @ViewBuilder
-    private func totals(widths w: Widths) -> some View {
+    private func totals(total: CGFloat) -> some View {
         VStack(spacing: 0) {
             if holes.upperBound == 9 {
-                totalRow("Out", holes: holes, widths: w)
+                totalRow("Out", holes: holes, total: total)
             } else {
-                totalRow("In", holes: holes, widths: w)
-                totalRow("Total", holes: 1...18, widths: w)
+                totalRow("In", holes: holes, total: total)
+                totalRow("Total", holes: 1...18, total: total)
             }
         }
         .background(ink.opacity(0.1), ignoresSafeAreaEdges: [])
         .overlay(alignment: .top) { Rectangle().fill(ink).frame(height: 1) }
     }
 
-    private func totalRow(_ label: String, holes range: ClosedRange<Int>, widths w: Widths) -> some View {
+    private func totalRow(_ label: String, holes range: ClosedRange<Int>, total: CGFloat) -> some View {
         HStack(spacing: 0) {
+            ForEach(layout.columns, id: \.self) { column in
+                footerCell(column, label: label, range: range)
+                    .frame(width: layout.width(of: column, in: total))
+            }
+        }
+        .font(.callout)
+        .monospacedDigit()
+        .frame(height: totalRowHeight)
+    }
+
+    @ViewBuilder
+    private func footerCell(_ column: CardColumn, label: String, range: ClosedRange<Int>) -> some View {
+        switch column {
+        case .hole:
             Text(label)
                 .font(.caption.weight(.semibold))
                 .textCase(.uppercase)
                 .tracking(0.8)
                 .foregroundStyle(ink)
-                .frame(width: w.hole)
-            if columns.yards { Text(round.yardTotal(range).map(String.init) ?? "").frame(width: w.yards) }
-            if columns.handicap { Text("").frame(width: w.handicap) }
-            Text("\(round.parTotal(range))").frame(width: w.par)
+        case .yards:    Text(round.yardTotal(range).map(String.init) ?? "")
+        case .handicap: Text("")
+        case .par:      Text("\(round.parTotal(range))")
+        case .score:
             Text(round.scoreTotal(range).map(String.init) ?? "—")
                 .font(.custom(BookletStyle.pencilFontName, fixedSize: 22))
                 .foregroundStyle(BookletStyle.pencilGraphite)
-                .frame(width: w.score)
+        case .putts:
+            Text(round.puttsTotal(range).map(String.init) ?? "—")
+                .font(.custom(BookletStyle.pencilFontName, fixedSize: 18))
+                .foregroundStyle(BookletStyle.pencilGraphite)
+        case .green:
+            let greens = round.greens(range)
+            Text(greens.known > 0 ? "\(greens.hit)" : "—")
+                .font(.custom(BookletStyle.pencilFontName, fixedSize: 18))
+                .foregroundStyle(BookletStyle.pencilGraphite)
         }
-        .font(.callout)
-        .monospacedDigit()
-        .frame(height: totalRowHeight)
+    }
+}
+
+/// A green in regulation, marked the way a player would on paper: a filled dot, or an open one when missed.
+private struct GreenDot: View {
+    let hit: Bool?
+    let ink: Color
+
+    var body: some View {
+        Group {
+            switch hit {
+            case true?:  Circle().fill(ink).frame(width: 10, height: 10)
+            case false?: Circle().strokeBorder(ink.opacity(0.45), lineWidth: 1).frame(width: 10, height: 10)
+            case nil:    Color.clear.frame(width: 10, height: 10)
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 
@@ -690,28 +885,28 @@ private struct AcrossTable: View {
     let holes: ClosedRange<Int>
     let activeHole: Int
     let ink: Color
+    let tracks: Bool
     var onSelect: (Int) -> Void
 
     @ScaledMetric(relativeTo: .caption) private var labelWidth: CGFloat = 52
     @ScaledMetric(relativeTo: .body) private var lineHeight: CGFloat = 32
 
-    private var columns: CardColumns { CardColumns(round) }
     private var totalLabel: String { holes.upperBound == 9 ? "Out" : "In" }
 
     var body: some View {
         VStack(spacing: 0) {
             // Header band: hole numbers
-            line(label: "Hole", background: ink, textColor: .white, labelFont: .caption2.weight(.semibold)) { hole in
+            line(label: "Hole", background: ink, textColor: .white) { hole in
                 Text("\(hole)").font(.callout.weight(.semibold)).foregroundStyle(.white)
             } total: {
                 Text(totalLabel).font(.caption2.weight(.semibold)).textCase(.uppercase).foregroundStyle(.white)
             }
 
-            if columns.yards {
+            if round.hasYards {
                 line(label: "Yds") { hole in cellText(round.yards(hole).map(String.init) ?? "") }
                     total: { cellText(round.yardTotal(holes).map(String.init) ?? "") }
             }
-            if columns.handicap {
+            if round.hasHandicaps {
                 line(label: "Hcp") { hole in cellText(round.handicap(hole).map(String.init) ?? "") }
                     total: { Text("") }
             }
@@ -719,6 +914,26 @@ private struct AcrossTable: View {
                 total: { cellText("\(round.parTotal(holes))") }
 
             scoreLine
+
+            if tracks {
+                line(label: "Putt") { hole in
+                    Text(round.putts(on: hole).map(String.init) ?? "")
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: 18))
+                        .foregroundStyle(BookletStyle.pencilGraphite)
+                } total: {
+                    Text(round.puttsTotal(holes).map(String.init) ?? "—")
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: 18))
+                        .foregroundStyle(BookletStyle.pencilGraphite)
+                }
+                line(label: "GIR") { hole in
+                    GreenDot(hit: round.greenInRegulation(on: hole), ink: ink)
+                } total: {
+                    let greens = round.greens(holes)
+                    Text(greens.known > 0 ? "\(greens.hit)" : "—")
+                        .font(.custom(BookletStyle.pencilFontName, fixedSize: 18))
+                        .foregroundStyle(BookletStyle.pencilGraphite)
+                }
+            }
         }
         .overlay(Rectangle().strokeBorder(ink, lineWidth: 1))
     }
@@ -732,13 +947,12 @@ private struct AcrossTable: View {
         label: String,
         background: Color = .clear,
         textColor: Color = .secondary,
-        labelFont: Font = .caption2.weight(.semibold),
         @ViewBuilder cell: @escaping (Int) -> Cell,
         @ViewBuilder total: () -> Total
     ) -> some View {
         HStack(spacing: 0) {
             Text(label)
-                .font(labelFont)
+                .font(.caption2.weight(.semibold))
                 .textCase(.uppercase)
                 .tracking(0.8)
                 .foregroundStyle(background == .clear ? ink : textColor)
@@ -774,11 +988,12 @@ private struct AcrossTable: View {
                             score: round.scores[hole - 1],
                             par: round.effectivePars[hole - 1],
                             side: min(proxy.size.width * 0.85, proxy.size.height * 0.6, 56),
-                            isActive: hole == activeHole
+                            isActive: hole == activeHole,
+                            accent: ink
                         )
                         .frame(width: proxy.size.width, height: proxy.size.height)
                     }
-                    .background(hole == activeHole ? Color.accentColor.opacity(0.16) : Color.clear)
+                    .background(hole == activeHole ? ink.opacity(0.16) : Color.clear)
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -796,6 +1011,7 @@ private struct AcrossTable: View {
                 .overlay(alignment: .leading) { Rectangle().fill(ink.opacity(0.25)).frame(width: 0.5) }
         }
         .frame(maxHeight: .infinity)
+        .overlay(alignment: .bottom) { Rectangle().fill(ink.opacity(0.25)).frame(height: 0.5) }
     }
 }
 
@@ -803,11 +1019,12 @@ private struct AcrossTable: View {
 
 /// Circle for under par, square for over par, doubled for two or more either way,
 /// in ink that reads at a glance: gold, green, graphite, orange, red.
-private struct ScoreMark: View {
+struct ScoreMark: View {
     let score: Int?
     let par: Int
     let side: CGFloat
     let isActive: Bool
+    var accent: Color = .accentColor
 
     var body: some View {
         ZStack {
@@ -829,7 +1046,7 @@ private struct ScoreMark: View {
             } else {
                 Image(systemName: "plus")
                     .font(.system(size: side * 0.32, weight: .medium))
-                    .foregroundStyle(isActive ? Color.accentColor : Color(.tertiaryLabel))
+                    .foregroundStyle(isActive ? accent : Color(.tertiaryLabel))
             }
         }
         .frame(width: side, height: side)
