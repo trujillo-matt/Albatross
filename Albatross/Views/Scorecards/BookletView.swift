@@ -543,56 +543,59 @@ private struct DownTable: View {
     let ink: Color
     var onSelect: (Int) -> Void
 
-    @State private var width: CGFloat = 0
-    @State private var rowsHeight: CGFloat = 0
-    @ScaledMetric(relativeTo: .body) private var minimumRowHeight: CGFloat = 40
+    @ScaledMetric(relativeTo: .body) private var minimumRowHeight: CGFloat = 28
     @ScaledMetric(relativeTo: .caption) private var bandHeight: CGFloat = 28
+    @ScaledMetric(relativeTo: .body) private var totalRowHeight: CGFloat = 36
 
     private var columns: CardColumns { CardColumns(round) }
+    private var totalRowCount: Int { holes.upperBound == 9 ? 1 : 2 }
 
-    private var widths: (hole: CGFloat, yards: CGFloat, handicap: CGFloat, par: CGFloat, score: CGFloat) {
+    private typealias Widths = (hole: CGFloat, yards: CGFloat, handicap: CGFloat, par: CGFloat, score: CGFloat)
+
+    private func widths(for width: CGFloat) -> Widths {
         let share = columns.shares
         let hole = width * share.hole, yards = width * share.yards
         let handicap = width * share.handicap, par = width * share.par
         return (hole, yards, handicap, par, max(0, width - hole - yards - handicap - par))
     }
 
-    /// Equal rows share the measured height, so the card fills the page.
-    private var rowHeight: CGFloat {
-        max(minimumRowHeight, rowsHeight / CGFloat(holes.count))
-    }
-
     var body: some View {
-        let w = widths
-        VStack(spacing: 0) {
-            // Header band
-            HStack(spacing: 0) {
-                band("Hole", width: w.hole)
-                if columns.yards { band("Yds", width: w.yards) }
-                if columns.handicap { band("Hcp", width: w.handicap) }
-                band("Par", width: w.par)
-                band("Score", width: w.score)
-            }
-            .frame(height: bandHeight)
-            .background(ink)
+        // The table is sized from the space the page offers, never from its own content,
+        // so it fills the page exactly and cannot overflow it.
+        GeometryReader { proxy in
+            let w = widths(for: proxy.size.width)
+            // Both pages reserve two footer rows, so front and back rows are the same height.
+            let rowsHeight = max(0, proxy.size.height - bandHeight - totalRowHeight * 2)
+            let rowHeight = max(minimumRowHeight, rowsHeight / CGFloat(holes.count))
 
-            ScrollView(.vertical) {
-                VStack(spacing: 0) {
-                    ForEach(Array(holes), id: \.self) { hole in
-                        row(hole, widths: w)
-                            .frame(height: rowHeight)
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    band("Hole", width: w.hole)
+                    if columns.yards { band("Yds", width: w.yards) }
+                    if columns.handicap { band("Hcp", width: w.handicap) }
+                    band("Par", width: w.par)
+                    band("Score", width: w.score)
+                }
+                .frame(height: bandHeight)
+                .background(ink, ignoresSafeAreaEdges: [])
+
+                // Rows fill the page; at large text sizes they keep a minimum and scroll.
+                ScrollView(.vertical) {
+                    VStack(spacing: 0) {
+                        ForEach(Array(holes), id: \.self) { hole in
+                            row(hole, widths: w)
+                                .frame(height: rowHeight)
+                        }
                     }
                 }
-            }
-            .scrollBounceBehavior(.basedOnSize)
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { rowsHeight = $0 }
+                .scrollBounceBehavior(.basedOnSize)
+                .frame(height: rowsHeight)
 
-            totals(widths: w)
+                totals(widths: w)
+            }
+            .overlay(Rectangle().strokeBorder(ink, lineWidth: 1))
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
-        // Take the full width first; the columns are sized from the width measured here.
-        .frame(maxWidth: .infinity)
-        .overlay(Rectangle().strokeBorder(ink, lineWidth: 1))
-        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
     }
 
     private func band(_ text: String, width: CGFloat) -> some View {
@@ -614,7 +617,7 @@ private struct DownTable: View {
             .overlay(alignment: .trailing) { Rectangle().fill(ink.opacity(0.25)).frame(width: 0.5) }
     }
 
-    private func row(_ hole: Int, widths w: (hole: CGFloat, yards: CGFloat, handicap: CGFloat, par: CGFloat, score: CGFloat)) -> some View {
+    private func row(_ hole: Int, widths w: Widths) -> some View {
         let isActive = hole == activeHole
         return Button { onSelect(hole) } label: {
             HStack(spacing: 0) {
@@ -645,7 +648,7 @@ private struct DownTable: View {
 
     /// Out on the front page; In and Total on the back, as printed on a card.
     @ViewBuilder
-    private func totals(widths w: (hole: CGFloat, yards: CGFloat, handicap: CGFloat, par: CGFloat, score: CGFloat)) -> some View {
+    private func totals(widths w: Widths) -> some View {
         VStack(spacing: 0) {
             if holes.upperBound == 9 {
                 totalRow("Out", holes: holes, widths: w)
@@ -654,11 +657,11 @@ private struct DownTable: View {
                 totalRow("Total", holes: 1...18, widths: w)
             }
         }
-        .background(ink.opacity(0.1))
+        .background(ink.opacity(0.1), ignoresSafeAreaEdges: [])
         .overlay(alignment: .top) { Rectangle().fill(ink).frame(height: 1) }
     }
 
-    private func totalRow(_ label: String, holes range: ClosedRange<Int>, widths w: (hole: CGFloat, yards: CGFloat, handicap: CGFloat, par: CGFloat, score: CGFloat)) -> some View {
+    private func totalRow(_ label: String, holes range: ClosedRange<Int>, widths w: Widths) -> some View {
         HStack(spacing: 0) {
             Text(label)
                 .font(.caption.weight(.semibold))
@@ -676,7 +679,7 @@ private struct DownTable: View {
         }
         .font(.callout)
         .monospacedDigit()
-        .frame(minHeight: 36)
+        .frame(height: totalRowHeight)
     }
 }
 
@@ -751,7 +754,7 @@ private struct AcrossTable: View {
                 .frame(height: lineHeight)
                 .overlay(alignment: .leading) { Rectangle().fill(ink.opacity(0.25)).frame(width: 0.5) }
         }
-        .background(background)
+        .background(background, ignoresSafeAreaEdges: [])
         .overlay(alignment: .bottom) { Rectangle().fill(ink.opacity(0.25)).frame(height: 0.5) }
     }
 
