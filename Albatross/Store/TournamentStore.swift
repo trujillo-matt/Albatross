@@ -24,9 +24,23 @@ final class TournamentStore: ObservableObject {
     private var draftChannel: RealtimeChannelV2? = nil
     private var standingsChannel: RealtimeChannelV2? = nil
 
+    #if DEBUG
+    /// True while the tournament demo data is showing. Loads that would replace it with cloud results are skipped.
+    private(set) var isShowingDemo = false
+
+    /// Fills the list with local data. Used by the tournament demo launch argument.
+    func seedForDemo(_ tournaments: [Tournament]) {
+        isShowingDemo = true
+        myTournaments = tournaments
+    }
+    #endif
+
     // MARK: - Load
 
     func loadMyTournaments() async {
+        #if DEBUG
+        if isShowingDemo { return }
+        #endif
         guard let userID = authStore?.currentProfile?.id else { return }
         isLoading = true
         defer { isLoading = false }
@@ -67,6 +81,9 @@ final class TournamentStore: ObservableObject {
     }
 
     func loadPendingInvites() async {
+        #if DEBUG
+        if isShowingDemo { return }
+        #endif
         guard let userID = authStore?.currentProfile?.id else { return }
         do {
             // Fetch tournament_players rows where I have a pending invite
@@ -154,6 +171,9 @@ final class TournamentStore: ObservableObject {
     // MARK: - Refresh single tournament
 
     func reload(_ tournamentID: UUID) async {
+        #if DEBUG
+        if isShowingDemo { return }
+        #endif
         guard let idx = myTournaments.firstIndex(where: { $0.id == tournamentID }) else { return }
         do {
             let base: Tournament = try await supabase

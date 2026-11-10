@@ -1,9 +1,14 @@
 import SwiftUI
 
+/// Who you are as a golfer: a membership card in your paper and ink, then friends, tournaments and settings.
 struct ProfileView: View {
     @EnvironmentObject private var authStore: AuthStore
     @EnvironmentObject private var roundStore: RoundStore
     @EnvironmentObject private var socialStore: SocialStore
+    @EnvironmentObject private var tournamentStore: TournamentStore
+    @EnvironmentObject private var appearance: CardAppearance
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @State private var showSettings = false
     @State private var showEditProfile = false
@@ -12,65 +17,39 @@ struct ProfileView: View {
     @State private var selectedProfile: UserProfile? = nil
     @State private var avatarImage: UIImage? = nil
 
-    // MARK: - Computed stats
-
     private var completedRounds: [Round] {
         roundStore.rounds.filter { $0.status == .completed }
-    }
-
-    private var bestScore: Int? {
-        completedRounds.map { $0.totalScore }.min()
-    }
-
-    private var averageScore: Double? {
-        guard !completedRounds.isEmpty else { return nil }
-        let total = completedRounds.map { $0.totalScore }.reduce(0, +)
-        return Double(total) / Double(completedRounds.count)
     }
 
     private var handicapIndex: Double? { Albatross.handicapIndex(for: completedRounds) }
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+            ScrollView {
+                VStack(spacing: 32) {
+                    membershipCard
 
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // ── Avatar + name ────────────────────────────────
-                        profileHeader
-                            .padding(.top, 24)
-                            .padding(.bottom, 24)
+                    friendsSection
 
-                        // ── Stats strip ──────────────────────────────────
-                        statsStrip
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 20)
+                    shortcutsSection
 
-                        // ── Handicap card ────────────────────────────────
-                        handicapCard
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 20)
-
-                        // ── Friends ──────────────────────────────────────
-                        friendsSection
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 20)
-
-                        // ── Actions ──────────────────────────────────────
-                        actionsSection
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 40)
+                    Button(role: .destructive) { showSignOutConfirm = true } label: {
+                        Text("Sign out")
+                            .font(.body)
+                            .foregroundStyle(Color(.systemRed))
+                            .frame(maxWidth: .infinity, minHeight: 44)
                     }
-                    .readableContentWidth()
+                    .buttonStyle(.pressFeedback)
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+                .readableContentWidth()
             }
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Profile")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button(action: { showSettings = true }) {
-                        Label("Settings", systemImage: "gearshape.fill")
-                    }
+                    Button("Edit") { showEditProfile = true }
                 }
             }
             .sheet(isPresented: $showSettings) {
@@ -91,364 +70,263 @@ struct ProfileView: View {
             .sheet(item: $selectedProfile) { profile in
                 UserProfileView(profile: profile)
             }
-            .confirmationDialog("Sign Out", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
-                Button("Sign Out", role: .destructive) { authStore.signOut() }
+            .confirmationDialog("Sign out", isPresented: $showSignOutConfirm, titleVisibility: .visible) {
+                Button("Sign out", role: .destructive) { authStore.signOut() }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("You'll need to sign in again to access your rounds.")
+                Text("You will need to sign in again to reach your rounds.")
             }
             .onAppear { loadAvatar() }
         }
     }
 
-    // MARK: - Profile header card
+    // MARK: - Membership card
 
-    private var profileHeader: some View {
+    /// The moment on this screen: a card printed on the player's paper in their ink,
+    /// with the handicap written in pencil, as on a scorecard.
+    private var membershipCard: some View {
         let profile = authStore.currentProfile
         let name = profile?.displayName ?? ""
         let username = profile?.username ?? ""
-        let homeCourse = profile?.homeCourse ?? ""
         let location = profile?.location ?? ""
+        let homeCourse = profile?.homeCourse ?? ""
+        let paper = appearance.paper.color ?? CardAppearance.cream
+        let ink = appearance.accent.color ?? CardAppearance.fairway
 
-        return VStack(spacing: 12) {
-            // ── Dark green card ──────────────────────────────────────────
-            ZStack(alignment: .topTrailing) {
-                HStack(alignment: .top, spacing: 16) {
-                    // Avatar — tall rounded rectangle
-                    ZStack {
-                        if let img = avatarImage {
-                            Image(uiImage: img)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 110, height: 130)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        } else {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color.white.opacity(0.12))
-                                .frame(width: 110, height: 130)
-                                .overlay(
-                                    Text(initialsFromName(name))
-                                        .font(.largeTitle.weight(.semibold))
-                                        .foregroundStyle(.white.opacity(0.85))
-                                )
-                        }
+        return VStack(alignment: .leading, spacing: 20) {
+            HStack(alignment: .top, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(name.isEmpty ? "Your name" : name)
+                        .font(.title2.weight(.medium))
+                        .foregroundStyle(ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                    if !username.isEmpty {
+                        Text("@\(username)")
+                            .font(.subheadline)
+                            .foregroundStyle(ink.opacity(0.75))
                     }
-
-                    // Name, username, location
-                    VStack(alignment: .leading, spacing: 4) {
-                        // Split name across two lines if it contains a space
-                        let parts = name.split(separator: " ", maxSplits: 1)
-                        if parts.count == 2 {
-                            VStack(alignment: .leading, spacing: 0) {
-                                Text(String(parts[0]))
-                                    .font(.title.weight(.semibold))
-                                    .foregroundStyle(.white)
-                                Text(String(parts[1]))
-                                    .font(.title.weight(.semibold))
-                                    .foregroundStyle(.white)
-                            }
-                        } else {
-                            Text(name.isEmpty ? "—" : name)
-                                .font(.title.weight(.semibold))
-                                .foregroundStyle(.white)
-                        }
-
-                        if !username.isEmpty {
-                            Text("@\(username)")
-                                .font(.footnote)
-                                .foregroundStyle(.white.opacity(0.6))
-                        }
-
-                        if !location.isEmpty {
-                            HStack(spacing: 3) {
-                                Image(systemName: "mappin.circle.fill")
-                                    .scaledFont(size: 11)
-                                    .foregroundStyle(.white.opacity(0.5))
-                                Text(location)
-                                    .font(.caption)
-                                    .foregroundStyle(.white.opacity(0.55))
-                            }
-                            .padding(.top, 2)
-                        }
+                    if !location.isEmpty {
+                        Text(location)
+                            .font(.footnote)
+                            .foregroundStyle(ink.opacity(0.65))
                     }
-                    .padding(.top, 6)
-
-                    Spacer()
                 }
-                .padding(18)
-
-                // Home course badge (top right corner)
-                VStack(spacing: 4) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.white.opacity(0.12))
-                            .frame(width: 52, height: 52)
-                        Image(systemName: "flag.fill")
-                            .scaledFont(size: 20, weight: .medium)
-                            .foregroundStyle(.white.opacity(0.7))
-                    }
-                    Text(homeCourse.isEmpty ? "Home Course" : homeCourse)
-                        .font(.caption2)
-                        .foregroundStyle(.white.opacity(homeCourse.isEmpty ? 0.35 : 0.65))
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .frame(width: 64)
-                }
-                .padding(.top, 18)
-                .padding(.trailing, 18)
+                Spacer(minLength: 8)
+                avatar(ink: ink)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.accentColor)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-            // ── Edit Profile pill (below card) ───────────────────────────
-            Button(action: { showEditProfile = true }) {
-                Text("Edit Profile")
-                    .font(.subheadline)
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 7)
-                    .background(Color.accentColor.opacity(0.1))
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.pressFeedback)
-        }
-    }
+            Rectangle()
+                .fill(ink.opacity(0.3))
+                .frame(height: 0.5)
 
-    // MARK: - Stats strip
-
-    private var statsStrip: some View {
-        HStack(spacing: 0) {
-            statItem(label: "Rounds", value: "\(completedRounds.count)")
-            Divider().frame(height: 32)
-            statItem(label: "Best", value: bestScore.map { "\($0)" } ?? "—")
-            Divider().frame(height: 32)
-            statItem(label: "Average", value: averageScore.map { String(format: "%.1f", $0) } ?? "—")
-        }
-        .padding(.vertical, 14)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
-    }
-
-    private func statItem(label: String, value: String) -> some View {
-        VStack(spacing: 3) {
-            Text(value)
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(.primary)
-            Text(label)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Handicap card
-
-    private var handicapCard: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Handicap Index")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-
-            HStack(alignment: .lastTextBaseline, spacing: 6) {
-                if let hcp = handicapIndex {
-                    Text(String(format: "%.1f", hcp))
-                        .scaledFont(size: 40, weight: .semibold)
-                        .foregroundStyle(.primary)
-                    Text("HCP")
+            HStack(alignment: .bottom, spacing: 16) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Home course")
+                        .font(.caption)
+                        .foregroundStyle(ink.opacity(0.65))
+                    Text(homeCourse.isEmpty ? "Not set" : homeCourse)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.bottom, 4)
-                } else {
-                    Text("—")
-                        .scaledFont(size: 40, weight: .semibold)
-                        .foregroundStyle(.secondary)
-                    Text(completedRounds.count < 3 ? "Need \(3 - completedRounds.count) more rounds" : "HCP")
-                        .font(.footnote)
-                        .foregroundStyle(.tertiary)
-                        .padding(.bottom, 4)
+                        .foregroundStyle(ink)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 8)
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(handicapIndex.map { String(format: "%.1f", $0) } ?? "—")
+                        .font(.custom(BookletStyle.pencilFontName, size: 44))
+                        .foregroundStyle(BookletStyle.pencilGraphite)
+                    Text(handicapIndex == nil ? "Needs 3 rounds" : "Handicap index")
+                        .font(.caption)
+                        .foregroundStyle(ink.opacity(0.65))
                 }
             }
         }
+        .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .background(paper, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(ink.opacity(0.45), lineWidth: 1)
+                .padding(4)
+        }
+        .accessibilityElement(children: .combine)
     }
 
-    // MARK: - Friends section
+    @ViewBuilder
+    private func avatar(ink: Color) -> some View {
+        let name = authStore.currentProfile?.displayName ?? ""
+        Group {
+            if let avatarImage {
+                Image(uiImage: avatarImage)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                ZStack {
+                    ink.opacity(0.12)
+                    Text(initialsFromName(name))
+                        .font(.title3.weight(.medium))
+                        .foregroundStyle(ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                }
+            }
+        }
+        .frame(width: 56, height: 56)
+        .clipShape(Circle())
+        .overlay(Circle().strokeBorder(ink.opacity(0.35), lineWidth: 0.5))
+        .accessibilityHidden(true)
+    }
+
+    // MARK: - Friends
 
     private var friendsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
-            HStack {
+            (dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+                : AnyLayout(HStackLayout(alignment: .firstTextBaseline))) {
                 Text("Friends")
-                    .font(.body.weight(.semibold))
+                    .font(.title3.weight(.medium))
+                    .accessibilityAddTraits(.isHeader)
+                if !dynamicTypeSize.isAccessibilitySize { Spacer() }
+                Text("\(socialStore.following.count) following · \(socialStore.followers.count) followers")
+                    .font(.footnote.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
 
-                Spacer()
-
-                // Follower / Following counts
-                HStack(spacing: 12) {
-                    VStack(spacing: 0) {
-                        Text("\(socialStore.followers.count)")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
-                        Text("Followers")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+            VStack(spacing: 0) {
+                ForEach(socialStore.following) { profile in
+                    Button { selectedProfile = profile } label: {
+                        friendRow(profile: profile)
                     }
-                    VStack(spacing: 0) {
-                        Text("\(socialStore.following.count)")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
-                        Text("Following")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                    .buttonStyle(.pressFeedback)
+                    Divider().padding(.leading, 64)
                 }
-
-                // Find Friends button
-                Button(action: { showUserSearch = true }) {
-                    Image(systemName: "magnifyingglass")
-                        .accessibilityLabel("Find Friends")
-                        .scaledFont(size: 14, weight: .semibold)
-                        .foregroundStyle(Color.accentColor)
-                        .padding(8)
-                        .background(Color.accentColor.opacity(0.1))
-                        .clipShape(Circle())
+                Button { showUserSearch = true } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.badge.plus")
+                            .frame(width: 40)
+                            .foregroundStyle(Color.accentColor)
+                        Text("Find friends")
+                            .font(.body)
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 52)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.pressFeedback)
             }
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-
-            if socialStore.following.isEmpty {
-                // Empty state
-                VStack(spacing: 8) {
-                    Image(systemName: "person.2.circle")
-                        .scaledFont(size: 32)
-                        .foregroundStyle(Color.accentColor.opacity(0.35))
-                    Text("Follow friends to see them here")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    Button(action: { showUserSearch = true }) {
-                        Text("Find Friends")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(Color.accentColor)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 6)
-                            .background(Color.accentColor.opacity(0.1))
-                            .clipShape(Capsule())
-                    }
-                    .buttonStyle(.pressFeedback)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-                .padding(.bottom, 4)
-            } else {
-                // Following list
-                VStack(spacing: 0) {
-                    ForEach(socialStore.following) { profile in
-                        Button(action: { selectedProfile = profile }) {
-                            friendRow(profile: profile)
-                        }
-                        .buttonStyle(.pressFeedback)
-
-                        if profile.id != socialStore.following.last?.id {
-                            Divider().padding(.leading, 60)
-                        }
-                    }
-                }
-                .padding(.bottom, 4)
-            }
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
     }
 
     private func friendRow(profile: UserProfile) -> some View {
         HStack(spacing: 12) {
-            // Avatar circle
-            ZStack {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.15))
-                    .frame(width: 40, height: 40)
-                Text(initials(for: profile.displayName))
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.accentColor)
-            }
+            Text(initialsFromName(profile.displayName))
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(Color.accentColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                .frame(width: 40, height: 40)
+                .background(Color.accentColor.opacity(0.12), in: Circle())
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(profile.displayName)
-                    .font(.subheadline.weight(.medium))
+                    .font(.body)
                     .foregroundStyle(.primary)
                 if let username = profile.username, !username.isEmpty {
                     Text("@\(username)")
-                        .font(.caption)
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
             }
 
             Spacer()
 
-            // Latest round score from feed
             if let latest = socialStore.friendsFeed.first(where: { $0.profile.id == profile.id }) {
-                let diff = latest.round.totalScore - latest.round.effectivePars.reduce(0, +)
+                let difference = latest.round.totalScore - latest.round.effectivePars.reduce(0, +)
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("\(latest.round.totalScore)")
-                        .font(.callout.weight(.semibold))
+                        .font(.callout.weight(.medium).monospacedDigit())
                         .foregroundStyle(.primary)
-                    Text(diff == 0 ? "E" : diff > 0 ? "+\(diff)" : "\(diff)")
-                        .font(.caption2)
-                        .foregroundStyle(diff < 0 ? .green : diff == 0 ? .secondary : .red)
+                    Text(difference == 0 ? "E" : difference > 0 ? "+\(difference)" : "\(difference)")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(BookletStyle.adaptiveInk(forDifference: difference == 0 ? 0 : (difference < 0 ? -1 : 2)))
                 }
             }
 
             Image(systemName: "chevron.right")
-                .scaledFont(size: 12, weight: .semibold)
+                .font(.footnote.weight(.semibold))
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .frame(minHeight: 60)
         .contentShape(Rectangle())
     }
 
-    private func initials(for name: String) -> String {
-        let parts = name.split(separator: " ")
-        return parts.compactMap { $0.first.map(String.init) }.prefix(2).joined()
+    // MARK: - Tournaments and settings
+
+    private var shortcutsSection: some View {
+        VStack(spacing: 0) {
+            NavigationLink {
+                ScrollView { TournamentListView() }
+                    .background(Color(.systemGroupedBackground))
+                    .navigationTitle("Tournaments")
+                    .navigationBarTitleDisplayMode(.inline)
+            } label: {
+                shortcutRow(
+                    title: "Tournaments",
+                    detail: tournamentStore.myTournaments.isEmpty ? nil : "\(tournamentStore.myTournaments.count)",
+                    systemImage: "flag.2.crossed")
+            }
+            .buttonStyle(.pressFeedback)
+
+            Divider().padding(.leading, 64)
+
+            Button { showSettings = true } label: {
+                shortcutRow(title: "Settings", detail: nil, systemImage: "gearshape")
+            }
+            .buttonStyle(.pressFeedback)
+        }
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
-    // MARK: - Actions section
-
-    private var actionsSection: some View {
-        VStack(spacing: 0) {
-            Button(role: .destructive, action: { showSignOutConfirm = true }) {
-                HStack {
-                    Spacer()
-                    Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                        .font(.callout)
-                    Spacer()
-                }
-                .padding(.vertical, 15)
-                .background(Color(.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+    private func shortcutRow(title: String, detail: String?, systemImage: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .frame(width: 40)
+                .foregroundStyle(Color.accentColor)
+            Text(title)
+                .font(.body)
+                .foregroundStyle(.primary)
+            Spacer()
+            if let detail {
+                Text(detail)
+                    .font(.body.monospacedDigit())
+                    .foregroundStyle(.secondary)
             }
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
+        .padding(.horizontal, 16)
+        .frame(minHeight: 52)
+        .contentShape(Rectangle())
     }
 
     // MARK: - Helpers
 
     private func loadAvatar() {
         if let data = try? Data(contentsOf: UserProfile.localAvatarURL),
-           let img = UIImage(data: data) {
-            avatarImage = img
+           let image = UIImage(data: data) {
+            avatarImage = image
         } else {
             avatarImage = nil
         }

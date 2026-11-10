@@ -69,3 +69,51 @@ final class AlbatrossUITests: XCTestCase {
         XCTAssertTrue(finish.waitForExistence(timeout: 8), "Finish Round (1/18) not found\n\(app.debugDescription)")
     }
 }
+
+/// Runs against the made-up tournament that a Debug build shows with `-demo-tournament`.
+final class AlbatrossTournamentUITests: XCTestCase {
+
+    private var app: XCUIApplication!
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launchArguments += ["-demo-tournament"]
+        app.launch()
+    }
+
+    @MainActor
+    func testDemoTournamentOpens() throws {
+        XCTAssertTrue(app.buttons["Scorecards"].firstMatch.waitForExistence(timeout: 20))
+        app.buttons["Scorecards"].firstMatch.tap()
+
+        let card = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Reynolds Cup'")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "The demo tournament is not on the shelf")
+        card.tap()
+
+        XCTAssertTrue(app.navigationBars["Reynolds Cup"].waitForExistence(timeout: 8), app.debugDescription)
+    }
+
+    /// Opens the first match and starts its scorecard: the booklet, not the old scorecard.
+    @MainActor
+    func testDemoMatchOpensBooklet() throws {
+        XCTAssertTrue(app.buttons["Scorecards"].firstMatch.waitForExistence(timeout: 20))
+        app.buttons["Scorecards"].firstMatch.tap()
+        let card = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Reynolds Cup'")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 10))
+        card.tap()
+        XCTAssertTrue(app.navigationBars["Reynolds Cup"].waitForExistence(timeout: 8))
+
+        let match = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Match 1' OR label CONTAINS 'Matchup 1'")).firstMatch
+        XCTAssertTrue(match.waitForExistence(timeout: 5), app.debugDescription)
+        match.tap()
+
+        // A match that was started on an earlier run says "Resume" instead of "Enter".
+        let enter = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Enter Scorecard' OR label CONTAINS 'Resume Scorecard'")).firstMatch
+        XCTAssertTrue(enter.waitForExistence(timeout: 8), app.debugDescription)
+        enter.tap()
+
+        // The booklet's cover says to swipe; the pencil strip appears once the card is open.
+        XCTAssertTrue(app.staticTexts["Swipe to open"].waitForExistence(timeout: 10) || app.buttons["Hole 1, par 4"].firstMatch.waitForExistence(timeout: 2), app.debugDescription)
+    }
+}

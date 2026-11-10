@@ -22,6 +22,13 @@ final class AuthStore: ObservableObject {
         Task { await restoreSession() }
     }
 
+    #if DEBUG
+    /// Stands in for a signed-in profile so tournament screens can be tried without a cloud account.
+    func seedDemoProfile(_ profile: UserProfile) {
+        currentProfile = profile
+    }
+    #endif
+
     // MARK: - Session restore
 
     private func restoreSession() async {

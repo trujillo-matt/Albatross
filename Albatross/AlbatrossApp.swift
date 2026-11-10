@@ -90,6 +90,12 @@ struct AlbatrossApp: App {
                 socialStore.authStore = authStore
                 tournamentStore.authStore = authStore
                 #if DEBUG
+                // Launching with -demo-tournament shows a made-up tournament without a cloud account.
+                if CommandLine.arguments.contains(TournamentDemo.launchArgument) {
+                    authStore.seedDemoProfile(TournamentDemo.me)
+                    tournamentStore.installDemoTournament()
+                    socialStore.installDemoFriends()
+                }
                 // UI tests launch with this argument to start from one empty in-progress round.
                 if CommandLine.arguments.contains("-uitest-seed-round"),
                    !roundStore.rounds.contains(where: { $0.courseName == "UI Test Course" }) {

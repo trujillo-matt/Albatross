@@ -14,7 +14,16 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab("Clubhouse", systemImage: "house.fill", value: 0) {
-                HomeView()
+                HomeView(
+                    onOpenRound: { roundID in
+                        selectedTab = 1
+                        pendingRoundID = roundID
+                    },
+                    onNewRound: {
+                        selectedTab = 1
+                        pendingNewRound = true
+                    }
+                )
             }
 
             Tab("Scorecards", systemImage: "list.clipboard.fill", value: 1) {

@@ -1,31 +1,57 @@
 import SwiftUI
 
+/// The Clubhouse: where your golf starts. The round you are in, your tournaments, then friends.
 struct HomeView: View {
+    @EnvironmentObject private var roundStore: RoundStore
+    @EnvironmentObject private var tournamentStore: TournamentStore
     @EnvironmentObject private var socialStore: SocialStore
+
+    /// Opens a round's booklet on the Scorecards tab.
+    var onOpenRound: (UUID) -> Void
+    /// Opens the new round sheet on the Scorecards tab.
+    var onNewRound: () -> Void
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     @State private var showUserSearch = false
     @State private var selectedProfile: UserProfile? = nil
-    @State private var isRefreshing = false
+
+    /// Side by side normally; stacked at the largest text sizes, where the course name would break mid-word.
+    private var continueLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 16))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
+    }
+
+    private var roundInProgress: Round? {
+        roundStore.rounds
+            .filter { $0.status == .inProgress && $0.tournamentMatchupID == nil }
+            .max { $0.date < $1.date }
+    }
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 32) {
+                    continueSection
 
-                if socialStore.isLoadingFeed && socialStore.friendsFeed.isEmpty {
-                    ProgressView()
-                } else if socialStore.following.isEmpty {
-                    emptyFollowingState
-                } else if socialStore.friendsFeed.isEmpty {
-                    emptyFeedState
-                } else {
-                    feedList
+                    if !tournamentStore.myTournaments.isEmpty {
+                        tournamentsSection
+                    }
+
+                    friendsSection
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+                .readableContentWidth()
             }
+            .background(Color(.systemGroupedBackground))
+            .refreshable { await socialStore.loadFeed() }
             .navigationTitle("Clubhouse")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showUserSearch = true }) {
-                        Label("Find Friends", systemImage: "person.badge.plus")
+                        Label("Find friends", systemImage: "person.badge.plus")
                     }
                 }
             }
@@ -38,69 +64,172 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Empty states
+    // MARK: - Sections
 
-    private var emptyFollowingState: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "person.2.circle")
-                .scaledFont(size: 56)
-                .foregroundStyle(Color.accentColor.opacity(0.4))
-            Text("Follow friends to see their rounds here")
-                .font(.body.weight(.semibold))
-                .multilineTextAlignment(.center)
-            Text("Find golfers you know and follow them to see their scores in your feed.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-            Button(action: { showUserSearch = true }) {
-                Text("Find Friends")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color.accentColor)
-                    .clipShape(Capsule())
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.title3.weight(.medium))
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    /// The moment on this screen: the round you are in, drawn as its booklet cover.
+    @ViewBuilder
+    private var continueSection: some View {
+        if let round = roundInProgress {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader("Continue")
+                continueLayout {
+                    CourseCoverView(round: round)
+                        .frame(height: 144)
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(round.courseName)
+                            .font(.headline)
+                        Text(progressText(for: round))
+                            .font(.subheadline.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                        Button { onOpenRound(round.id) } label: {
+                            Text("Resume round")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 16)
+                                .frame(minHeight: 44)
+                                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .buttonStyle(.pressFeedback)
+                        .padding(.top, 8)
+                    }
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
-            .buttonStyle(.pressFeedback)
+        } else {
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader("Continue")
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("No round in progress")
+                        .font(.headline)
+                    Text("Start one and it waits here until you pick it back up.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Button(action: onNewRound) {
+                        Text("Start a round")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 16)
+                            .frame(minHeight: 44)
+                            .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.pressFeedback)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            }
         }
-        .padding(40)
     }
 
-    private var emptyFeedState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "flag.slash")
-                .scaledFont(size: 48)
-                .foregroundStyle(.tertiary)
-            Text("No rounds yet")
-                .font(.body.weight(.semibold))
-            Text("Your friends haven't posted any completed rounds yet.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-        }
-        .padding(40)
-    }
-
-    // MARK: - Feed list
-
-    private var feedList: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                ForEach(socialStore.friendsFeed) { item in
-                    FeedItemCard(item: item) {
-                        selectedProfile = item.profile
+    private var tournamentsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("Tournaments")
+            VStack(spacing: 0) {
+                ForEach(Array(tournamentStore.myTournaments.enumerated()), id: \.element.id) { index, tournament in
+                    NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
+                        tournamentRow(tournament)
+                    }
+                    .buttonStyle(.pressFeedback)
+                    if index < tournamentStore.myTournaments.count - 1 {
+                        Divider().padding(.leading, 16)
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
-            .readableContentWidth()
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
-        .refreshable {
-            await socialStore.loadFeed()
+    }
+
+    private func tournamentRow(_ tournament: Tournament) -> some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(tournament.status == .active ? Color.accentColor : Color.secondary.opacity(0.4))
+                .frame(width: 8, height: 8)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(tournament.name)
+                    .font(.body.weight(.medium))
+                    .foregroundStyle(.primary)
+                Text("\(tournament.matchType.displayName) · \(tournament.totalMatches) matches")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
+        .padding(.horizontal, 16)
+        .frame(minHeight: 60)
+        .contentShape(Rectangle())
+    }
+
+    private var friendsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("Friends")
+
+            if socialStore.isLoadingFeed && socialStore.friendsFeed.isEmpty {
+                ProgressView()
+                    .frame(maxWidth: .infinity, minHeight: 80)
+            } else if socialStore.following.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Follow friends to see their rounds here")
+                        .font(.headline)
+                    Text("Find golfers you know and their scores show up in this feed.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Button { showUserSearch = true } label: {
+                        Text("Find friends")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(Color.accentColor)
+                            .padding(.horizontal, 16)
+                            .frame(minHeight: 44)
+                            .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
+                    .buttonStyle(.pressFeedback)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            } else if socialStore.friendsFeed.isEmpty {
+                Text("Your friends have not posted a round yet")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            } else {
+                LazyVStack(spacing: 16) {
+                    ForEach(socialStore.friendsFeed) { item in
+                        FeedItemCard(item: item) {
+                            selectedProfile = item.profile
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Helpers
+
+    /// "3 of 18 holes · +1": holes entered and where the round stands against par so far.
+    private func progressText(for round: Round) -> String {
+        guard round.holesPlayed > 0 else { return "Not started" }
+        let difference = zip(round.scores, round.effectivePars).reduce(0) { total, hole in
+            guard let score = hole.0 else { return total }
+            return total + score - hole.1
+        }
+        let toPar = difference == 0 ? "E" : difference > 0 ? "+\(difference)" : "\(difference)"
+        return "\(round.holesPlayed) of 18 holes · \(toPar)"
     }
 }
 
@@ -238,6 +367,9 @@ struct FeedItemCard: View {
 }
 
 #Preview {
-    HomeView()
+    HomeView(onOpenRound: { _ in }, onNewRound: {})
+        .environmentObject(RoundStore())
+        .environmentObject(TournamentStore())
         .environmentObject(SocialStore())
+        .environmentObject(CardAppearance())
 }
