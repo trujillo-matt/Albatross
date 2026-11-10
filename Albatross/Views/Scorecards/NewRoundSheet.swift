@@ -50,9 +50,9 @@ struct NewRoundSheet: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
                                 .background(Color.accentColor.opacity(0.08))
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressFeedback)
                         .padding(.horizontal, 20)
                         .padding(.bottom, 8)
 
@@ -89,7 +89,7 @@ struct NewRoundSheet: View {
                     }
                     .padding(28)
                     .background(Color.black.opacity(0.7))
-                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 }
             }
             .navigationTitle("New Round")
@@ -205,13 +205,13 @@ struct NewRoundSheet: View {
                     .frame(width: 26, height: 26)
                     .overlay(
                         Image(systemName: "camera.fill")
-                            .font(.system(size: 11, weight: .medium))
+                            .scaledFont(size: 11, weight: .medium)
                             .foregroundStyle(Color.accentColor)
                     )
                     .offset(x: 4, y: 4)
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressFeedback)
     }
 
     // MARK: - Manual entry
@@ -231,7 +231,7 @@ struct NewRoundSheet: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
                         .background(Color(.secondarySystemGroupedBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .focused($manualFieldFocused)
                         .submitLabel(.done)
                         .onSubmit { manualFieldFocused = false }
@@ -252,7 +252,7 @@ struct NewRoundSheet: View {
                         parNineSection(title: "Back 9", range: 9..<18)
                     }
                     .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .padding(.horizontal, 20)
                 }
 
@@ -268,7 +268,7 @@ struct NewRoundSheet: View {
                                 : Color.accentColor
                         )
                         .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .disabled(manualCourseName.trimmingCharacters(in: .whitespaces).isEmpty)
                 .padding(.horizontal, 20)
@@ -316,56 +316,36 @@ struct NewRoundSheet: View {
         }
     }
 
+    /// One menu per hole in place of two tiny steppers: a tap opens 3, 4 or 5 under the thumb.
     private func parCell(index: Int) -> some View {
-        VStack(spacing: 3) {
-            // UP = increment
-            Button(action: { if manualPars[index] < 5 { manualPars[index] += 1 } }) {
-                Image(systemName: "chevron.up")
-                    .accessibilityLabel("Increase par, hole \(index + 1)")
-                    .font(.system(size: 8, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4)
-                    .background(Color(.tertiarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                    .foregroundStyle(manualPars[index] < 5 ? Color.accentColor : Color(.tertiaryLabel))
+        Menu {
+            Picker("Par, hole \(index + 1)", selection: $manualPars[index]) {
+                ForEach(3...5, id: \.self) { par in Text("Par \(par)").tag(par) }
             }
-            .buttonStyle(.plain)
-
+        } label: {
             Text("\(manualPars[index])")
-                .font(.subheadline.weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 5)
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .frame(maxWidth: .infinity, minHeight: 44)
                 .background(parCellBackground(manualPars[index]))
                 .foregroundStyle(parCellForeground(manualPars[index]))
-                .clipShape(RoundedRectangle(cornerRadius: 4))
-
-            // DOWN = decrement
-            Button(action: { if manualPars[index] > 3 { manualPars[index] -= 1 } }) {
-                Image(systemName: "chevron.down")
-                    .accessibilityLabel("Decrease par, hole \(index + 1)")
-                    .font(.system(size: 8, weight: .semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 4)
-                    .background(Color(.tertiarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                    .foregroundStyle(manualPars[index] > 3 ? Color.accentColor : Color(.tertiaryLabel))
-            }
-            .buttonStyle(.plain)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
+        .accessibilityLabel("Par, hole \(index + 1)")
+        .accessibilityValue("\(manualPars[index])")
     }
 
     private func parCellBackground(_ par: Int) -> Color {
         switch par {
-        case 3: return Color.blue.opacity(0.10)
-        case 5: return Color.orange.opacity(0.10)
+        case 3: return Color.secondary.opacity(0.10)
+        case 5: return Color.primary.opacity(0.10)
         default: return Color.accentColor.opacity(0.08)
         }
     }
 
     private func parCellForeground(_ par: Int) -> Color {
         switch par {
-        case 3: return Color.blue
-        case 5: return Color.orange
+        case 3: return Color.secondary
+        case 5: return Color.primary
         default: return Color.accentColor
         }
     }

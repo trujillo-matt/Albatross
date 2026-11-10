@@ -54,13 +54,13 @@ struct EditRoundSheet: View {
                                     .frame(width: 26, height: 26)
                                     .overlay(
                                         Image(systemName: "camera.fill")
-                                            .font(.system(size: 11, weight: .medium))
+                                            .scaledFont(size: 11, weight: .medium)
                                             .foregroundStyle(Color.accentColor)
                                     )
                                     .offset(x: 4, y: 4)
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressFeedback)
                         Spacer()
                     }
                     .listRowBackground(Color.clear)
@@ -123,7 +123,7 @@ struct EditRoundSheet: View {
                         HStack(spacing: 8) {
                             Image(systemName: "info.circle")
                                 .foregroundStyle(.secondary)
-                                .font(.system(size: 14))
+                                .scaledFont(size: 14)
                             Text("Pars were loaded from the course database. Any changes you make here will override them for this round only.")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
@@ -184,54 +184,36 @@ struct EditRoundSheet: View {
         .padding(.vertical, 6)
     }
 
+    /// One menu per hole in place of two tiny steppers: a tap opens 3, 4 or 5 under the thumb.
     private func parCell(index: Int) -> some View {
-        VStack(spacing: 4) {
-            // UP = increment
-            Button(action: { if pars[index] < 5 { pars[index] += 1 } }) {
-                Image(systemName: "chevron.up")
-                    .accessibilityLabel("Increase par, hole \(index + 1)")
-                    .font(.system(size: 9, weight: .semibold))
-                    .frame(width: 22, height: 16)
-                    .background(Color(.tertiarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                    .foregroundStyle(pars[index] < 5 ? Color.accentColor : Color(.tertiaryLabel))
+        Menu {
+            Picker("Par, hole \(index + 1)", selection: $pars[index]) {
+                ForEach(3...5, id: \.self) { par in Text("Par \(par)").tag(par) }
             }
-            .buttonStyle(.plain)
-
+        } label: {
             Text("\(pars[index])")
-                .font(.subheadline.weight(.semibold))
-                .frame(width: 22, height: 20)
+                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .frame(maxWidth: .infinity, minHeight: 44)
                 .background(parBackground(pars[index]))
-                .clipShape(RoundedRectangle(cornerRadius: 4))
                 .foregroundStyle(parForeground(pars[index]))
-
-            // DOWN = decrement
-            Button(action: { if pars[index] > 3 { pars[index] -= 1 } }) {
-                Image(systemName: "chevron.down")
-                    .accessibilityLabel("Decrease par, hole \(index + 1)")
-                    .font(.system(size: 9, weight: .semibold))
-                    .frame(width: 22, height: 16)
-                    .background(Color(.tertiarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
-                    .foregroundStyle(pars[index] > 3 ? Color.accentColor : Color(.tertiaryLabel))
-            }
-            .buttonStyle(.plain)
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
-        .frame(maxWidth: .infinity)
+        .accessibilityLabel("Par, hole \(index + 1)")
+        .accessibilityValue("\(pars[index])")
     }
 
     private func parBackground(_ par: Int) -> Color {
         switch par {
-        case 3: return Color.blue.opacity(0.12)
-        case 5: return Color.orange.opacity(0.12)
+        case 3: return Color.secondary.opacity(0.12)
+        case 5: return Color.primary.opacity(0.12)
         default: return Color.accentColor.opacity(0.10)
         }
     }
 
     private func parForeground(_ par: Int) -> Color {
         switch par {
-        case 3: return Color.blue
-        case 5: return Color.orange
+        case 3: return Color.secondary
+        case 5: return Color.primary
         default: return Color.accentColor
         }
     }

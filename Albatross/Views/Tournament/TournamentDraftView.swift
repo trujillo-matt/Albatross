@@ -127,7 +127,7 @@ struct TournamentDraftView: View {
             // Vote tally
             HStack(spacing: 6) {
                 Image(systemName: "person.2.fill")
-                    .font(.system(size: 13))
+                    .scaledFont(size: 13)
                     .foregroundStyle(Color.accentColor)
                 Text("\(uniqueVoterCount) of \(acceptedPlayers.count) players voted")
                     .font(.footnote)
@@ -192,7 +192,7 @@ struct TournamentDraftView: View {
                     .padding(.vertical, 10)
                     .background(Color(.secondarySystemGroupedBackground))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
                 .disabled(alreadyVoted)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 4)
@@ -213,9 +213,9 @@ struct TournamentDraftView: View {
                     .padding(.vertical, 14)
                     .background(selectedNominees.count == 2 ? Color.accentColor : Color(.systemFill))
                     .foregroundStyle(selectedNominees.count == 2 ? .white : .secondary)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
                 .disabled(selectedNominees.count < 2 || isSubmittingVote)
                 .padding(.horizontal, 16)
                 .padding(.top, 20)
@@ -254,9 +254,9 @@ struct TournamentDraftView: View {
                         .padding(.vertical, 12)
                         .background(Color.accentColor.opacity(0.15))
                         .foregroundStyle(Color.accentColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
                     .disabled(isFinalizingCaptains)
                 }
                 .padding(.horizontal, 16)
@@ -316,7 +316,7 @@ struct TournamentDraftView: View {
                             .padding(.vertical, 10)
                             .background(Color(.secondarySystemGroupedBackground))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressFeedback)
                         .padding(.horizontal, 16)
                         .padding(.bottom, 4)
                     }
@@ -365,9 +365,9 @@ struct TournamentDraftView: View {
                     .padding(.vertical, 14)
                     .background(Color.accentColor)
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
                 .disabled(isStartingTournament)
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -433,9 +433,9 @@ struct TournamentDraftView: View {
                 ? Color.green.opacity(0.06)
                 : Color(.secondarySystemGroupedBackground)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(isOnClock ? Color.green.opacity(0.4) : Color(.separator).opacity(0.3), lineWidth: isOnClock ? 1.5 : 0.5)
         )
     }
@@ -456,7 +456,7 @@ struct TournamentDraftView: View {
                         .background(Color.accentColor)
                         .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
             }
             if let tB = teamB {
                 Button(action: { overridePick(player, to: tB) }) {
@@ -468,13 +468,13 @@ struct TournamentDraftView: View {
                         .background(Color.blue)
                         .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
             }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     // MARK: - Subviews

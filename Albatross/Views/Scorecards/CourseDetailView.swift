@@ -64,7 +64,7 @@ struct CourseDetailView: View {
 
             // Subtle flag watermark
             Image(systemName: "flag.fill")
-                .font(.system(size: 80))
+                .scaledFont(size: 80)
                 .foregroundStyle(.white.opacity(0.06))
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.trailing, 24)
@@ -79,7 +79,7 @@ struct CourseDetailView: View {
                 if let loc = location {
                     HStack(spacing: 4) {
                         Image(systemName: "mappin.circle.fill")
-                            .font(.system(size: 12))
+                            .scaledFont(size: 12)
                             .foregroundStyle(.white.opacity(0.6))
                         Text(loc)
                             .font(.subheadline)
@@ -140,20 +140,20 @@ struct CourseDetailView: View {
             }) {
                 HStack {
                     Image(systemName: "globe")
-                        .font(.system(size: 14))
+                        .scaledFont(size: 14)
                         .foregroundStyle(Color.accentColor)
                     Text(site)
                         .font(.subheadline)
                         .foregroundStyle(Color.accentColor)
                     Spacer()
                     Image(systemName: "arrow.up.right")
-                        .font(.system(size: 11, weight: .semibold))
+                        .scaledFont(size: 11, weight: .semibold)
                         .foregroundStyle(Color.accentColor.opacity(0.7))
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressFeedback)
         }
     }
 
@@ -208,7 +208,7 @@ struct CourseDetailView: View {
                 content()
             }
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 

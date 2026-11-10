@@ -111,8 +111,8 @@ struct HeadToHeadView: View {
                 isLeft: false
             )
         }
-        .background(RoundedRectangle(cornerRadius: 18).fill(Color(red: 0.18, green: 0.22, blue: 0.18)))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(red: 0.18, green: 0.22, blue: 0.18)))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func playerColumn(name: String, username: String?, rounds: Int, isLeft: Bool) -> some View {
@@ -124,7 +124,7 @@ struct HeadToHeadView: View {
         return VStack(spacing: 8) {
             // Avatar
             ZStack {
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Color.white.opacity(0.12))
                     .frame(width: 56, height: 64)
                 Text(initials.isEmpty ? "?" : initials)
@@ -195,8 +195,8 @@ struct HeadToHeadView: View {
             )
         }
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
     }
 
     private func statRow(label: String, myValue: String, theirValue: String,
@@ -210,7 +210,7 @@ struct HeadToHeadView: View {
                     .foregroundStyle(myWins ? Color.accentColor : .primary)
                 if myWins {
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 11))
+                        .scaledFont(size: 11)
                         .foregroundStyle(Color.accentColor)
                 }
             }
@@ -229,7 +229,7 @@ struct HeadToHeadView: View {
             HStack {
                 if theirWins {
                     Image(systemName: "trophy.fill")
-                        .font(.system(size: 11))
+                        .scaledFont(size: 11)
                         .foregroundStyle(Color.accentColor)
                 }
                 Text(theirValue)
@@ -277,8 +277,8 @@ struct HeadToHeadView: View {
                 }
             }
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
         }
     }
 
@@ -330,7 +330,7 @@ struct HeadToHeadView: View {
     private var noSharedCoursesView: some View {
         VStack(spacing: 10) {
             Image(systemName: "map")
-                .font(.system(size: 36))
+                .scaledFont(size: 36)
                 .foregroundStyle(.tertiary)
             Text("No Shared Courses")
                 .font(.callout.weight(.semibold))
@@ -342,8 +342,8 @@ struct HeadToHeadView: View {
         .padding(32)
         .frame(maxWidth: .infinity)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
     }
 
     // MARK: - Helpers

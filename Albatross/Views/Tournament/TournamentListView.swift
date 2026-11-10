@@ -23,7 +23,7 @@ struct TournamentListView: View {
 
                 Button(action: { showNewTournament = true }) {
                     Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .semibold))
+                        .scaledFont(size: 16, weight: .semibold)
                         .foregroundStyle(Color.accentColor)
                         .accessibilityLabel("New Tournament")
                 }
@@ -70,7 +70,7 @@ struct TournamentListView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "envelope.badge.fill")
-                    .font(.system(size: 13))
+                    .scaledFont(size: 13)
                     .foregroundStyle(Color.accentColor)
                 Text("\(tournamentStore.pendingInvites.count) pending invite\(tournamentStore.pendingInvites.count == 1 ? "" : "s")")
                     .font(.footnote)
@@ -110,7 +110,7 @@ struct TournamentListView: View {
                         .background(Color(.systemFill))
                         .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
 
                 Button(action: {
                     Task { try? await tournamentStore.acceptInvite(tournamentID: tournament.id) }
@@ -123,15 +123,15 @@ struct TournamentListView: View {
                         .background(Color.accentColor)
                         .clipShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
             }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.accentColor.opacity(0.3), lineWidth: 1)
         )
     }
@@ -145,7 +145,7 @@ struct TournamentListView: View {
                     NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
                         tournamentCard(tournament)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
                     .contextMenu {
                         Button(role: .destructive) {
                             tournamentToDelete = tournament
@@ -197,9 +197,9 @@ struct TournamentListView: View {
         }
         .frame(width: 148, height: 110)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color(.separator).opacity(0.5), lineWidth: 0.5)
         )
     }
@@ -210,23 +210,23 @@ struct TournamentListView: View {
         Button(action: { showNewTournament = true }) {
             HStack(spacing: 10) {
                 Image(systemName: "flag.2.crossed.fill")
-                    .font(.system(size: 18))
+                    .scaledFont(size: 18)
                     .foregroundStyle(Color.accentColor.opacity(0.7))
                 Text("Create your first tournament")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .scaledFont(size: 12, weight: .semibold)
                     .foregroundStyle(Color(.tertiaryLabel))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 16)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressFeedback)
     }
 
     // MARK: - Helpers

@@ -14,7 +14,7 @@ struct CourseSearchView: View {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                    .font(.system(size: 15))
+                    .scaledFont(size: 15)
 
                 TextField("Search courses…", text: $courseStore.searchText)
                     .font(.callout)
@@ -27,13 +27,13 @@ struct CourseSearchView: View {
                             .foregroundStyle(Color(.tertiaryLabel))
                             .accessibilityLabel("Clear Search")
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
                 }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 11)
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 20)
             .padding(.top, 4)
             .padding(.bottom, 12)
@@ -58,18 +58,18 @@ struct CourseSearchView: View {
                         }
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .padding(.horizontal, 20)
 
                 // "Enter manually" always visible at the bottom
                 Button(action: onManual) {
                     HStack(spacing: 12) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(Color(.tertiarySystemGroupedBackground))
                                 .frame(width: 36, height: 36)
                             Image(systemName: "pencil")
-                                .font(.system(size: 14))
+                                .scaledFont(size: 14)
                                 .foregroundStyle(.secondary)
                         }
 
@@ -80,15 +80,15 @@ struct CourseSearchView: View {
                         Spacer()
 
                         Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
+                            .scaledFont(size: 12, weight: .semibold)
                             .foregroundStyle(Color(.tertiaryLabel))
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
                 .padding(.horizontal, 20)
                 .padding(.top, 12)
             }
@@ -101,7 +101,7 @@ struct CourseSearchView: View {
         Button(action: { onSelect(course) }) {
             HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(Color.accentColor.opacity(0.1))
                         .frame(width: 36, height: 36)
                     Image("black-browed-albatross")
@@ -134,14 +134,14 @@ struct CourseSearchView: View {
                 }
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold))
+                    .scaledFont(size: 11, weight: .semibold)
                     .foregroundStyle(Color(.tertiaryLabel))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressFeedback)
     }
 
     // MARK: - Suggested section (shown when search is empty)
@@ -153,7 +153,7 @@ struct CourseSearchView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     Image(systemName: "mappin.circle.fill")
-                        .font(.system(size: 12))
+                        .scaledFont(size: 12)
                         .foregroundStyle(Color.accentColor)
                     Text("Suggested")
                         .font(.footnote.weight(.medium))
@@ -173,7 +173,7 @@ struct CourseSearchView: View {
                     }
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 
@@ -182,7 +182,7 @@ struct CourseSearchView: View {
     private var noResults: some View {
         VStack(spacing: 10) {
             Image(systemName: "flag.slash")
-                .font(.system(size: 28))
+                .scaledFont(size: 28)
                 .foregroundStyle(Color(.tertiaryLabel))
             Text("No courses found for \"\(courseStore.searchText)\"")
                 .font(.subheadline)

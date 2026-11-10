@@ -174,7 +174,7 @@ struct ScorecardsView: View {
                         CourseCoverView(round: round)
                             .frame(width: coverWidth)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
                     .matchedTransitionSource(id: round.id, in: coverNamespace)
                     .scrollTransition(axis: .horizontal) { view, phase in
                         view

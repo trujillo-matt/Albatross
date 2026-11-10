@@ -169,7 +169,7 @@ struct SwatchPicker<Value: Hashable & Identifiable>: View {
                                     .foregroundStyle(selection == value ? .primary : .secondary)
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressFeedback)
                         .accessibilityLabel(label(value))
                         .accessibilityAddTraits(selection == value ? .isSelected : [])
                     }

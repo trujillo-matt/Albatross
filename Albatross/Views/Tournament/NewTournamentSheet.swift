@@ -150,12 +150,12 @@ struct NewTournamentSheet: View {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
                 }
             }
             .padding(12)
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 16)
             .padding(.top, 16)
             .padding(.bottom, 12)
@@ -211,14 +211,14 @@ struct NewTournamentSheet: View {
                                 }
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressFeedback)
                     }
                 }
                 .listStyle(.plain)
             } else if searchQuery.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "person.2.fill")
-                        .font(.system(size: 36))
+                        .scaledFont(size: 36)
                         .foregroundStyle(Color.accentColor.opacity(0.5))
                     Text("Search for players to invite")
                         .font(.subheadline)
@@ -234,7 +234,7 @@ struct NewTournamentSheet: View {
             } else {
                 VStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 28))
+                        .scaledFont(size: 28)
                         .foregroundStyle(.tertiary)
                     Text("No players found")
                         .font(.subheadline)
@@ -265,11 +265,11 @@ struct NewTournamentSheet: View {
                 .foregroundStyle(.primary)
             Button(action: { invitedProfiles.removeAll { $0.id == profile.id } }) {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 13))
+                    .scaledFont(size: 13)
                     .foregroundStyle(Color(.tertiaryLabel))
                     .accessibilityLabel("Remove \(profile.displayName)")
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressFeedback)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)

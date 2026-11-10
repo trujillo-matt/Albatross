@@ -167,7 +167,7 @@ struct StatsView: View {
                     HStack(spacing: 2) {
                         ForEach(distribution, id: \.result) { entry in
                             if entry.count > 0 {
-                                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                                RoundedRectangle(cornerRadius: 4, style: .continuous)
                                     .fill(ink(entry.result))
                                     .frame(width: max(4, proxy.size.width * CGFloat(entry.count) / CGFloat(total)))
                             }

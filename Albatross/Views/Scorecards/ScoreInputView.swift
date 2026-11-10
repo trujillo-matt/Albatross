@@ -52,7 +52,7 @@ struct ScoreInputView: View {
 
                     HStack(alignment: .center, spacing: 6) {
                         Text(inputText.isEmpty ? (score.map { String($0) } ?? "—") : inputText)
-                            .font(.system(size: 72, weight: .semibold))
+                            .scaledFont(size: 72, weight: .semibold)
                             // The value is a large display figure; scaling it further only crowds the keys.
                             .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                             .foregroundStyle(scoreDisplayColor)
@@ -62,7 +62,7 @@ struct ScoreInputView: View {
                         if !inputText.isEmpty || score != nil {
                             Button { clearScore() } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 22))
+                                    .scaledFont(size: 22)
                                     .foregroundStyle(Color(.tertiaryLabel))
                                     .accessibilityLabel("Clear Score")
                             }
@@ -186,7 +186,7 @@ private struct NumberPadView: View {
     private func keyLabel(_ key: String) -> some View {
         if key == "⌫" {
             Image(systemName: "delete.backward")
-                .font(.system(size: 20))
+                .scaledFont(size: 20)
                 .foregroundStyle(.primary)
         } else {
             Text(key)
@@ -252,7 +252,7 @@ private struct KeyButtonStyle: ButtonStyle {
         let hasTint = !isDelete && !isParKey && score != nil
 
         return ZStack {
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(
                     hasTint
                         ? (color ?? Color(.secondarySystemGroupedBackground)).opacity(configuration.isPressed ? 0.5 : 0.18)
@@ -261,7 +261,7 @@ private struct KeyButtonStyle: ButtonStyle {
                 .shadow(color: .black.opacity(0.06), radius: 1, y: 1)
 
             if hasTint {
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(
                         (color ?? Color.clear).opacity(0.45),
                         lineWidth: 1.5

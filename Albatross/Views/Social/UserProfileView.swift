@@ -108,7 +108,7 @@ struct UserProfileView: View {
             HStack(alignment: .top, spacing: 16) {
                 // Avatar initials
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(Color.white.opacity(0.12))
                         .frame(width: 90, height: 110)
                     Text(initials.isEmpty ? "?" : initials)
@@ -142,7 +142,7 @@ struct UserProfileView: View {
                     if let location = profile.location, !location.isEmpty {
                         HStack(spacing: 3) {
                             Image(systemName: "mappin.circle.fill")
-                                .font(.system(size: 11))
+                                .scaledFont(size: 11)
                                 .foregroundStyle(.white.opacity(0.5))
                             Text(location)
                                 .font(.caption)
@@ -162,8 +162,8 @@ struct UserProfileView: View {
                 .padding(.top, 18)
                 .padding(.trailing, 18)
         }
-        .background(RoundedRectangle(cornerRadius: 18).fill(Color(red: 0.18, green: 0.22, blue: 0.18)))
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(red: 0.18, green: 0.22, blue: 0.18)))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var statsStrip: some View {
@@ -178,8 +178,8 @@ struct UserProfileView: View {
         }
         .padding(.vertical, 14)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
     }
 
     private func statItem(label: String, value: String) -> some View {
@@ -198,7 +198,7 @@ struct UserProfileView: View {
         Button(action: { showHeadToHead = true }) {
             HStack {
                 Image(systemName: "arrow.left.arrow.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .scaledFont(size: 14, weight: .semibold)
                 Text("Head to Head")
                     .font(.subheadline.weight(.semibold))
             }
@@ -206,10 +206,10 @@ struct UserProfileView: View {
             .padding(.vertical, 14)
             .background(Color.accentColor.opacity(0.12))
             .foregroundStyle(Color.accentColor)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Color.accentColor.opacity(0.25), lineWidth: 0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.accentColor.opacity(0.25), lineWidth: 0.5))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressFeedback)
     }
 
     private var roundsList: some View {
@@ -251,8 +251,8 @@ struct UserProfileView: View {
                 }
             }
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
         }
     }
 

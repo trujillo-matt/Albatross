@@ -111,7 +111,7 @@ struct ScannedScorecardReviewView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .background(Color(.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .padding(.horizontal, 20)
     }
@@ -137,7 +137,7 @@ struct ScannedScorecardReviewView: View {
     private var noScoresDetectedNote: some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 14))
+                .scaledFont(size: 14)
                 .foregroundStyle(.orange)
             Text("No scores detected — tap any cell to enter manually")
                 .font(.subheadline)
@@ -194,7 +194,7 @@ struct ScannedScorecardReviewView: View {
             }
             .padding(14)
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .padding(.horizontal, 20)
     }
@@ -205,7 +205,7 @@ struct ScannedScorecardReviewView: View {
 
         return Button(action: { editingHole = holeIndex + 1 }) {
             ZStack {
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(score == nil
                           ? Color(.tertiarySystemFill)
                           : cellBackground(score: score!, par: par))
@@ -223,7 +223,7 @@ struct ScannedScorecardReviewView: View {
             .frame(maxWidth: .infinity)
             .frame(height: 34)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressFeedback)
     }
 
     private var totalsRow: some View {
@@ -263,7 +263,7 @@ struct ScannedScorecardReviewView: View {
                 .padding(.vertical, 16)
                 .background(isConfirmEnabled ? Color.accentColor : Color.accentColor.opacity(0.35))
                 .foregroundStyle(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .disabled(!isConfirmEnabled)
         .padding(.horizontal, 20)
@@ -286,16 +286,10 @@ struct ScannedScorecardReviewView: View {
         onConfirm(editedScores, name)
     }
 
-    // MARK: - Cell Colors (matching ScorecardView conventions)
+    // MARK: - Cell Colors (the same result inks as the booklet)
 
     private func cellBackground(score: Int, par: Int) -> Color {
-        switch score - par {
-        case ...(-2): return Color.yellow.opacity(0.80)
-        case -1:      return Color.blue.opacity(0.80)
-        case 0:       return Color(.secondarySystemFill)
-        case 1:       return Color.orange.opacity(0.80)
-        default:      return Color.red.opacity(0.80)
-        }
+        score == par ? Color(.secondarySystemFill) : BookletStyle.ink(forDifference: score - par).opacity(0.9)
     }
 
     private func cellForeground(score: Int, par: Int) -> Color {

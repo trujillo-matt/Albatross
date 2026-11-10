@@ -19,6 +19,13 @@ enum BookletStyle {
         default:      return onDark ? Color(red: 1.00, green: 0.45, blue: 0.45) : Color(red: 0.72, green: 0.10, blue: 0.12)
         }
     }
+
+    /// The same inks, switching to the lighter version in dark mode. The one place a result's colour comes from.
+    static func adaptiveInk(forDifference difference: Int?) -> Color {
+        let light = UIColor(ink(forDifference: difference, onDark: false))
+        let dark = UIColor(ink(forDifference: difference, onDark: true))
+        return Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? dark : light })
+    }
 }
 
 /// Loads saved course logos once and keeps them, so scrolling a shelf of covers stays smooth.

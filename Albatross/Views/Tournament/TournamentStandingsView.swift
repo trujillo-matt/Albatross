@@ -49,9 +49,9 @@ struct TournamentStandingsView: View {
                         .padding(.vertical, 14)
                         .background(Color.accentColor)
                         .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
                 .padding(.horizontal, 16)
                 .padding(.top, 24)
 
@@ -85,7 +85,7 @@ struct TournamentStandingsView: View {
                         .font(.callout.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(String(format: "%.1f", s.pointsTeamA))
-                        .font(.system(size: 48, weight: .semibold))
+                        .scaledFont(size: 48, weight: .semibold)
                         .foregroundStyle(s.leader?.id == s.teamA.id ? Color.accentColor : .primary)
                 }
                 .frame(maxWidth: .infinity)
@@ -104,7 +104,7 @@ struct TournamentStandingsView: View {
                         .font(.callout.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(String(format: "%.1f", s.pointsTeamB))
-                        .font(.system(size: 48, weight: .semibold))
+                        .scaledFont(size: 48, weight: .semibold)
                         .foregroundStyle(s.leader?.id == s.teamB.id ? Color.accentColor : .primary)
                 }
                 .frame(maxWidth: .infinity)
@@ -130,13 +130,13 @@ struct TournamentStandingsView: View {
         }
         .padding(20)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func progressGauge(_ s: TournamentStandings) -> some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(Color(.systemFill))
                     .frame(height: 12)
 
@@ -144,13 +144,13 @@ struct TournamentStandingsView: View {
                 let maxPoints = max(s.pointsToWin * 2, totalPoints + 0.1)
 
                 // Team A progress (from left)
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(Color.accentColor)
                     .frame(width: geo.size.width * (s.pointsTeamA / maxPoints), height: 12)
 
                 // Team B progress (from right)
                 let bWidth = geo.size.width * (s.pointsTeamB / maxPoints)
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(Color.blue)
                     .frame(width: bWidth, height: 12)
                     .frame(maxWidth: .infinity, alignment: .trailing)
@@ -206,7 +206,7 @@ struct TournamentStandingsView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func resultScore(name: String, points: Double, isWinner: Bool) -> some View {
@@ -297,7 +297,7 @@ private struct StandingsShareCard: View {
                             .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text(String(format: "%.1f", standings.pointsTeamA))
-                            .font(.system(size: 72, weight: .semibold))
+                            .scaledFont(size: 72, weight: .semibold)
                             .foregroundStyle(standings.leader?.id == standings.teamA.id ? brandGreen : Color(white: 0.3))
                     }
                     .frame(maxWidth: .infinity)
@@ -311,7 +311,7 @@ private struct StandingsShareCard: View {
                             .font(.body.weight(.semibold))
                             .foregroundStyle(.primary)
                         Text(String(format: "%.1f", standings.pointsTeamB))
-                            .font(.system(size: 72, weight: .semibold))
+                            .scaledFont(size: 72, weight: .semibold)
                             .foregroundStyle(standings.leader?.id == standings.teamB.id ? brandGreen : Color(white: 0.3))
                     }
                     .frame(maxWidth: .infinity)

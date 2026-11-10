@@ -43,7 +43,7 @@ struct HomeView: View {
     private var emptyFollowingState: some View {
         VStack(spacing: 16) {
             Image(systemName: "person.2.circle")
-                .font(.system(size: 56))
+                .scaledFont(size: 56)
                 .foregroundStyle(Color.accentColor.opacity(0.4))
             Text("Follow friends to see their rounds here")
                 .font(.body.weight(.semibold))
@@ -62,7 +62,7 @@ struct HomeView: View {
                     .background(Color.accentColor)
                     .clipShape(Capsule())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressFeedback)
         }
         .padding(40)
     }
@@ -70,7 +70,7 @@ struct HomeView: View {
     private var emptyFeedState: some View {
         VStack(spacing: 12) {
             Image(systemName: "flag.slash")
-                .font(.system(size: 48))
+                .scaledFont(size: 48)
                 .foregroundStyle(.tertiary)
             Text("No rounds yet")
                 .font(.body.weight(.semibold))
@@ -134,8 +134,10 @@ struct FeedItemCard: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(Color.accentColor)
                     }
+                    .frame(width: 44, height: 44)
+                    .contentShape(Circle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
 
                 VStack(alignment: .leading, spacing: 1) {
                     Button(action: onTapProfile) {
@@ -143,7 +145,7 @@ struct FeedItemCard: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
 
                     Text(round.date.formatted(date: .abbreviated, time: .omitted))
                         .font(.caption)
@@ -169,7 +171,7 @@ struct FeedItemCard: View {
             // Course name
             HStack {
                 Image(systemName: "flag.fill")
-                    .font(.system(size: 10))
+                    .scaledFont(size: 10)
                     .foregroundStyle(Color.accentColor.opacity(0.7))
                 Text(round.courseName)
                     .font(.footnote.weight(.medium))
@@ -185,8 +187,8 @@ struct FeedItemCard: View {
                 .padding(.bottom, 14)
         }
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
     }
 
     private var holeStrip: some View {
@@ -204,28 +206,17 @@ struct FeedItemCard: View {
         let bg: Color = {
             guard let s = score else { return Color(.tertiarySystemGroupedBackground) }
             let d = s - par
-            switch d {
-            case ..<(-1): return Color(red: 1, green: 0.84, blue: 0.0)   // Eagle+: gold
-            case -1:      return .red                                      // Birdie
-            case 0:       return Color(.tertiarySystemGroupedBackground)  // Par
-            case 1:       return Color(red: 0.18, green: 0.22, blue: 0.18) // Bogey: dark green
-            default:      return Color(.systemGray4)                       // Double+
-            }
+            return d == 0 ? Color(.tertiarySystemGroupedBackground) : BookletStyle.ink(forDifference: d)
         }()
 
         let fg: Color = {
             guard let s = score else { return .secondary }
             let d = s - par
-            switch d {
-            case ..<0:  return .white
-            case 0:     return .primary
-            case 1:     return .white
-            default:    return .primary
-            }
+            return d == 0 ? .primary : .white
         }()
 
         return ZStack {
-            RoundedRectangle(cornerRadius: 4)
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
                 .fill(bg)
                 .frame(height: 28)
             if let s = score {
@@ -239,9 +230,9 @@ struct FeedItemCard: View {
 
     private func scoreColor(_ diff: Int) -> Color {
         switch diff {
-        case ..<0: return .green
+        case ..<0: return BookletStyle.adaptiveInk(forDifference: -1)
         case 0:    return .secondary
-        default:   return .red
+        default:   return BookletStyle.adaptiveInk(forDifference: 2)
         }
     }
 }

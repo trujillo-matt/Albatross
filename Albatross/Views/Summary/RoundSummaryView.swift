@@ -9,6 +9,7 @@ struct RoundSummaryView: View {
     @EnvironmentObject private var store: RoundStore
     @EnvironmentObject private var appearance: CardAppearance
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.displayScale) private var displayScale
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
@@ -114,7 +115,7 @@ struct RoundSummaryView: View {
             let scale = proxy.size.width / ShareCanvas.size.width
             card
                 .frame(width: ShareCanvas.size.width, height: ShareCanvas.size.height)
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .scaleEffect(scale, anchor: .topLeading)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
         }
@@ -163,7 +164,7 @@ struct RoundSummaryView: View {
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .strokeBorder(selectedTemplate == template ? Color.accentColor : Color.clear, lineWidth: 1.5))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
                     .accessibilityLabel(template.label)
                     .accessibilityAddTraits(selectedTemplate == template ? .isSelected : [])
                 }
@@ -251,7 +252,7 @@ struct RoundSummaryView: View {
                     .padding(.vertical, 12)
                     .background(.regularMaterial, in: Capsule())
                     .padding(.bottom, 40)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
             }
         }
     }
@@ -263,7 +264,7 @@ struct RoundSummaryView: View {
         let renderer = ImageRenderer(
             content: card
                 .frame(width: ShareCanvas.size.width, height: ShareCanvas.size.height)
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         )
         renderer.scale = displayScale
         return renderer.uiImage ?? UIImage()

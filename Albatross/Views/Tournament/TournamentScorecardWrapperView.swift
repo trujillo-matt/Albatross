@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Creates (or reuses) a Round for the current user tied to a tournament matchup,
-/// presents ScorecardView, then on finish records the matchup round and — if all
+/// presents the booklet scorecard, then on finish records the matchup round and — if all
 /// players have submitted — auto-calculates and saves the matchup result.
 struct TournamentScorecardWrapperView: View {
     @EnvironmentObject private var roundStore: RoundStore
@@ -29,10 +29,12 @@ struct TournamentScorecardWrapperView: View {
             if navigateToSummary, let round = finishedRound {
                 RoundSummaryView(round: round)
             } else if let round = activeRound {
-                ScorecardView(round: round, onFinish: { finished in
+                BookletView(roundID: round.id, opensNextHole: round.holesPlayed > 0) { roundID, _ in
+                    // The booklet has already marked the round complete in the store.
+                    guard let finished = roundStore.rounds.first(where: { $0.id == roundID }) else { return }
                     finishedRound = finished
                     Task { await handleFinish(finished) }
-                })
+                }
             } else {
                 ProgressView("Setting up scorecard…")
             }

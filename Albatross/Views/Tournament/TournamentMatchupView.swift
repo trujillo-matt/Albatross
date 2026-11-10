@@ -114,7 +114,7 @@ struct TournamentMatchupView: View {
 
             VStack(spacing: 6) {
                 Image(systemName: "flag.2.crossed.fill")
-                    .font(.system(size: 20))
+                    .scaledFont(size: 20)
                     .foregroundStyle(Color.accentColor.opacity(0.7))
                 Text(current.matchType.displayName)
                     .font(.caption2)
@@ -141,7 +141,7 @@ struct TournamentMatchupView: View {
         }
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     // MARK: - Pairings editor
@@ -185,9 +185,9 @@ struct TournamentMatchupView: View {
                 .padding(.vertical, 14)
                 .background(canConfirmPairings ? Color.accentColor : Color(.systemFill))
                 .foregroundStyle(canConfirmPairings ? .white : .secondary)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressFeedback)
             .disabled(!canConfirmPairings || isSavingPairings)
             .padding(.horizontal, 16)
         }
@@ -236,9 +236,9 @@ struct TournamentMatchupView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
                     .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
             }
         }
     }
@@ -328,7 +328,7 @@ struct TournamentMatchupView: View {
                                      icon: round.status == .completed ? "checkmark.circle.fill" : "pencil.circle.fill",
                                      style: .secondary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
                 .padding(.horizontal, 16)
             } else {
                 // New round
@@ -341,7 +341,7 @@ struct TournamentMatchupView: View {
                                      icon: "pencil.circle.fill",
                                      style: .primary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
                 .padding(.horizontal, 16)
             }
         }
@@ -356,9 +356,9 @@ struct TournamentMatchupView: View {
             .padding(.vertical, 14)
             .background(style == .primary ? Color.accentColor : Color(.secondarySystemGroupedBackground))
             .foregroundStyle(style == .primary ? .white : Color.accentColor)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(style == .primary ? .clear : Color.accentColor.opacity(0.4), lineWidth: 1)
             )
     }
@@ -368,7 +368,7 @@ struct TournamentMatchupView: View {
     private var resultCard: some View {
         VStack(spacing: 8) {
             Image(systemName: "flag.checkered.2.crossed")
-                .font(.system(size: 24))
+                .scaledFont(size: 24)
                 .foregroundStyle(Color.accentColor)
 
             if let result = current.result {
@@ -391,7 +391,7 @@ struct TournamentMatchupView: View {
         .frame(maxWidth: .infinity)
         .padding(20)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     // MARK: - Scorecard destination

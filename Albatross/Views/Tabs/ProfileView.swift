@@ -121,9 +121,9 @@ struct ProfileView: View {
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 110, height: 130)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         } else {
-                            RoundedRectangle(cornerRadius: 12)
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .fill(Color.white.opacity(0.12))
                                 .frame(width: 110, height: 130)
                                 .overlay(
@@ -162,7 +162,7 @@ struct ProfileView: View {
                         if !location.isEmpty {
                             HStack(spacing: 3) {
                                 Image(systemName: "mappin.circle.fill")
-                                    .font(.system(size: 11))
+                                    .scaledFont(size: 11)
                                     .foregroundStyle(.white.opacity(0.5))
                                 Text(location)
                                     .font(.caption)
@@ -180,11 +180,11 @@ struct ProfileView: View {
                 // Home course badge (top right corner)
                 VStack(spacing: 4) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
                             .fill(Color.white.opacity(0.12))
                             .frame(width: 52, height: 52)
                         Image(systemName: "flag.fill")
-                            .font(.system(size: 20, weight: .medium))
+                            .scaledFont(size: 20, weight: .medium)
                             .foregroundStyle(.white.opacity(0.7))
                     }
                     Text(homeCourse.isEmpty ? "Home Course" : homeCourse)
@@ -198,10 +198,10 @@ struct ProfileView: View {
                 .padding(.trailing, 18)
             }
             .background(
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(Color.accentColor)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 18))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 
             // ── Edit Profile pill (below card) ───────────────────────────
             Button(action: { showEditProfile = true }) {
@@ -213,7 +213,7 @@ struct ProfileView: View {
                     .background(Color.accentColor.opacity(0.1))
                     .clipShape(Capsule())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressFeedback)
         }
     }
 
@@ -229,8 +229,8 @@ struct ProfileView: View {
         }
         .padding(.vertical, 14)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
     }
 
     private func statItem(label: String, value: String) -> some View {
@@ -256,7 +256,7 @@ struct ProfileView: View {
             HStack(alignment: .lastTextBaseline, spacing: 6) {
                 if let hcp = handicapIndex {
                     Text(String(format: "%.1f", hcp))
-                        .font(.system(size: 40, weight: .semibold))
+                        .scaledFont(size: 40, weight: .semibold)
                         .foregroundStyle(.primary)
                     Text("HCP")
                         .font(.subheadline)
@@ -264,7 +264,7 @@ struct ProfileView: View {
                         .padding(.bottom, 4)
                 } else {
                     Text("—")
-                        .font(.system(size: 40, weight: .semibold))
+                        .scaledFont(size: 40, weight: .semibold)
                         .foregroundStyle(.secondary)
                     Text(completedRounds.count < 3 ? "Need \(3 - completedRounds.count) more rounds" : "HCP")
                         .font(.footnote)
@@ -277,8 +277,8 @@ struct ProfileView: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 16)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
     }
 
     // MARK: - Friends section
@@ -316,13 +316,13 @@ struct ProfileView: View {
                 Button(action: { showUserSearch = true }) {
                     Image(systemName: "magnifyingglass")
                         .accessibilityLabel("Find Friends")
-                        .font(.system(size: 14, weight: .semibold))
+                        .scaledFont(size: 14, weight: .semibold)
                         .foregroundStyle(Color.accentColor)
                         .padding(8)
                         .background(Color.accentColor.opacity(0.1))
                         .clipShape(Circle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
             }
             .padding(.horizontal, 18)
             .padding(.top, 16)
@@ -331,7 +331,7 @@ struct ProfileView: View {
                 // Empty state
                 VStack(spacing: 8) {
                     Image(systemName: "person.2.circle")
-                        .font(.system(size: 32))
+                        .scaledFont(size: 32)
                         .foregroundStyle(Color.accentColor.opacity(0.35))
                     Text("Follow friends to see them here")
                         .font(.footnote)
@@ -345,7 +345,7 @@ struct ProfileView: View {
                             .background(Color.accentColor.opacity(0.1))
                             .clipShape(Capsule())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
@@ -357,7 +357,7 @@ struct ProfileView: View {
                         Button(action: { selectedProfile = profile }) {
                             friendRow(profile: profile)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressFeedback)
 
                         if profile.id != socialStore.following.last?.id {
                             Divider().padding(.leading, 60)
@@ -368,8 +368,8 @@ struct ProfileView: View {
             }
         }
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
     }
 
     private func friendRow(profile: UserProfile) -> some View {
@@ -411,7 +411,7 @@ struct ProfileView: View {
             }
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
+                .scaledFont(size: 12, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 16)
@@ -437,8 +437,8 @@ struct ProfileView: View {
                 }
                 .padding(.vertical, 15)
                 .background(Color(.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
             }
         }
     }

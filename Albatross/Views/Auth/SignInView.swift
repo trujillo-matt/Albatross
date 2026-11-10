@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct SignInView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var authStore: AuthStore
 
     @State private var isSignUp = false
@@ -54,7 +55,7 @@ struct SignInView: View {
                                 capitalization: .words,
                                 secure: false
                             )
-                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
 
                             inputField(
                                 icon: "at",
@@ -69,7 +70,7 @@ struct SignInView: View {
                                 let cleaned = val.lowercased().filter { !$0.isWhitespace }
                                 if cleaned != val { username = cleaned }
                             }
-                            .transition(.move(edge: .top).combined(with: .opacity))
+                            .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
                         }
 
                         inputField(
@@ -103,7 +104,7 @@ struct SignInView: View {
                         // Primary action button
                         Button(action: submit) {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 14)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .fill(.white)
                                     .frame(height: 54)
 
@@ -141,7 +142,7 @@ struct SignInView: View {
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.6))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
                     .padding(.top, 24)
 
                     Text("By continuing you agree to our\nTerms of Service and Privacy Policy.")
@@ -170,7 +171,7 @@ struct SignInView: View {
     ) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.system(size: 15, weight: .medium))
+                .scaledFont(size: 15, weight: .medium)
                 .foregroundStyle(.white.opacity(0.5))
                 .frame(width: 20)
 
@@ -193,9 +194,9 @@ struct SignInView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 15)
         .background(Color.white.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
         )
     }

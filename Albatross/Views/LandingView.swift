@@ -5,6 +5,7 @@ struct LandingView: View {
 
     @State private var logoOpacity: Double = 0
     @State private var logoScale: Double = 0.92
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var taglineOpacity: Double = 0
 
     var body: some View {
@@ -16,7 +17,7 @@ struct LandingView: View {
                 Spacer()
 
                 Text("ALBATROSS")
-                    .font(.system(size: 32, weight: .regular))
+                    .scaledFont(size: 32, weight: .regular)
                     .foregroundStyle(.white)
                     .tracking(2)
 
@@ -27,7 +28,7 @@ struct LandingView: View {
                     .padding(.top, 12)
 
                 Text("Est. 2026")
-                    .font(.system(size: 14, weight: .regular))
+                    .scaledFont(size: 14, weight: .regular)
                     .foregroundStyle(.white.opacity(0.75))
                     .tracking(3)
                     .padding(.top, 16)
@@ -39,6 +40,8 @@ struct LandingView: View {
             .scaleEffect(logoScale)
         }
         .onAppear {
+            // With Reduce Motion the mark fades in without the slight scale.
+            if reduceMotion { logoScale = 1 }
             withAnimation(.easeOut(duration: 0.7)) {
                 logoOpacity = 1
                 logoScale = 1

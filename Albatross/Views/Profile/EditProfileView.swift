@@ -41,13 +41,13 @@ struct EditProfileView: View {
                                     .frame(width: 28, height: 28)
                                     .overlay(
                                         Image(systemName: "camera.fill")
-                                            .font(.system(size: 12, weight: .medium))
+                                            .scaledFont(size: 12, weight: .medium)
                                             .foregroundStyle(Color.accentColor)
                                     )
                                     .offset(x: 4, y: 4)
                             }
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressFeedback)
                         Spacer()
                     }
                     .listRowBackground(Color.clear)

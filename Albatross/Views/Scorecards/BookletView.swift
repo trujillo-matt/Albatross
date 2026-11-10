@@ -342,6 +342,7 @@ struct BookletView: View {
         finished.status = .completed
         store.update(finished)
         LiveActivityManager.shared.endActivity(for: finished)
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
         onShowSummary(roundID, true)
     }
 
@@ -379,6 +380,18 @@ private extension View {
 /// The way scores are written: the active hole's par and one button per result, relative to par.
 /// With putts and greens switched on, a second line takes putts and the green before the score,
 /// so the score tap that moves the pencil on is always the last one.
+/// Press-in feedback for the strip: a small shrink, or a fade when Reduce Motion is on.
+private struct StripPressStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .opacity(configuration.isPressed && reduceMotion ? 0.6 : 1)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
 private struct PencilStrip: View {
     let hole: Int
     let par: Int
@@ -394,7 +407,7 @@ private struct PencilStrip: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @ScaledMetric(relativeTo: .title2) private var buttonHeight: CGFloat = 52
-    @ScaledMetric(relativeTo: .body) private var chipSize: CGFloat = 34
+    @ScaledMetric(relativeTo: .body) private var chipSize: CGFloat = 44
 
     private var choices: [(title: String, value: Int)] {
         [("Birdie", par - 1), ("Par", par), ("Bogey", par + 1), ("Double", par + 2)]
@@ -417,10 +430,10 @@ private struct PencilStrip: View {
                         Label("Finish \(holesPlayed)/18", systemImage: "flag.checkered")
                             .font(.subheadline.weight(.medium))
                             .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
+                            .frame(minHeight: 44)
                             .background(Color.accentColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(StripPressStyle())
                 }
             }
 
@@ -439,40 +452,63 @@ private struct PencilStrip: View {
     }
 
     /// Putts, then the green: both are optional and neither moves the pencil.
+    /// One row when it fits; otherwise the green moves to its own line.
     private var greenLine: some View {
-        HStack(spacing: 8) {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 4) {
+                puttsRow
+                Spacer(minLength: 0)
+                greenButton
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                puttsRow
+                greenButton
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private var puttsRow: some View {
+        HStack(spacing: 4) {
             Text("Putts")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
+                .fixedSize()
             ForEach(0...4, id: \.self) { count in
                 Button { onPutts(putts == count ? nil : count) } label: {
                     Text(count == 4 ? "4+" : "\(count)")
                         .font(.subheadline.monospacedDigit().weight(.medium))
                         .foregroundStyle(putts == count ? (colorScheme == .dark ? Color.black : Color.white) : Color.primary)
-                        .frame(width: chipSize, height: chipSize * 0.88)
+                        .frame(width: chipSize - 6, height: chipSize - 12)
                         .background(
                             putts == count ? Color.accentColor : Color.primary.opacity(0.08),
                             in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .frame(width: chipSize, height: chipSize)
+                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(StripPressStyle())
                 .accessibilityLabel("\(count) putts")
                 .accessibilityAddTraits(putts == count ? .isSelected : [])
             }
-            Spacer(minLength: 0)
-            Button { onGreen(!(greenInRegulation ?? false)) } label: {
-                Label("GIR", systemImage: greenInRegulation == true ? "checkmark.circle.fill" : "circle")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(greenInRegulation == true ? Color.accentColor : Color.secondary)
-                    .lineLimit(1)
-                    .fixedSize()
-                    .padding(.horizontal, 10)
-                    .frame(height: chipSize * 0.88)
-                    .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Green in regulation")
-            .accessibilityValue(greenInRegulation == true ? "Yes" : "No")
         }
+    }
+
+    private var greenButton: some View {
+        Button { onGreen(!(greenInRegulation ?? false)) } label: {
+            Label("GIR", systemImage: greenInRegulation == true ? "checkmark.circle.fill" : "circle")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(greenInRegulation == true ? Color.accentColor : Color.secondary)
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, 10)
+                .frame(height: chipSize - 12)
+                .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .frame(minHeight: chipSize)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(StripPressStyle())
+        .accessibilityLabel("Green in regulation")
+        .accessibilityValue(greenInRegulation == true ? "Yes" : "No")
     }
 
     private func scoreButton(title: String, value: Int) -> some View {
@@ -489,7 +525,7 @@ private struct PencilStrip: View {
             .frame(maxWidth: .infinity, minHeight: buttonHeight)
             .background(isCurrent ? ink : ink.opacity(0.14), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(StripPressStyle())
         .accessibilityLabel("\(title) \(value)")
         .accessibilityHint("Writes \(value) for hole \(hole)")
     }
@@ -508,8 +544,9 @@ private struct PencilStrip: View {
         } label: {
             Label("Other score", systemImage: "number")
                 .labelStyle(.iconOnly)
-                .font(.system(size: 17, weight: .medium))
-                .frame(width: 36, height: 32)
+                .scaledFont(size: 17, weight: .medium)
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
         }
         .tint(.primary)
     }

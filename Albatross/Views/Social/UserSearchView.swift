@@ -36,7 +36,7 @@ struct UserSearchView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(Color(.secondarySystemGroupedBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
 
@@ -74,7 +74,7 @@ struct UserSearchView: View {
         VStack(spacing: 12) {
             Spacer()
             Image(systemName: "person.2.circle")
-                .font(.system(size: 48))
+                .scaledFont(size: 48)
                 .foregroundStyle(Color.accentColor.opacity(0.4))
             Text("Search for golfers")
                 .font(.body.weight(.semibold))
@@ -91,7 +91,7 @@ struct UserSearchView: View {
         VStack(spacing: 12) {
             Spacer()
             Image(systemName: "magnifyingglass")
-                .font(.system(size: 40))
+                .scaledFont(size: 40)
                 .foregroundStyle(.tertiary)
             Text("No golfers found")
                 .font(.body.weight(.semibold))
@@ -114,8 +114,8 @@ struct UserSearchView: View {
                 }
             }
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
             .padding(.horizontal, 16)
         }
     }
@@ -172,7 +172,7 @@ struct SearchResultRow: View {
             .padding(.vertical, 10)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressFeedback)
     }
 
     private var initials: String {
@@ -204,7 +204,7 @@ struct FollowButton: View {
                 )
                 .clipShape(Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.pressFeedback)
         .disabled(isLoading)
     }
 

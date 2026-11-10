@@ -119,7 +119,7 @@ struct TournamentDetailView: View {
         }
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.horizontal, 16)
         .padding(.top, 16)
         .padding(.bottom, 8)
@@ -171,13 +171,13 @@ struct TournamentDetailView: View {
                             .padding(.vertical, 14)
                             .background(Color(.secondarySystemGroupedBackground))
                             .foregroundStyle(Color.accentColor)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .overlay(
-                                RoundedRectangle(cornerRadius: 12)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .strokeBorder(Color.accentColor.opacity(0.4), lineWidth: 1)
                             )
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
 
                     let acceptedCount = current.playerPool.filter { $0.inviteStatus == .accepted }.count
                     Button(action: startDraft) {
@@ -194,9 +194,9 @@ struct TournamentDetailView: View {
                         .padding(.vertical, 14)
                         .background(acceptedCount >= 2 ? Color.accentColor : Color(.systemFill))
                         .foregroundStyle(acceptedCount >= 2 ? .white : .secondary)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.pressFeedback)
                     .disabled(acceptedCount < 2 || isStartingDraft)
 
                     if acceptedCount < 2 {
@@ -218,7 +218,7 @@ struct TournamentDetailView: View {
                 playerRow(player)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .padding(.horizontal, 16)
     }
 
@@ -250,7 +250,7 @@ struct TournamentDetailView: View {
 
             if player.isAdmin {
                 Image(systemName: "star.fill")
-                    .font(.system(size: 11))
+                    .scaledFont(size: 11)
                     .foregroundStyle(.yellow)
             }
         }
@@ -276,11 +276,11 @@ struct TournamentDetailView: View {
             NavigationLink(destination: TournamentDraftView(tournament: current)) {
                 HStack(spacing: 14) {
                     Image(systemName: "person.2.wave.2.fill")
-                        .font(.system(size: 28))
+                        .scaledFont(size: 28)
                         .foregroundStyle(Color.accentColor)
                         .frame(width: 48, height: 48)
                         .background(Color.accentColor.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Enter Draft Room")
@@ -294,14 +294,14 @@ struct TournamentDetailView: View {
                     Spacer()
 
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 13, weight: .semibold))
+                        .scaledFont(size: 13, weight: .semibold)
                         .foregroundStyle(Color(.tertiaryLabel))
                 }
                 .padding(16)
                 .background(Color(.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressFeedback)
             .padding(.horizontal, 16)
             .padding(.top, 20)
         }
@@ -327,7 +327,7 @@ struct TournamentDetailView: View {
                 NavigationLink(destination: TournamentMatchupView(tournament: current, matchup: matchup)) {
                     matchupRow(matchup)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.pressFeedback)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
             }
@@ -339,11 +339,11 @@ struct TournamentDetailView: View {
                     .padding(.vertical, 14)
                     .background(Color(.secondarySystemGroupedBackground))
                     .foregroundStyle(Color.accentColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressFeedback)
         }
     }
 
@@ -380,7 +380,7 @@ struct TournamentDetailView: View {
         }
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func matchupRow(_ matchup: TournamentMatchup) -> some View {
@@ -410,13 +410,13 @@ struct TournamentDetailView: View {
             }
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
+                .scaledFont(size: 12, weight: .semibold)
                 .foregroundStyle(Color(.tertiaryLabel))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func matchupStatusBadge(_ status: MatchupStatus) -> some View {
@@ -443,7 +443,7 @@ struct TournamentDetailView: View {
                         Spacer()
                         VStack(spacing: 6) {
                             Image(systemName: "trophy.fill")
-                                .font(.system(size: 28))
+                                .scaledFont(size: 28)
                                 .foregroundStyle(.yellow)
                             Text("\(winner.name) wins!")
                                 .font(.body.weight(.semibold))
@@ -462,10 +462,10 @@ struct TournamentDetailView: View {
                     .padding(.vertical, 14)
                     .background(Color.accentColor)
                     .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .padding(.horizontal, 16)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressFeedback)
         }
     }
 
@@ -547,12 +547,12 @@ private struct InvitePlayersSheet: View {
                         }) {
                             Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.pressFeedback)
                     }
                 }
                 .padding(12)
                 .background(Color(.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
                 .padding(.bottom, 12)
@@ -588,7 +588,7 @@ private struct InvitePlayersSheet: View {
                                     }
                                 }
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.pressFeedback)
                             .disabled(alreadyInPool)
                         }
                     }
