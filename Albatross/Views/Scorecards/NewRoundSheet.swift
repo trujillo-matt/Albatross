@@ -265,7 +265,7 @@ struct NewRoundSheet: View {
                         .background(
                             manualCourseName.trimmingCharacters(in: .whitespaces).isEmpty
                                 ? Color.accentColor.opacity(0.4)
-                                : Color.accentColor
+                                : Color.brandGreen
                         )
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))

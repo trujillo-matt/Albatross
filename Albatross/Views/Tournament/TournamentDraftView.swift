@@ -154,7 +154,7 @@ struct TournamentDraftView: View {
                 }) {
                     HStack(spacing: 12) {
                         Circle()
-                            .fill(isSelected ? Color.accentColor : Color.accentColor.opacity(0.15))
+                            .fill(isSelected ? Color.brandGreen : Color.accentColor.opacity(0.15))
                             .frame(width: 36, height: 36)
                             .overlay(
                                 Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
@@ -211,7 +211,7 @@ struct TournamentDraftView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(selectedNominees.count == 2 ? Color.accentColor : Color(.systemFill))
+                    .background(selectedNominees.count == 2 ? Color.brandGreen : Color(.systemFill))
                     .foregroundStyle(selectedNominees.count == 2 ? .white : .secondary)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
@@ -363,7 +363,7 @@ struct TournamentDraftView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.accentColor)
+                    .background(Color.brandGreen)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
@@ -384,7 +384,7 @@ struct TournamentDraftView: View {
                 if isOnClock {
                     // Pulsing green dot
                     Circle()
-                        .fill(Color.accentColor)
+                        .fill(Color.brandGreen)
                         .frame(width: 8, height: 8)
                         .overlay(
                             Circle()
@@ -453,7 +453,7 @@ struct TournamentDraftView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(Color.accentColor)
+                        .background(Color.brandGreen)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.pressFeedback)

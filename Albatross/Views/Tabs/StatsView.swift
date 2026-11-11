@@ -228,7 +228,7 @@ struct StatsView: View {
                                 .fill(Color.primary.opacity(0.08))
                                 .overlay(alignment: .leading) {
                                     Capsule()
-                                        .fill(row.average == best ? Color.accentColor : Color.primary.opacity(0.35))
+                                        .fill(row.average == best ? Color.brandGreen : Color.primary.opacity(0.35))
                                         .frame(width: max(6, proxy.size.width * CGFloat(max(0, row.average) / scale)))
                                 }
                         }

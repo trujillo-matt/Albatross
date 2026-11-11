@@ -10,6 +10,8 @@ final class TournamentStore: ObservableObject {
 
     @Published private(set) var myTournaments: [Tournament] = []
     @Published private(set) var pendingInvites: [Tournament] = []
+    /// Where each match being played stands, by match id. Filled by `refreshLive`.
+    @Published private(set) var liveStatus: [UUID: LiveMatchStatus] = [:]
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
@@ -25,6 +27,11 @@ final class TournamentStore: ObservableObject {
     private var standingsChannel: RealtimeChannelV2? = nil
 
     #if DEBUG
+    /// Sets live match statuses for the demo.
+    func seedLiveForDemo(_ statuses: [UUID: LiveMatchStatus]) {
+        liveStatus = statuses
+    }
+
     /// True while the tournament demo data is showing. Loads that would replace it with cloud results are skipped.
     private(set) var isShowingDemo = false
 
@@ -193,11 +200,14 @@ final class TournamentStore: ObservableObject {
 
     // MARK: - Creation
 
+    /// Creates a tournament of `days` days. How many matches each day has is not known yet:
+    /// it comes from the number of players when the tournament starts, so `total_matches`
+    /// holds the day count until then and is rewritten by `startTournament`.
     func createTournament(
         name: String,
         matchType: TournamentMatchType,
-        totalMatches: Int,
-        pointsToWin: Double = 9.5,
+        days: Int,
+        pointsToWin: Double = 0.5,
         courseNames: [String],
         matchTypes: [TournamentMatchType] = []
     ) async throws -> Tournament {
@@ -217,7 +227,7 @@ final class TournamentStore: ObservableObject {
                 name: name,
                 creator_user_id: userID.uuidString,
                 match_type: matchType.rawValue,
-                total_matches: totalMatches,
+                total_matches: days,
                 points_to_win: pointsToWin
             ))
             .select()
@@ -399,7 +409,8 @@ final class TournamentStore: ObservableObject {
     func startTournament(tournamentID: UUID) async throws {
         try await updateTournamentStatus(tournamentID, status: .active)
 
-        // Create all matchups (one per totalMatches)
+        // Matches come from the players: every player on a team plays once each day,
+        // so a day of singles has one match per player and a day of pairs half as many.
         guard let tournament = myTournaments.first(where: { $0.id == tournamentID }),
               tournament.teams.count == 2 else { throw TournamentError.teamsNotCreated }
 
@@ -411,21 +422,31 @@ final class TournamentStore: ObservableObject {
             let team_a_id: String; let team_b_id: String
             let match_type: String
         }
-        for i in 1...max(1, tournament.totalMatches) {
-            // Use the per-course format if set, otherwise fall back to the tournament default
-            let courseMatchType = tournament.courses
-                .first(where: { $0.roundNumber == i })?
-                .matchType ?? tournament.matchType
-            try await supabase.from("tournament_matchups")
-                .insert(NewMatchup(
-                    tournament_id: tournamentID.uuidString,
-                    matchup_number: i,
-                    team_a_id: teamA.id.uuidString,
-                    team_b_id: teamB.id.uuidString,
-                    match_type: courseMatchType.rawValue
-                ))
-                .execute()
+        let playersPerTeam = tournament.playersPerTeam
+        var matchNumber = 0
+        for course in tournament.sortedCourses.isEmpty ? [nil] : tournament.sortedCourses.map({ Optional($0) }) {
+            let dayType = course?.matchType ?? tournament.matchType
+            let count = Tournament.matchCount(playersPerTeam: playersPerTeam, matchType: dayType)
+            for _ in 0..<count {
+                matchNumber += 1
+                try await supabase.from("tournament_matchups")
+                    .insert(NewMatchup(
+                        tournament_id: tournamentID.uuidString,
+                        matchup_number: matchNumber,
+                        team_a_id: teamA.id.uuidString,
+                        team_b_id: teamB.id.uuidString,
+                        match_type: dayType.rawValue
+                    ))
+                    .execute()
+            }
         }
+
+        // Now the match count is known, so the points needed to win are too.
+        struct Totals: Encodable { let total_matches: Int; let points_to_win: Double }
+        try await supabase.from("tournaments")
+            .update(Totals(total_matches: matchNumber, points_to_win: Tournament.pointsToWin(matchCount: matchNumber)))
+            .eq("id", value: tournamentID.uuidString)
+            .execute()
         await reload(tournamentID)
     }
 
@@ -588,6 +609,38 @@ final class TournamentStore: ObservableObject {
             }
         }
         await reload(matchup.tournamentID)
+    }
+
+    // MARK: - Live
+
+    /// Reloads the tournament and works out where each match being played stands from both sides' scores.
+    /// The board calls this every few seconds while it is on screen.
+    func refreshLive(for tournamentID: UUID) async {
+        #if DEBUG
+        if isShowingDemo { return }
+        #endif
+        await reload(tournamentID)
+        guard let tournament = myTournaments.first(where: { $0.id == tournamentID }) else { return }
+
+        var statuses = liveStatus
+        for matchup in tournament.matchups {
+            guard matchup.status == .active else {
+                statuses[matchup.id] = nil
+                continue
+            }
+            let links = (try? await loadMatchupRounds(matchupID: matchup.id)) ?? []
+            let allRounds = await fetchRoundsForMatchup(matchupID: matchup.id)
+            func roundsOf(_ playerIDs: [UUID]) -> [Round] {
+                allRounds.filter { round in
+                    links.contains { $0.roundID == round.id && playerIDs.contains($0.userID) }
+                }
+            }
+            statuses[matchup.id] = LiveMatchStatus.from(
+                teamARounds: roundsOf(matchup.teamAPlayerIDs),
+                teamBRounds: roundsOf(matchup.teamBPlayerIDs),
+                matchType: matchup.matchType)
+        }
+        liveStatus = statuses
     }
 
     // MARK: - Standings

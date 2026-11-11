@@ -153,7 +153,9 @@ struct TournamentMatchupView: View {
                 .padding(.top, 24)
                 .padding(.bottom, 12)
 
-            Text("Select 1 or 2 players per team to play this match.")
+            Text(current.matchType.playersPerSide == 1
+                 ? "Pick one player per team for this match."
+                 : "Pick \(current.matchType.playersPerSide) players per team for this match.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
@@ -183,7 +185,7 @@ struct TournamentMatchupView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(canConfirmPairings ? Color.accentColor : Color(.systemFill))
+                .background(canConfirmPairings ? Color.brandGreen : Color(.systemFill))
                 .foregroundStyle(canConfirmPairings ? .white : .secondary)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
@@ -208,13 +210,13 @@ struct TournamentMatchupView: View {
                 Button(action: {
                     if isSelected {
                         selections.wrappedValue.removeAll { $0 == player.userID }
-                    } else if selections.wrappedValue.count < 2 {
+                    } else if selections.wrappedValue.count < current.matchType.playersPerSide {
                         selections.wrappedValue.append(player.userID)
                     }
                 }) {
                     HStack(spacing: 12) {
                         Circle()
-                            .fill(isSelected ? Color.accentColor : Color.accentColor.opacity(0.15))
+                            .fill(isSelected ? Color.brandGreen : Color.accentColor.opacity(0.15))
                             .frame(width: 32, height: 32)
                             .overlay(
                                 Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
@@ -354,7 +356,7 @@ struct TournamentMatchupView: View {
             .font(.subheadline.weight(.medium))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(style == .primary ? Color.accentColor : Color(.secondarySystemGroupedBackground))
+            .background(style == .primary ? Color.brandGreen : Color(.secondarySystemGroupedBackground))
             .foregroundStyle(style == .primary ? .white : Color.accentColor)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(

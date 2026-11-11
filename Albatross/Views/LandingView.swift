@@ -10,7 +10,7 @@ struct LandingView: View {
 
     var body: some View {
         ZStack {
-            Color.accentColor
+            Color.brandGreen
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {

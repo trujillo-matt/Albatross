@@ -162,7 +162,7 @@ struct RoundSummaryView: View {
                             in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(selectedTemplate == template ? Color.accentColor : Color.clear, lineWidth: 1.5))
+                                .strokeBorder(selectedTemplate == template ? Color.brandGreen : Color.clear, lineWidth: 1.5))
                     }
                     .buttonStyle(.pressFeedback)
                     .accessibilityLabel(template.label)
@@ -223,7 +223,7 @@ struct RoundSummaryView: View {
                         .font(.body.weight(.semibold))
                 }
                 .frame(maxWidth: .infinity, minHeight: 52)
-                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .foregroundStyle(.white)
             }
             .disabled(isRendering)

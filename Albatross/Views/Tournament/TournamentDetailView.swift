@@ -80,6 +80,13 @@ struct TournamentDetailView: View {
         .task {
             await refreshTournament()
         }
+        .task(id: current.status == .active) {
+            guard current.status == .active else { return }
+            while !Task.isCancelled {
+                await tournamentStore.refreshLive(for: current.id)
+                try? await Task.sleep(for: .seconds(10))
+            }
+        }
     }
 
     // MARK: - Header card
@@ -95,7 +102,8 @@ struct TournamentDetailView: View {
             }
 
             HStack(spacing: 20) {
-                statItem(label: "Matches", value: "\(current.totalMatches)")
+                statItem(label: current.dayCount == 1 ? "Day" : "Days", value: "\(current.dayCount)")
+                statItem(label: "Matches", value: current.matchups.isEmpty ? "—" : "\(current.matchCount)")
                 statItem(label: "Points to Win", value: String(format: "%.1f", current.pointsToWin))
                 statItem(label: "Players", value: "\(current.playerPool.filter { $0.inviteStatus == .accepted }.count)")
             }
@@ -192,7 +200,7 @@ struct TournamentDetailView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(acceptedCount >= 2 ? Color.accentColor : Color(.systemFill))
+                        .background(acceptedCount >= 2 ? Color.brandGreen : Color(.systemFill))
                         .foregroundStyle(acceptedCount >= 2 ? .white : .secondary)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
@@ -411,7 +419,7 @@ struct TournamentDetailView: View {
             .foregroundStyle(status == .active ? Color.accentColor : .orange)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background((status == .active ? Color.accentColor : Color.orange).opacity(0.12))
+            .background((status == .active ? Color.brandGreen : Color.orange).opacity(0.12))
             .clipShape(Capsule())
     }
 
@@ -446,7 +454,7 @@ struct TournamentDetailView: View {
                     .font(.subheadline.weight(.medium))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.accentColor)
+                    .background(Color.brandGreen)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .padding(.horizontal, 16)

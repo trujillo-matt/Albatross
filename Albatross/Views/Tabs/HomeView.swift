@@ -95,7 +95,7 @@ struct HomeView: View {
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 16)
                                 .frame(minHeight: 44)
-                                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                         .buttonStyle(.pressFeedback)
                         .padding(.top, 8)
@@ -120,7 +120,7 @@ struct HomeView: View {
                             .foregroundStyle(.white)
                             .padding(.horizontal, 16)
                             .frame(minHeight: 44)
-                            .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
                     .buttonStyle(.pressFeedback)
                 }
@@ -152,14 +152,16 @@ struct HomeView: View {
     private func tournamentRow(_ tournament: Tournament) -> some View {
         HStack(spacing: 12) {
             Circle()
-                .fill(tournament.status == .active ? Color.accentColor : Color.secondary.opacity(0.4))
+                .fill(tournament.status == .active ? Color.brandGreen : Color.secondary.opacity(0.4))
                 .frame(width: 8, height: 8)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(tournament.name)
                     .font(.body.weight(.medium))
                     .foregroundStyle(.primary)
-                Text("\(tournament.matchType.displayName) · \(tournament.totalMatches) matches")
+                Text(tournament.matchups.isEmpty
+                     ? "\(tournament.dayCount) day\(tournament.dayCount == 1 ? "" : "s")"
+                     : "\(tournament.dayCount) day\(tournament.dayCount == 1 ? "" : "s") · \(tournament.matchCount) matches")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

@@ -91,9 +91,10 @@ struct AlbatrossApp: App {
                 tournamentStore.authStore = authStore
                 #if DEBUG
                 // Launching with -demo-tournament shows a made-up tournament without a cloud account.
-                if CommandLine.arguments.contains(TournamentDemo.launchArgument) {
+                let wantsLargeDemo = CommandLine.arguments.contains(TournamentDemo.largeLaunchArgument)
+                if wantsLargeDemo || CommandLine.arguments.contains(TournamentDemo.launchArgument) {
                     authStore.seedDemoProfile(TournamentDemo.me)
-                    tournamentStore.installDemoTournament()
+                    tournamentStore.installDemoTournament(large: wantsLargeDemo)
                     socialStore.installDemoFriends()
                 }
                 // -demo-tab N opens that tab first (0 Clubhouse, 1 Scorecards, 4 Tournaments, 2 Stats, 3 Profile).

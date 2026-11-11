@@ -47,7 +47,7 @@ struct TournamentStandingsView: View {
                         .font(.subheadline.weight(.medium))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Color.accentColor)
+                        .background(Color.brandGreen)
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
@@ -145,7 +145,7 @@ struct TournamentStandingsView: View {
 
                 // Team A progress (from left)
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color.accentColor)
+                    .fill(Color.brandGreen)
                     .frame(width: geo.size.width * (s.pointsTeamA / maxPoints), height: 12)
 
                 // Team B progress (from right)
@@ -199,7 +199,7 @@ struct TournamentStandingsView: View {
                     .foregroundStyle(matchup.status == .active ? Color.accentColor : .orange)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background((matchup.status == .active ? Color.accentColor : Color.orange).opacity(0.12))
+                    .background((matchup.status == .active ? Color.brandGreen : Color.orange).opacity(0.12))
                     .clipShape(Capsule())
             }
         }

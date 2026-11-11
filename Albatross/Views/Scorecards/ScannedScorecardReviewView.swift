@@ -261,7 +261,7 @@ struct ScannedScorecardReviewView: View {
                 .font(.body.weight(.semibold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(isConfirmEnabled ? Color.accentColor : Color.accentColor.opacity(0.35))
+                .background(isConfirmEnabled ? Color.brandGreen : Color.accentColor.opacity(0.35))
                 .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }

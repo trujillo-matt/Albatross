@@ -231,7 +231,7 @@ struct ScorecardsView: View {
                     .font(.callout)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 14)
-                    .background(Color.accentColor)
+                    .background(Color.brandGreen)
                     .foregroundStyle(.white)
                     .clipShape(Capsule())
             }

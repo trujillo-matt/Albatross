@@ -54,9 +54,9 @@ struct CoverStyle {
     let border: Border
 
     private static let stocks: [(paper: Color, ink: Color)] = [
-        (Color(red: 0.96, green: 0.93, blue: 0.84), Color(red: 0.10, green: 0.30, blue: 0.22)),  // cream, forest
+        (Color(red: 0.96, green: 0.93, blue: 0.84), Color.brandGreen),  // cream, forest
         (Color(red: 0.97, green: 0.97, blue: 0.95), Color(red: 0.11, green: 0.17, blue: 0.35)),  // white, navy
-        (Color(red: 0.84, green: 0.90, blue: 0.78), Color(red: 0.12, green: 0.25, blue: 0.18)),  // sage, pine
+        (Color(red: 0.84, green: 0.90, blue: 0.78), Color.brandGreen),  // sage, pine
         (Color(red: 0.90, green: 0.83, blue: 0.69), Color(red: 0.35, green: 0.12, blue: 0.12)),  // tan, oxblood
         (Color(red: 0.87, green: 0.90, blue: 0.93), Color(red: 0.15, green: 0.18, blue: 0.25))   // fog, slate
     ]

@@ -33,7 +33,6 @@ struct TournamentListView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 16)
-                .readableContentWidth()
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Tournaments")
@@ -58,6 +57,14 @@ struct TournamentListView: View {
             .task {
                 await tournamentStore.loadMyTournaments()
                 await tournamentStore.loadPendingInvites()
+            }
+            // The board stays current while it is on screen: results and scores are refreshed every few seconds.
+            .task(id: featuredTournament?.id) {
+                guard let id = featuredTournament?.id else { return }
+                while !Task.isCancelled {
+                    await tournamentStore.refreshLive(for: id)
+                    try? await Task.sleep(for: .seconds(10))
+                }
             }
         }
     }
@@ -118,7 +125,7 @@ struct TournamentListView: View {
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color.accentColor)
+                        .background(Color.brandGreen)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.pressFeedback)
@@ -191,7 +198,7 @@ struct TournamentListView: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
-                Text("\(tournament.matchType.displayName) · \(tournament.totalMatches) match\(tournament.totalMatches == 1 ? "" : "es")")
+                Text(tournamentSummary(tournament))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -221,7 +228,7 @@ struct TournamentListView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .frame(minHeight: 44)
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(.pressFeedback)
         }
@@ -231,6 +238,14 @@ struct TournamentListView: View {
     }
 
     // MARK: - Helpers
+
+    /// "3 days · 18 matches", or just the days until the players are set and the matches known.
+    private func tournamentSummary(_ tournament: Tournament) -> String {
+        let days = "\(tournament.dayCount) day\(tournament.dayCount == 1 ? "" : "s")"
+        guard !tournament.matchups.isEmpty else { return days }
+        let matches = tournament.matchCount
+        return "\(days) · \(matches) match\(matches == 1 ? "" : "es")"
+    }
 
     private func statusColor(_ status: TournamentStatus) -> Color {
         switch status {

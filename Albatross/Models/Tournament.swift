@@ -289,3 +289,132 @@ func snakeIsTeamATurn(pickNumber: Int) -> Bool {
     let pos = pickNumber % 4
     return pos == 0 || pos == 3
 }
+
+// MARK: - Days and matches
+
+extension TournamentMatchType {
+    /// Players on each side of one match. Singles formats pit one player against one,
+    /// pairs formats two against two, so the format decides how many matches a team makes.
+    var playersPerSide: Int {
+        switch self {
+        case .matchPlay, .strokePlay: return 1
+        case .bestBall, .scramble:    return 2
+        }
+    }
+
+    /// "Singles" or "Pairs", for the board.
+    var sideDescription: String { playersPerSide == 1 ? "Singles" : "Pairs" }
+}
+
+/// One day of a tournament: a course, a format, and the matches that format makes from the teams.
+struct TournamentDay: Identifiable {
+    var id: Int { number }
+    let number: Int
+    let course: TournamentCourse?
+    let matchType: TournamentMatchType
+    let matchups: [TournamentMatchup]
+
+    var pointsTeamA: Double { matchups.map(\.pointsTeamA).reduce(0, +) }
+    var pointsTeamB: Double { matchups.map(\.pointsTeamB).reduce(0, +) }
+    var isComplete: Bool { !matchups.isEmpty && matchups.allSatisfy { $0.status == .complete } }
+}
+
+extension Tournament {
+    /// Players on the larger team, from the players who have joined.
+    var playersPerTeam: Int {
+        guard teams.count == 2 else { return playerPool.filter { $0.inviteStatus == .accepted }.count / 2 }
+        let counts = teams.map { team in playerPool.filter { $0.teamID == team.id && $0.inviteStatus == .accepted }.count }
+        return max(counts.max() ?? 0, 1)
+    }
+
+    /// Matches one day of this format makes: every player plays once, so 12 against 12 is
+    /// twelve singles matches or six pairs matches.
+    static func matchCount(playersPerTeam: Int, matchType: TournamentMatchType) -> Int {
+        max(1, playersPerTeam / matchType.playersPerSide)
+    }
+
+    var sortedCourses: [TournamentCourse] { courses.sorted { $0.roundNumber < $1.roundNumber } }
+
+    /// How many days the tournament runs.
+    var dayCount: Int { max(courses.count, 1) }
+
+    /// Matches across every day. Before the tournament starts this comes from the players;
+    /// afterwards it is the matches that exist.
+    var matchCount: Int {
+        if !matchups.isEmpty { return matchups.count }
+        let perTeam = playersPerTeam
+        return sortedCourses.reduce(0) { total, course in
+            total + Tournament.matchCount(playersPerTeam: perTeam, matchType: course.matchType ?? matchType)
+        }
+    }
+
+    /// First to more than half of the points on offer: 12 points available means 6.5.
+    static func pointsToWin(matchCount: Int) -> Double {
+        (Double(matchCount) / 2).rounded(.down) + 0.5
+    }
+
+    /// The matches grouped by day, in play order.
+    var days: [TournamentDay] {
+        let ordered = matchups.sorted { $0.matchupNumber < $1.matchupNumber }
+        guard !ordered.isEmpty else { return [] }
+        let plan = sortedCourses
+        guard !plan.isEmpty else {
+            return [TournamentDay(number: 1, course: nil, matchType: matchType, matchups: ordered)]
+        }
+
+        let perTeam = playersPerTeam
+        var result: [TournamentDay] = []
+        var start = 0
+        for (index, course) in plan.enumerated() {
+            let type = course.matchType ?? matchType
+            let isLast = index == plan.count - 1
+            let count = isLast ? ordered.count - start : Tournament.matchCount(playersPerTeam: perTeam, matchType: type)
+            let end = min(ordered.count, start + max(count, 0))
+            result.append(TournamentDay(number: index + 1, course: course, matchType: type, matchups: Array(ordered[start..<end])))
+            start = end
+        }
+        return result
+    }
+
+    /// The day being played: the first that is not finished.
+    var currentDay: TournamentDay? {
+        let all = days
+        return all.first { !$0.isComplete } ?? all.last
+    }
+}
+
+// MARK: - Live match status
+
+/// Where a match stands while it is being played.
+struct LiveMatchStatus: Equatable {
+    /// Holes both sides have a score for.
+    var holesPlayed: Int
+    /// Holes (match play) or strokes (other formats) team A is ahead by. Negative when team B leads.
+    var lead: Int
+
+    var isAllSquare: Bool { lead == 0 }
+
+    /// The status of a match from the rounds each side has so far.
+    static func from(teamARounds: [Round], teamBRounds: [Round], matchType: TournamentMatchType) -> LiveMatchStatus {
+        var played = 0
+        var holesWonByA = 0
+        var holesWonByB = 0
+        var strokesA = 0
+        var strokesB = 0
+        for hole in 0..<18 {
+            guard let a = teamARounds.compactMap({ $0.scores.indices.contains(hole) ? $0.scores[hole] : nil }).min(),
+                  let b = teamBRounds.compactMap({ $0.scores.indices.contains(hole) ? $0.scores[hole] : nil }).min()
+            else { continue }
+            played += 1
+            strokesA += a
+            strokesB += b
+            if a < b { holesWonByA += 1 } else if b < a { holesWonByB += 1 }
+        }
+        switch matchType {
+        case .matchPlay:
+            return LiveMatchStatus(holesPlayed: played, lead: holesWonByA - holesWonByB)
+        case .strokePlay, .bestBall, .scramble:
+            return LiveMatchStatus(holesPlayed: played, lead: strokesB - strokesA)
+        }
+    }
+}

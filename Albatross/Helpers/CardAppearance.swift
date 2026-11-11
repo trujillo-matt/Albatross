@@ -263,7 +263,7 @@ struct CardStyleForm: View {
                 values: inkValues,
                 selection: inkBinding,
                 label: { $0.label },
-                swatch: { ink in swatch(ink.color, club: [Color(red: 0.10, green: 0.30, blue: 0.22), Color(red: 0.11, green: 0.17, blue: 0.35)], isDefault: ink == .inherit) }
+                swatch: { ink in swatch(ink.color, club: [Color.brandGreen, Color(red: 0.11, green: 0.17, blue: 0.35)], isDefault: ink == .inherit) }
             )
 
             if round == nil {

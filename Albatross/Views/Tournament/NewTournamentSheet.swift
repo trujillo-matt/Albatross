@@ -11,7 +11,7 @@ struct NewTournamentSheet: View {
     // ── Step 1 ───────────────────────────────────────────────────────────
     @State private var name: String = ""
     @State private var matchType: TournamentMatchType = .bestBall
-    @State private var totalMatches: Int = 3
+    @State private var days: Int = 3
 
     // ── Step 2 ───────────────────────────────────────────────────────────
     @State private var courseNames: [String] = ["", "", ""]
@@ -61,7 +61,7 @@ struct NewTournamentSheet: View {
                 }
             }
         }
-        .onChange(of: totalMatches) { _, newValue in
+        .onChange(of: days) { _, newValue in
             adjustCourseNames(to: newValue)
         }
     }
@@ -76,20 +76,20 @@ struct NewTournamentSheet: View {
             }
 
             Section {
-                Stepper(value: $totalMatches, in: 1...18) {
+                Stepper(value: $days, in: 1...7) {
                     HStack {
-                        Text("Matches")
+                        Text("Days")
                             .font(.callout)
                         Spacer()
-                        Text("\(totalMatches)")
+                        Text("\(days)")
                             .font(.callout.weight(.semibold))
                             .foregroundStyle(Color.accentColor)
                     }
                 }
             } header: {
-                Text("Number of Matches")
+                Text("Days of play")
             } footer: {
-                Text("Points to win: \(String(format: "%.1f", Double(totalMatches) / 2.0 + 0.5))")
+                Text("Each day has its own course and format. The matches in a day come from the players: every player plays once a day, so singles make one match per player and pairs make half as many. Points to win is set when the tournament starts.")
                     .font(.caption)
             }
         }
@@ -100,9 +100,9 @@ struct NewTournamentSheet: View {
     private var step2View: some View {
         Form {
             Section {
-                ForEach(0..<totalMatches, id: \.self) { index in
+                ForEach(0..<days, id: \.self) { index in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Match \(index + 1)")
+                        Text("Day \(index + 1)")
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(.secondary)
 
@@ -119,7 +119,7 @@ struct NewTournamentSheet: View {
                     .padding(.vertical, 4)
                 }
             } header: {
-                Text("Course & format for each match")
+                Text("Course and format for each day")
             } footer: {
                 Text("Course names can be updated later from the tournament detail page.")
                     .font(.caption)
@@ -359,7 +359,7 @@ struct NewTournamentSheet: View {
                 let tournament = try await tournamentStore.createTournament(
                     name: name.trimmingCharacters(in: .whitespaces),
                     matchType: matchTypes.first ?? .bestBall,
-                    totalMatches: totalMatches,
+                    days: days,
                     courseNames: names,
                     matchTypes: matchTypes
                 )
