@@ -20,7 +20,7 @@ struct SignInView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.141, green: 0.157, blue: 0.133)
+            Color.brandGreen
                 .ignoresSafeArea()
 
             ScrollView {
@@ -110,11 +110,11 @@ struct SignInView: View {
 
                                 if authStore.isLoading {
                                     ProgressView()
-                                        .tint(Color(red: 0.141, green: 0.208, blue: 0.153))
+                                        .tint(Color.brandGreen)
                                 } else {
                                     Text(isSignUp ? "Create Account" : "Sign In")
                                         .font(.body.weight(.semibold))
-                                        .foregroundStyle(Color(red: 0.141, green: 0.208, blue: 0.153))
+                                        .foregroundStyle(Color.brandGreen)
                                 }
                             }
                         }

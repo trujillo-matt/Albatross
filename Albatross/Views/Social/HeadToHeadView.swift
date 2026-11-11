@@ -111,7 +111,7 @@ struct HeadToHeadView: View {
                 isLeft: false
             )
         }
-        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color(red: 0.18, green: 0.22, blue: 0.18)))
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.brandGreen))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
@@ -350,7 +350,7 @@ struct HeadToHeadView: View {
 
     private func scoreColor(_ diff: Int) -> Color {
         switch diff {
-        case ..<0: return .green
+        case ..<0: return BookletStyle.adaptiveInk(forDifference: -1)
         case 0:    return .secondary
         default:   return .red
         }

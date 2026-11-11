@@ -56,7 +56,7 @@ enum AccentInk: String, CaseIterable, Identifiable {
     /// A lighter version of the ink for controls on a dark background, where the printed ink would sink.
     var lightTint: Color {
         switch self {
-        case .inherit, .club, .fairway: return Color(red: 0.24, green: 0.78, blue: 0.54)
+        case .inherit, .club, .fairway: return Color.brandGreenLight
         case .navy:           return Color(red: 0.48, green: 0.61, blue: 0.96)
         case .oxblood:        return Color(red: 0.96, green: 0.52, blue: 0.54)
         case .plum:           return Color(red: 0.79, green: 0.58, blue: 0.89)
@@ -87,7 +87,7 @@ enum AccentInk: String, CaseIterable, Identifiable {
 /// and it is carried across the app: the card, covers, stats and share images.
 @MainActor
 final class CardAppearance: ObservableObject {
-    static let fairway = Color(red: 0.0, green: 0.404, blue: 0.278)
+    static let fairway = Color.brandGreen
     static let cream = Color(red: 0.985, green: 0.975, blue: 0.94)
 
     @Published var paper: PaperStock { didSet { defaults.set(paper.rawValue, forKey: Keys.paper) } }

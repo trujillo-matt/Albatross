@@ -39,7 +39,7 @@ private struct StartRoundSmall: View {
                 .tracking(2)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(red: 0.141, green: 0.208, blue: 0.153))
+        .background(Color.brandGreen)
     }
 }
 
@@ -77,7 +77,7 @@ private struct StartRoundMedium: View {
         }
         .padding(.horizontal, 20)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(red: 0.141, green: 0.208, blue: 0.153))
+        .background(Color.brandGreen)
     }
 }
 

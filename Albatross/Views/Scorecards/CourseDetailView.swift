@@ -58,7 +58,7 @@ struct CourseDetailView: View {
     private var bannerHeader: some View {
         ZStack(alignment: .bottomLeading) {
             // Accent green fill
-            Color(red: 0.141, green: 0.208, blue: 0.153)
+            Color.brandGreen
                 .frame(maxWidth: .infinity)
                 .frame(height: 180)
 

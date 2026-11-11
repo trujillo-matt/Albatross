@@ -8,13 +8,13 @@ enum TournamentDemo {
     static let launchArgument = "-demo-tournament"
 
     /// The signed-in player the demo pretends to be.
-    static let me = UserProfile(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000A1")!, displayName: "Matt T")
+    static let me = UserProfile(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000A1")!, displayName: "Matt Trujillo")
 
-    static let sam = UserProfile(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000B2")!, displayName: "Sam R")
-    static let alex = UserProfile(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000C3")!, displayName: "Alex K")
-    static let jordan = UserProfile(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000D4")!, displayName: "Jordan P")
+    static let sam = UserProfile(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000B2")!, displayName: "Sam Rhodes")
+    static let alex = UserProfile(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000C3")!, displayName: "Alex Kim")
+    static let jordan = UserProfile(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000D4")!, displayName: "Jordan Park")
 
-    /// Two teams of two, an active first match that includes the player, and a second match still to be played.
+    /// Two teams of two playing four singles matches: two finished, one in progress with the player, one still to play.
     static func makeTournament() -> Tournament {
         let tournamentID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
         let teamAID = UUID(uuidString: "00000000-0000-0000-0000-0000000000E1")!
@@ -27,17 +27,18 @@ enum TournamentDemo {
                 inviteStatus: .accepted, isAdmin: admin, draftPosition: nil, profile: profile)
         }
 
-        func matchup(_ number: Int, status: MatchupStatus) -> TournamentMatchup {
+        func matchup(_ number: Int, a: UserProfile, b: UserProfile, status: MatchupStatus,
+                     result: MatchResult? = nil, pointsA: Double = 0, pointsB: Double = 0) -> TournamentMatchup {
             TournamentMatchup(
                 id: UUID(uuidString: "00000000-0000-0000-0000-00000000F00\(number)")!,
                 tournamentID: tournamentID, matchupNumber: number, teamAID: teamAID, teamBID: teamBID,
-                teamAPlayerIDs: [me.id, sam.id], teamBPlayerIDs: [alex.id, jordan.id],
-                matchType: .matchPlay, status: status, result: nil, pointsTeamA: 0, pointsTeamB: 0)
+                teamAPlayerIDs: [a.id], teamBPlayerIDs: [b.id],
+                matchType: .matchPlay, status: status, result: result, pointsTeamA: pointsA, pointsTeamB: pointsB)
         }
 
         var tournament = Tournament(
             id: tournamentID, name: "Reynolds Cup", creatorUserID: me.id, status: .active,
-            matchType: .matchPlay, totalMatches: 2, pointsToWin: 1.5, createdAt: now, updatedAt: now)
+            matchType: .matchPlay, totalMatches: 4, pointsToWin: 2.5, createdAt: now, updatedAt: now)
         tournament.courses = [
             TournamentCourse(id: UUID(), tournamentID: tournamentID, courseName: "Great Waters at Reynolds", roundNumber: 1, matchType: .matchPlay),
             TournamentCourse(id: UUID(), tournamentID: tournamentID, courseName: "Reynolds Plantation: Oconee", roundNumber: 2, matchType: .matchPlay)
@@ -50,7 +51,12 @@ enum TournamentDemo {
             player(me, team: teamAID, admin: true), player(sam, team: teamAID),
             player(alex, team: teamBID), player(jordan, team: teamBID)
         ]
-        tournament.matchups = [matchup(1, status: .active), matchup(2, status: .pending)]
+        tournament.matchups = [
+            matchup(1, a: me, b: alex, status: .complete, result: .teamAWin, pointsA: 1),
+            matchup(2, a: sam, b: jordan, status: .complete, result: .teamBWin, pointsB: 1),
+            matchup(3, a: me, b: jordan, status: .active),
+            matchup(4, a: sam, b: alex, status: .pending)
+        ]
         return tournament
     }
 }

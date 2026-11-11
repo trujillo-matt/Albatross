@@ -131,8 +131,6 @@ struct ScorecardsView: View {
     private var library: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                TournamentListView()
-
                 if inProgress.isEmpty && completed.isEmpty {
                     emptyState
                         .frame(maxWidth: .infinity)

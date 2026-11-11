@@ -311,26 +311,12 @@ struct TournamentDetailView: View {
 
     private var activeBody: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Standings summary
-            if let standings = tournamentStore.standings(for: current) {
-                standingsSummaryCard(standings)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
+            // The board: team points and every match, each row opening its match
+            TournamentLeaderboard(tournament: current) { matchup in
+                AnyView(TournamentMatchupView(tournament: current, matchup: matchup))
             }
-
-            sectionHeader("Matchups")
-                .padding(.horizontal, 20)
-                .padding(.top, 24)
-                .padding(.bottom, 12)
-
-            ForEach(current.matchups) { matchup in
-                NavigationLink(destination: TournamentMatchupView(tournament: current, matchup: matchup)) {
-                    matchupRow(matchup)
-                }
-                .buttonStyle(.pressFeedback)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
 
             NavigationLink(destination: TournamentStandingsView(tournament: current)) {
                 Label("Full Standings", systemImage: "chart.bar.fill")
@@ -422,10 +408,10 @@ struct TournamentDetailView: View {
     private func matchupStatusBadge(_ status: MatchupStatus) -> some View {
         Text(status == .active ? "In Progress" : "Pending")
             .font(.caption2)
-            .foregroundStyle(status == .active ? .green : .orange)
+            .foregroundStyle(status == .active ? Color.accentColor : .orange)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
-            .background((status == .active ? Color.green : Color.orange).opacity(0.12))
+            .background((status == .active ? Color.accentColor : Color.orange).opacity(0.12))
             .clipShape(Capsule())
     }
 
@@ -481,7 +467,7 @@ struct TournamentDetailView: View {
         switch status {
         case .setup:    return .orange
         case .draft:    return .blue
-        case .active:   return .green
+        case .active:   return Color.accentColor
         case .complete: return .secondary
         }
     }
@@ -489,7 +475,7 @@ struct TournamentDetailView: View {
     private func inviteStatusColor(_ status: InviteStatus) -> Color {
         switch status {
         case .pending:  return .orange
-        case .accepted: return .green
+        case .accepted: return Color.accentColor
         case .declined: return .red
         }
     }

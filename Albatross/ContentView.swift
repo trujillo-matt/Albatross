@@ -30,6 +30,10 @@ struct ContentView: View {
                 ScorecardsView(pendingRoundID: $pendingRoundID, pendingNewRound: $pendingNewRound)
             }
 
+            Tab("Tournaments", systemImage: "flag.2.crossed.fill", value: 4) {
+                TournamentListView()
+            }
+
             Tab("Stats", systemImage: "chart.bar.fill", value: 2) {
                 StatsView()
             }

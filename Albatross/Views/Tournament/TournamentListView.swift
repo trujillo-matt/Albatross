@@ -9,58 +9,56 @@ struct TournamentListView: View {
     @State private var showDeleteAlert = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // ── Section header ───────────────────────────────────────────
-            HStack {
-                Text("Tournaments")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    // A single word should shrink before it breaks across lines.
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    if !tournamentStore.pendingInvites.isEmpty {
+                        pendingInvitesSection
+                    }
 
-                Spacer()
+                    if let featured = featuredTournament {
+                        leaderboardSection(featured)
+                    }
 
-                Button(action: { showNewTournament = true }) {
-                    Image(systemName: "plus")
-                        .scaledFont(size: 16, weight: .semibold)
-                        .foregroundStyle(Color.accentColor)
-                        .accessibilityLabel("New Tournament")
+                    if tournamentStore.myTournaments.isEmpty && tournamentStore.pendingInvites.isEmpty {
+                        emptyTournamentState
+                    } else if !tournamentStore.myTournaments.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("All tournaments")
+                                .font(.title3.weight(.medium))
+                                .accessibilityAddTraits(.isHeader)
+                            tournamentList
+                        }
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+                .readableContentWidth()
+            }
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Tournaments")
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: { showNewTournament = true }) {
+                        Label("New tournament", systemImage: "plus")
+                    }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            .padding(.bottom, 12)
-
-            // ── Pending invites ──────────────────────────────────────────
-            if !tournamentStore.pendingInvites.isEmpty {
-                pendingInvitesSection
-                    .padding(.bottom, 12)
+            .sheet(isPresented: $showNewTournament) {
+                NewTournamentSheet()
             }
-
-            // ── Tournament cards ─────────────────────────────────────────
-            if tournamentStore.myTournaments.isEmpty && tournamentStore.pendingInvites.isEmpty {
-                emptyTournamentState
-                    .padding(.bottom, 20)
-            } else if !tournamentStore.myTournaments.isEmpty {
-                tournamentScrollRow
-                    .padding(.bottom, 20)
+            .alert("Delete Tournament?", isPresented: $showDeleteAlert, presenting: tournamentToDelete) { t in
+                Button("Delete", role: .destructive) {
+                    Task { try? await tournamentStore.deleteTournament(t) }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: { t in
+                Text("\u{201C}\(t.name)\u{201D} and all its data will be permanently deleted. This cannot be undone.")
             }
-        }
-        .sheet(isPresented: $showNewTournament) {
-            NewTournamentSheet()
-        }
-        .alert("Delete Tournament?", isPresented: $showDeleteAlert, presenting: tournamentToDelete) { t in
-            Button("Delete", role: .destructive) {
-                Task { try? await tournamentStore.deleteTournament(t) }
+            .task {
+                await tournamentStore.loadMyTournaments()
+                await tournamentStore.loadPendingInvites()
             }
-            Button("Cancel", role: .cancel) { }
-        } message: { t in
-            Text("\u{201C}\(t.name)\u{201D} and all its data will be permanently deleted. This cannot be undone.")
-        }
-        .task {
-            await tournamentStore.loadMyTournaments()
-            await tournamentStore.loadPendingInvites()
         }
     }
 
@@ -136,106 +134,109 @@ struct TournamentListView: View {
         )
     }
 
-    // MARK: - Tournament scroll row
+    // MARK: - Leaderboard
 
-    private var tournamentScrollRow: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(tournamentStore.myTournaments) { tournament in
-                    NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
-                        tournamentCard(tournament)
-                    }
-                    .buttonStyle(.pressFeedback)
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            tournamentToDelete = tournament
-                            showDeleteAlert = true
-                        } label: {
-                            Label("Delete Tournament", systemImage: "trash")
-                        }
+    /// The tournament the board shows: the one being played, otherwise the newest.
+    private var featuredTournament: Tournament? {
+        let withMatches = tournamentStore.myTournaments.filter { !$0.matchups.isEmpty && $0.teams.count == 2 }
+        return withMatches.first { $0.status == .active } ?? withMatches.first
+    }
+
+    private func leaderboardSection(_ tournament: Tournament) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Leaderboard")
+                .font(.title3.weight(.medium))
+                .accessibilityAddTraits(.isHeader)
+            NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
+                TournamentLeaderboard(tournament: tournament)
+            }
+            .buttonStyle(.pressFeedback)
+        }
+    }
+
+    // MARK: - Tournament list
+
+    private var tournamentList: some View {
+        VStack(spacing: 12) {
+            ForEach(tournamentStore.myTournaments) { tournament in
+                NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
+                    tournamentCard(tournament)
+                }
+                .buttonStyle(.pressFeedback)
+                .contextMenu {
+                    Button(role: .destructive) {
+                        tournamentToDelete = tournament
+                        showDeleteAlert = true
+                    } label: {
+                        Label("Delete Tournament", systemImage: "trash")
                     }
                 }
             }
-            .padding(.horizontal, 16)
         }
-        .clippedToHorizontalSafeArea()
     }
 
     private func tournamentCard(_ tournament: Tournament) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Status banner
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(statusColor(tournament.status))
-                    .frame(width: 7, height: 7)
-                Text(statusLabel(tournament.status))
-                    .font(.caption2)
-                    .foregroundStyle(statusColor(tournament.status))
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 12)
-
-            Spacer(minLength: 8)
-
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(statusColor(tournament.status))
+                        .frame(width: 8, height: 8)
+                        .accessibilityHidden(true)
+                    Text(statusLabel(tournament.status))
+                        .font(.footnote)
+                        .foregroundStyle(statusColor(tournament.status))
+                }
                 Text(tournament.name)
-                    .font(.subheadline.weight(.semibold))
+                    .font(.headline)
                     .foregroundStyle(.primary)
-                    .lineLimit(2)
                     .multilineTextAlignment(.leading)
-
-                Text(tournament.matchType.displayName)
-                    .font(.caption)
+                Text("\(tournament.matchType.displayName) · \(tournament.totalMatches) match\(tournament.totalMatches == 1 ? "" : "es")")
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
-
-                Text("\(tournament.totalMatches) match\(tournament.totalMatches == 1 ? "" : "es")")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 12)
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
-        .frame(width: 148, height: 110)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(Color(.separator).opacity(0.5), lineWidth: 0.5)
-        )
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     // MARK: - Empty state
 
     private var emptyTournamentState: some View {
-        Button(action: { showNewTournament = true }) {
-            HStack(spacing: 10) {
-                Image(systemName: "flag.2.crossed.fill")
-                    .scaledFont(size: 18)
-                    .foregroundStyle(Color.accentColor.opacity(0.7))
-                Text("Create your first tournament")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .scaledFont(size: 12, weight: .semibold)
-                    .foregroundStyle(Color(.tertiaryLabel))
+        VStack(alignment: .leading, spacing: 12) {
+            Text("No tournaments yet")
+                .font(.headline)
+            Text("Create one, invite friends, and score each match on a booklet.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Button(action: { showNewTournament = true }) {
+                Text("Create a tournament")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 44)
+                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .padding(.horizontal, 16)
+            .buttonStyle(.pressFeedback)
         }
-        .buttonStyle(.pressFeedback)
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     // MARK: - Helpers
 
     private func statusColor(_ status: TournamentStatus) -> Color {
         switch status {
-        case .setup:    return .orange
-        case .draft:    return .blue
-        case .active:   return .green
+        case .setup:    return .secondary
+        case .draft:    return .orange
+        case .active:   return .accentColor
         case .complete: return .secondary
         }
     }

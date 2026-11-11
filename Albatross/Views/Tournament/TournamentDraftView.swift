@@ -222,7 +222,7 @@ struct TournamentDraftView: View {
             } else {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color.accentColor)
                     Text("Your vote has been submitted")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -384,11 +384,11 @@ struct TournamentDraftView: View {
                 if isOnClock {
                     // Pulsing green dot
                     Circle()
-                        .fill(Color.green)
+                        .fill(Color.accentColor)
                         .frame(width: 8, height: 8)
                         .overlay(
                             Circle()
-                                .stroke(Color.green.opacity(0.4), lineWidth: 3)
+                                .stroke(Color.accentColor.opacity(0.4), lineWidth: 3)
                         )
                 }
             }
@@ -430,13 +430,13 @@ struct TournamentDraftView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             isOnClock
-                ? Color.green.opacity(0.06)
+                ? Color.accentColor.opacity(0.06)
                 : Color(.secondarySystemGroupedBackground)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(isOnClock ? Color.green.opacity(0.4) : Color(.separator).opacity(0.3), lineWidth: isOnClock ? 1.5 : 0.5)
+                .strokeBorder(isOnClock ? Color.accentColor.opacity(0.4) : Color(.separator).opacity(0.3), lineWidth: isOnClock ? 1.5 : 0.5)
         )
     }
 

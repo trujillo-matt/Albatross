@@ -5,7 +5,6 @@ struct ProfileView: View {
     @EnvironmentObject private var authStore: AuthStore
     @EnvironmentObject private var roundStore: RoundStore
     @EnvironmentObject private var socialStore: SocialStore
-    @EnvironmentObject private var tournamentStore: TournamentStore
     @EnvironmentObject private var appearance: CardAppearance
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -275,21 +274,6 @@ struct ProfileView: View {
 
     private var shortcutsSection: some View {
         VStack(spacing: 0) {
-            NavigationLink {
-                ScrollView { TournamentListView() }
-                    .background(Color(.systemGroupedBackground))
-                    .navigationTitle("Tournaments")
-                    .navigationBarTitleDisplayMode(.inline)
-            } label: {
-                shortcutRow(
-                    title: "Tournaments",
-                    detail: tournamentStore.myTournaments.isEmpty ? nil : "\(tournamentStore.myTournaments.count)",
-                    systemImage: "flag.2.crossed")
-            }
-            .buttonStyle(.pressFeedback)
-
-            Divider().padding(.leading, 64)
-
             Button { showSettings = true } label: {
                 shortcutRow(title: "Settings", detail: nil, systemImage: "gearshape")
             }

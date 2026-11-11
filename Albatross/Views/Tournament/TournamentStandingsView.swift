@@ -196,10 +196,10 @@ struct TournamentStandingsView: View {
             } else {
                 Text(matchup.status == .active ? "In Progress" : "Pending")
                     .font(.caption)
-                    .foregroundStyle(matchup.status == .active ? .green : .orange)
+                    .foregroundStyle(matchup.status == .active ? Color.accentColor : .orange)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background((matchup.status == .active ? Color.green : Color.orange).opacity(0.12))
+                    .background((matchup.status == .active ? Color.accentColor : Color.orange).opacity(0.12))
                     .clipShape(Capsule())
             }
         }
@@ -245,7 +245,7 @@ struct TournamentStandingsView: View {
 
 private struct StandingsShareCard: View {
     // Explicit color — Color.accentColor does not resolve in ImageRenderer
-    private let brandGreen = Color(red: 0.141, green: 0.208, blue: 0.153)
+    private let brandGreen = Color.brandGreen
 
     let tournament: Tournament
     let standings: TournamentStandings

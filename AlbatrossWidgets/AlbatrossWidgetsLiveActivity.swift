@@ -12,7 +12,7 @@ struct AlbatrossLiveActivityWidget: Widget {
                 courseName: context.attributes.courseAbbreviation,
                 state: context.state
             )
-            .activityBackgroundTint(Color(red: 0.13, green: 0.17, blue: 0.13))
+            .activityBackgroundTint(Color.brandGreen)
             .activitySystemActionForegroundColor(.white)
             .widgetURL(URL(string: "albatross://round?id=\(context.attributes.roundID)"))
 
@@ -23,7 +23,7 @@ struct AlbatrossLiveActivityWidget: Widget {
                     HStack(spacing: 5) {
                         Image(systemName: "flag.fill")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(.green)
+                            .foregroundStyle(Color.brandGreenLight)
                         Text(context.attributes.courseName)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(.white)
@@ -50,7 +50,7 @@ struct AlbatrossLiveActivityWidget: Widget {
                 HStack(spacing: 3) {
                     Image(systemName: "flag.fill")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color.brandGreenLight)
                     Text(scoreToParString(context.state.scoreToPar))
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundStyle(scoreToParColor(context.state.scoreToPar))
@@ -67,7 +67,7 @@ struct AlbatrossLiveActivityWidget: Widget {
                     .foregroundStyle(scoreToParColor(context.state.scoreToPar))
             }
             .widgetURL(URL(string: "albatross://round?id=\(context.attributes.roundID)"))
-            .keylineTint(.green)
+            .keylineTint(Color.brandGreenLight)
         }
     }
 }
@@ -85,7 +85,7 @@ struct AlbatrossLockScreenView: View {
                 HStack(spacing: 5) {
                     Image(systemName: "flag.fill")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color.brandGreenLight)
                     Text(courseName)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(.white)

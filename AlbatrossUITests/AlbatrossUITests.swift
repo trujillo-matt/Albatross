@@ -84,8 +84,8 @@ final class AlbatrossTournamentUITests: XCTestCase {
 
     @MainActor
     func testDemoTournamentOpens() throws {
-        XCTAssertTrue(app.buttons["Scorecards"].firstMatch.waitForExistence(timeout: 20))
-        app.buttons["Scorecards"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Tournaments"].firstMatch.waitForExistence(timeout: 20))
+        app.buttons["Tournaments"].firstMatch.tap()
 
         let card = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Reynolds Cup'")).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10), "The demo tournament is not on the shelf")
@@ -94,17 +94,17 @@ final class AlbatrossTournamentUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Reynolds Cup"].waitForExistence(timeout: 8), app.debugDescription)
     }
 
-    /// Opens the first match and starts its scorecard: the booklet, not the old scorecard.
+    /// Opens the live match and starts its scorecard: the booklet, not the old scorecard.
     @MainActor
     func testDemoMatchOpensBooklet() throws {
-        XCTAssertTrue(app.buttons["Scorecards"].firstMatch.waitForExistence(timeout: 20))
-        app.buttons["Scorecards"].firstMatch.tap()
+        XCTAssertTrue(app.buttons["Tournaments"].firstMatch.waitForExistence(timeout: 20))
+        app.buttons["Tournaments"].firstMatch.tap()
         let card = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Reynolds Cup'")).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10))
         card.tap()
         XCTAssertTrue(app.navigationBars["Reynolds Cup"].waitForExistence(timeout: 8))
 
-        let match = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Match 1' OR label CONTAINS 'Matchup 1'")).firstMatch
+        let match = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Match 3' OR label CONTAINS 'Matchup 3'")).firstMatch
         XCTAssertTrue(match.waitForExistence(timeout: 5), app.debugDescription)
         match.tap()
 

@@ -96,6 +96,12 @@ struct AlbatrossApp: App {
                     tournamentStore.installDemoTournament()
                     socialStore.installDemoFriends()
                 }
+                // -demo-tab N opens that tab first (0 Clubhouse, 1 Scorecards, 4 Tournaments, 2 Stats, 3 Profile).
+                let arguments = CommandLine.arguments
+                if let flag = arguments.firstIndex(of: "-demo-tab"), arguments.indices.contains(flag + 1),
+                   let tab = Int(arguments[flag + 1]) {
+                    selectedTab = tab
+                }
                 // UI tests launch with this argument to start from one empty in-progress round.
                 if CommandLine.arguments.contains("-uitest-seed-round"),
                    !roundStore.rounds.contains(where: { $0.courseName == "UI Test Course" }) {
