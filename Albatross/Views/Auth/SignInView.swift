@@ -4,6 +4,9 @@ struct SignInView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var authStore: AuthStore
 
+    /// Lets someone use the app with no account. Their rounds stay on the phone.
+    var onContinueWithoutAccount: () -> Void = {}
+
     @State private var isSignUp = false
     @State private var firstName = ""
     @State private var username = ""
@@ -144,6 +147,24 @@ struct SignInView: View {
                     }
                     .buttonStyle(.pressFeedback)
                     .padding(.top, 24)
+
+                    VStack(spacing: 4) {
+                        Button(action: onContinueWithoutAccount) {
+                            Text("Continue without an account")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.pressFeedback)
+
+                        Text("Your rounds stay on this phone. Sign in later to sync and see friends.")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.6))
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.top, 12)
 
                     Text("By continuing you agree to our\nTerms of Service and Privacy Policy.")
                         .font(.caption2)

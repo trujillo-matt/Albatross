@@ -9,6 +9,8 @@ struct ProfileView: View {
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    @AppStorage("continuesWithoutAccount") private var continuesWithoutAccount = false
+
     @State private var showSettings = false
     @State private var showEditProfile = false
     @State private var showSignOutConfirm = false
@@ -32,13 +34,25 @@ struct ProfileView: View {
 
                     shortcutsSection
 
-                    Button(role: .destructive) { showSignOutConfirm = true } label: {
-                        Text("Sign out")
-                            .font(.body)
-                            .foregroundStyle(Color(.systemRed))
-                            .frame(maxWidth: .infinity, minHeight: 44)
+                    if authStore.isSignedIn {
+                        Button(role: .destructive) { showSignOutConfirm = true } label: {
+                            Text("Sign out")
+                                .font(.body)
+                                .foregroundStyle(Color(.systemRed))
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.pressFeedback)
+                    } else if continuesWithoutAccount {
+                        Button { continuesWithoutAccount = false } label: {
+                            Text("Sign in to sync")
+                                .font(.body)
+                                .foregroundStyle(Color.accentColor)
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.pressFeedback)
                     }
-                    .buttonStyle(.pressFeedback)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 16)

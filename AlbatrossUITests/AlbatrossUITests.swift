@@ -117,3 +117,31 @@ final class AlbatrossTournamentUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Swipe to open"].waitForExistence(timeout: 10) || app.buttons["Hole 1, par 4"].firstMatch.waitForExistence(timeout: 2), app.debugDescription)
     }
 }
+
+/// The sign-in screen, with its way in that needs no account.
+final class AlbatrossSignInUITests: XCTestCase {
+
+    @MainActor
+    func testContinueWithoutAnAccountThenSignInLater() throws {
+        let app = XCUIApplication()
+        // -show-sign-in starts from a phone that has not chosen yet.
+        app.launchArguments += ["-show-sign-in"]
+        app.launch()
+
+        let continueButton = app.buttons["Continue without an account"].firstMatch
+        XCTAssertTrue(continueButton.waitForExistence(timeout: 25), "The sign-in screen did not appear")
+        // The splash fades into the sign-in screen; let that finish so the tap lands on the screen, not the fade.
+        Thread.sleep(forTimeInterval: 2)
+        continueButton.tap()
+
+        // In the app without an account: the tabs are there and Profile offers sign-in.
+        XCTAssertTrue(app.buttons["Profile"].firstMatch.waitForExistence(timeout: 10), app.debugDescription)
+        app.buttons["Profile"].firstMatch.tap()
+        let signIn = app.buttons["Sign in to sync"].firstMatch
+        XCTAssertTrue(signIn.waitForExistence(timeout: 8))
+        signIn.tap()
+
+        // And it is back at the sign-in screen.
+        XCTAssertTrue(app.buttons["Continue without an account"].firstMatch.waitForExistence(timeout: 10))
+    }
+}
