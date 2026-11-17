@@ -109,6 +109,10 @@ struct AlbatrossApp: App {
                         tournamentStore.installDemoTournament(large: wantsLargeDemo)
                         socialStore.installDemoFriends()
                     }
+                    // -demo-rounds fills the library so stacked cards can be seen.
+                    if CommandLine.arguments.contains("-demo-rounds") {
+                        roundStore.installDemoRounds()
+                    }
                     // -show-sign-in also forgets an earlier "continue without an account", so the screen can be tested.
                     if CommandLine.arguments.contains("-show-sign-in") {
                         continuesWithoutAccount = false

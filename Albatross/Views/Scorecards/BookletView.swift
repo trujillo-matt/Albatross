@@ -37,9 +37,18 @@ struct BookletView: View {
     @State private var showCardStyle = false
     @State private var showFinishConfirm = false
     @State private var hasSetUp = false
+    /// The scores written this visit, newest last, so a slip can be taken back.
+    @State private var scoreHistory: [ScoreEntry] = []
+    @State private var lastScoreWrittenAt = Date.distantPast
     @State private var spineEmphasis = false
 
     private var round: Round? { store.rounds.first { $0.id == roundID } }
+
+    /// One score written to a hole, with what was there before.
+    private struct ScoreEntry {
+        let hole: Int
+        let previous: Int?
+    }
 
     var body: some View {
         if let round {
@@ -84,9 +93,11 @@ struct BookletView: View {
                         tracks: appearance.tracksPuttsAndGreens,
                         putts: round.putts(on: activeHole),
                         greenInRegulation: round.greenInRegulation(on: activeHole),
+                        canUndo: !scoreHistory.isEmpty,
                         onScore: { record($0) },
                         onPutts: { recordPutts($0) },
                         onGreen: { recordGreen($0) },
+                        onUndo: { undoLastScore() },
                         onFinish: { showFinishConfirm = true }
                     )
                     .padding(.horizontal, 12)
@@ -294,6 +305,12 @@ struct BookletView: View {
     /// Writes a score (or clears it) for the active hole, then moves the pencil on.
     private func record(_ value: Int?) {
         guard var updated = round else { return }
+        // A second tap right after the first is a slip, not the next hole's score:
+        // the pencil has already moved on, so it would write to the wrong hole.
+        if value != nil, Date().timeIntervalSince(lastScoreWrittenAt) < 0.7 { return }
+        scoreHistory.append(ScoreEntry(hole: activeHole, previous: updated.scores[activeHole - 1]))
+        if scoreHistory.count > 20 { scoreHistory.removeFirst() }
+        if value != nil { lastScoreWrittenAt = Date() }
         updated.scores[activeHole - 1] = value
         store.update(updated)
         // Writing a score is what starts the Live Activity, not merely opening the booklet.
@@ -308,6 +325,17 @@ struct BookletView: View {
                 break
             }
         }
+    }
+
+    /// Takes back the last score written: that hole gets its old value back and the pencil returns to it.
+    private func undoLastScore() {
+        guard var updated = round, let entry = scoreHistory.popLast() else { return }
+        updated.scores[entry.hole - 1] = entry.previous
+        store.update(updated)
+        LiveActivityManager.shared.updateActivity(for: updated)
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        lastScoreWrittenAt = .distantPast
+        activeHole = entry.hole
     }
 
     /// The back page's line under the banner: where the round stands.
@@ -400,9 +428,11 @@ private struct PencilStrip: View {
     let tracks: Bool
     let putts: Int?
     let greenInRegulation: Bool?
+    let canUndo: Bool
     var onScore: (Int?) -> Void
     var onPutts: (Int?) -> Void
     var onGreen: (Bool) -> Void
+    var onUndo: () -> Void
     var onFinish: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
@@ -410,7 +440,7 @@ private struct PencilStrip: View {
     @ScaledMetric(relativeTo: .body) private var chipSize: CGFloat = 44
 
     private var choices: [(title: String, value: Int)] {
-        [("Birdie", par - 1), ("Par", par), ("Bogey", par + 1), ("Double", par + 2)]
+        [("Birdie", par - 1), ("Par", par), ("Bogey", par + 1), ("Double", par + 2), ("Triple", par + 3)]
             .filter { $0.1 >= 1 }
             .map { (title: $0.0, value: $0.1) }
     }
@@ -424,7 +454,17 @@ private struct PencilStrip: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 8)
-                moreMenu
+                if canUndo {
+                    Button(action: onUndo) {
+                        Label("Undo", systemImage: "arrow.uturn.backward")
+                            .font(.subheadline.weight(.medium))
+                            .padding(.horizontal, 12)
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(StripPressStyle())
+                    .accessibilityHint("Takes back the last score")
+                }
                 if holesPlayed > 0 {
                     Button(action: onFinish) {
                         Label("Finish \(holesPlayed)/18", systemImage: "flag.checkered")
@@ -439,10 +479,9 @@ private struct PencilStrip: View {
 
             if tracks { greenLine }
 
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 72), spacing: 8)], spacing: 8) {
-                ForEach(choices, id: \.title) { choice in
-                    scoreButton(title: choice.title, value: choice.value)
-                }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 6) { scoreTiles }
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) { scoreTiles }
             }
         }
         .padding(12)
@@ -530,25 +569,56 @@ private struct PencilStrip: View {
         .accessibilityHint("Writes \(value) for hole \(hole)")
     }
 
-    private var moreMenu: some View {
-        Menu {
-            ForEach(1...12, id: \.self) { value in
-                Button("\(value)") { onScore(value) }
+    /// Every result relative to par, then More for anything higher.
+    @ViewBuilder
+    private var scoreTiles: some View {
+        ForEach(choices, id: \.title) { choice in
+            scoreButton(title: choice.title, value: choice.value)
+        }
+        moreTile
+    }
+
+    /// Any score, and a way to clear the hole. Shows the score itself when it is beyond the tiles.
+    private var moreTile: some View {
+        let beyondTiles = score.map { value in !choices.contains { $0.value == value } } ?? false
+        let ink = BookletStyle.ink(forDifference: (score ?? par + 4) - par, onDark: colorScheme == .dark)
+        return Menu {
+            ForEach(1...15, id: \.self) { value in
+                Button(menuTitle(for: value)) { onScore(value) }
             }
             if score != nil {
                 Divider()
                 Button(role: .destructive) { onScore(nil) } label: {
-                    Label("Clear Score", systemImage: "eraser")
+                    Label("Clear score", systemImage: "eraser")
                 }
             }
         } label: {
-            Label("Other score", systemImage: "number")
-                .labelStyle(.iconOnly)
-                .scaledFont(size: 17, weight: .medium)
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
+            VStack(spacing: 0) {
+                Text("More")
+                    .font(.footnote)
+                if beyondTiles, let score {
+                    Text("\(score)")
+                        .font(.custom(BookletStyle.pencilFontName, size: 28))
+                } else {
+                    Image(systemName: "ellipsis")
+                        .font(.title3)
+                        .frame(height: 34)
+                }
+            }
+            .foregroundStyle(beyondTiles ? (colorScheme == .dark ? Color.black : Color.white) : Color.primary)
+            .frame(maxWidth: .infinity, minHeight: buttonHeight)
+            .background(beyondTiles ? ink : Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .tint(.primary)
+        .buttonStyle(StripPressStyle())
+        .accessibilityLabel("More scores")
+        .accessibilityValue(beyondTiles ? "\(score ?? 0)" : "")
+    }
+
+    /// "8 · +4" for a par 4.
+    private func menuTitle(for value: Int) -> String {
+        let difference = value - par
+        let relative = difference == 0 ? "par" : difference > 0 ? "+\(difference)" : "\(difference)"
+        return "\(value) · \(relative)"
     }
 }
 

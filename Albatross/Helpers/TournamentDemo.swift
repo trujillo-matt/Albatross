@@ -189,4 +189,31 @@ extension TournamentStore {
         seedLiveForDemo(TournamentDemo.liveStatuses(for: tournament))
     }
 }
+
+extension RoundStore {
+    /// Eight rounds on different courses, one in progress, so the stack of cards has something to stack.
+    /// Launch with `-demo-rounds`. Debug builds only.
+    func installDemoRounds() {
+        guard !rounds.contains(where: { $0.courseName == "Pebble Beach Golf Links" }) else { return }
+        let courses: [(String, Int, [Int?])] = [
+            ("Great Waters at Reynolds", 1, [4,5,3,4,6,3,4,5,4, 4,4,3,5,4,3,4,5,4]),
+            ("Pebble Beach Golf Links", 6, [5,4,4,5,3,6,3,5,5, 4,4,5,3,5,4,4,6,5]),
+            ("Augusta National", 14, [4,5,4,3,4,3,4,3,4, 4,4,3,5,5,3,5,4,4]),
+            ("Reynolds Plantation: Oconee", 21, [5,4,3,5,4,4,3,5,4, 5,4,4,5,3,4,4,5,4]),
+            ("TPC Sawgrass", 30, [4,5,3,4,4,5,4,3,5, 4,5,4,3,5,4,3,4,6]),
+            ("Bethpage Black", 45, [5,5,4,6,4,5,3,5,5, 5,4,5,4,4,4,5,4,5]),
+            ("Torrey Pines South", 60, [4,4,3,5,4,4,3,4,5, 4,5,4,4,5,3,4,4,5])
+        ]
+        for (name, daysAgo, scores) in courses {
+            var round = Round(courseName: name, date: Calendar.current.date(byAdding: .day, value: -daysAgo, to: Date()) ?? Date())
+            round.scores = scores
+            round.status = .completed
+            add(round)
+        }
+        // A fixed id so the round can be opened by link: albatross://round?id=00000000-0000-0000-0000-0000000000F1
+        var live = Round(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000F1")!, courseName: "Brasstown Valley Resort & Spa")
+        live.scores = [4, 5, 3, 4, 5, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil]
+        add(live)
+    }
+}
 #endif

@@ -18,6 +18,8 @@ struct ScorecardsView: View {
     @State private var showNewRound = false
     @State private var sortOrder: RoundSortOrder = .newest
     @State private var editingRound: Round? = nil
+    /// "wallet" stacks the rounds like cards in Wallet; "shelves" lays covers out in rows.
+    @AppStorage("scorecardLayout") private var layout = "wallet"
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var coverNamespace
@@ -111,6 +113,12 @@ struct ScorecardsView: View {
         ToolbarItem(placement: .topBarLeading) {
             if !completed.isEmpty { sortMenu }
         }
+        ToolbarItem(placement: .topBarLeading) {
+            Button { layout = layout == "wallet" ? "shelves" : "wallet" } label: {
+                Label(layout == "wallet" ? "Show as shelves" : "Show as a stack",
+                      systemImage: layout == "wallet" ? "books.vertical" : "rectangle.stack")
+            }
+        }
     }
 
     private var sortMenu: some View {
@@ -137,14 +145,27 @@ struct ScorecardsView: View {
                         .padding(.top, 16)
                 }
 
-                if !inProgress.isEmpty {
-                    sectionHeader("In Progress")
-                    shelf(inProgress)
-                }
+                if layout == "wallet" {
+                    if !inProgress.isEmpty || !completed.isEmpty {
+                        WalletStackView(
+                            rounds: inProgress + completed,
+                            namespace: coverNamespace,
+                            onOpen: { path.append(.booklet($0.id, opensNextHole: false)) },
+                            onEdit: { editingRound = $0 },
+                            onDelete: { store.delete($0) })
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                    }
+                } else {
+                    if !inProgress.isEmpty {
+                        sectionHeader("In Progress")
+                        shelf(inProgress)
+                    }
 
-                if !completed.isEmpty {
-                    sectionHeader("Previous Rounds")
-                    shelf(completed)
+                    if !completed.isEmpty {
+                        sectionHeader("Previous Rounds")
+                        shelf(completed)
+                    }
                 }
 
                 Spacer().frame(height: 32)

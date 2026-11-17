@@ -68,6 +68,47 @@ final class AlbatrossUITests: XCTestCase {
             .matching(NSPredicate(format: "label CONTAINS '1/18'")).firstMatch
         XCTAssertTrue(finish.waitForExistence(timeout: 8), "Finish Round (1/18) not found\n\(app.debugDescription)")
     }
+
+    /// The strip offers Triple and More, a double tap writes only one hole, and Undo takes a score back.
+    @MainActor
+    func testScoreEntryOptionsDoubleTapAndUndo() throws {
+        XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
+        tab("Scorecards").tap()
+        let cover = app.buttons.matching(NSPredicate(format: "label CONTAINS 'UI Test Course'")).firstMatch
+        XCTAssertTrue(cover.waitForExistence(timeout: 10))
+        cover.tap()
+        if app.staticTexts["Swipe to open"].waitForExistence(timeout: 3) {
+            app.swipeLeft()
+        }
+
+        func row(_ hole: Int) -> XCUIElement {
+            app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Hole \(hole),'")).firstMatch
+        }
+        func scoreValue(_ hole: Int) -> String { (row(hole).value as? String) ?? "" }
+
+        let holeFive = row(5)
+        XCTAssertTrue(holeFive.waitForExistence(timeout: 8))
+        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"), object: holeFive)
+        XCTAssertEqual(XCTWaiter().wait(for: [hittable], timeout: 6), .completed, "Hole 5 is not on screen")
+        holeFive.tap()
+
+        // Results above a double bogey are on the strip.
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Triple'")).firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["More scores"].firstMatch.exists)
+
+        // A double tap on a result writes hole 5 and leaves hole 6 empty.
+        let par = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Par '")).firstMatch
+        XCTAssertTrue(par.waitForExistence(timeout: 5))
+        par.doubleTap()
+        XCTAssertNotEqual(scoreValue(5), "No score", "Hole 5 should have a score")
+        XCTAssertEqual(scoreValue(6), "No score", "A double tap must not write the next hole")
+
+        // Undo takes hole 5's score back.
+        let undo = app.buttons["Undo"].firstMatch
+        XCTAssertTrue(undo.waitForExistence(timeout: 5))
+        undo.tap()
+        XCTAssertEqual(scoreValue(5), "No score")
+    }
 }
 
 /// Runs against the made-up tournament that a Debug build shows with `-demo-tournament`.
