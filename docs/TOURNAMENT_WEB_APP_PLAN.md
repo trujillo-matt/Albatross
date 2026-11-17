@@ -48,7 +48,7 @@ Scoring rules (`Tournament.swift:223-282`), each matchup is worth exactly 1 poin
 
 These matter because the web app will sit on the same data. Each is verified by reading the cited code, except where marked.
 
-1. **`pointsToWin` is wrong for small tournaments.** The setup sheet footer says points to win = `matches / 2 + 0.5` (`NewTournamentSheet.swift:89`), but `createTournament` is called without that value (`NewTournamentSheet.swift:354-360`), so the default `9.5` is used (`TournamentStore.swift:180`). Each match is worth at most 1 point, so a 3-match tournament (the default) can never reach 9.5 and the auto-complete check (`TournamentStore.swift:566`) never fires. Web app: compute `floor(total/2) + 0.5` server-side and let the admin override it.
+1. **`pointsToWin` is wrong for small tournaments.** The setup sheet footer says points to win = `matches / 2 + 0.5` (`NewTournamentSheet.swift:89`), but `createTournament` is called without that value (`NewTournamentSheet.swift:354-360`), so the default `9.5` is used (`TournamentStore.swift:180`). Each match is worth at most 1 point, so a 3-match tournament (the default) can never reach 9.5 and the auto-complete check (`TournamentStore.swift:566`) never fires. Web app: compute `total / 2 + 0.5` server-side (3 matches -> 2.0, 4 -> 2.5) and let the admin override it.
 2. **Captain tie-break is nondeterministic.** `finalizeCaptains` builds a `[UUID: Int]` dictionary and sorts by count (`TournamentStore.swift:337-339`). Ties are broken by dictionary order, which Swift randomizes per process. Web app: explicit tie detection, admin resolves.
 3. **Team A and Team B identity is positional and unordered.** (**iOS: fixed.** `loadTeams` now orders by name with an id tie-break, so `teams[0]` is always Team A. **Web: specified, not yet built.** The web app must never rely on row order: add a `side` column (`A` or `B`, unique per tournament) via `docs/migrations/001_tournament_team_side.sql` and read teams by `side`. After that migration is applied, the iOS code should switch from name order to `side` too.) Original issue: no `order` clause (`TournamentStore.swift:135-142`) with `teams[0]` and `teams[1]` used at `:346-353` and `:577-578`, so Team A could flip between loads.
 4. **Captains are not placed on their own team.** `finalizeCaptains` sets `captain_user_id` only (`:345-353`). The draft pool is "accepted and `teamID == nil`" (`TournamentDraftView.swift:40`). **[Inference]** the captains themselves therefore appear in the undrafted pool. Web app: finalizing captains also assigns each captain to their team.
@@ -59,6 +59,24 @@ These matter because the web app will sit on the same data. Each is verified by 
 9. **Result computation is client-side and racy.** Whichever device finishes last computes and writes the result. Two simultaneous finishers can both write. Web app: compute in a Postgres function triggered by round completion, idempotent.
 10. **Whole-array score writes.** `RoundStore.syncToCloud` upserts the full `scores` array (`RoundStore.swift:178-189`). Two writers to one card would overwrite each other. Web app: per-hole RPC.
 11. **Live vote counts are visible to all voters** (`TournamentDraftView.swift:179-184`), which invites bandwagon voting. This may be intended. See open questions.
+
+### Fix status for section 3
+
+iOS changes are in the Swift code (not compiled here). Database changes are in `docs/migrations/` and are **not applied or tested**. The web app does not exist yet; its column reads the migration column.
+
+| # | iOS | Database / web |
+|---|---|---|
+| 1 | Fixed: `defaultPointsToWin` used on create; tournament also completes when all matches are played | Migration 002 corrects existing rows still at 9.5 |
+| 2 | Fixed: deterministic ranking, tie raises `captainTie`, commissioner tie-break sheet | `finalize_captains` in 002 |
+| 3 | Fixed: teams ordered by name | `side` column in 001 |
+| 4 | Fixed: captains placed on their team, excluded from pick count | `finalize_captains` in 002 |
+| 5 | Fixed: single atomic insert, exactly 2 distinct, one ballot | Unique index + `cast_captain_votes` in 002 |
+| 6 | Fixed: pick rejected if not that captain's turn or player unavailable (client check on fresh data, still raceable) | `draft_pick` in 002 (race-free) |
+| 7 | Fixed when the course name matches the catalog; otherwise fallback pars remain | `course_id` column in 002; picker UI is future work |
+| 8 | Fixed: scramble needs one card per team, with a hint in the UI | `scorer_user_id` column in 002 |
+| 9 | Not changed on iOS (writes are idempotent, race is narrow) | `compute_matchup_result` + triggers in 002 |
+| 10 | Not changed: iOS still writes the whole array | `set_hole_score` in 002, for the web app |
+| 11 | Fixed: counts hidden from voters until they vote (commissioner always sees) | Make this a setting in the web app |
 
 ## 4. Architecture
 
@@ -306,7 +324,7 @@ Time estimates are **[Inference]** and assume one developer who knows the stack.
 4. **Ties at the captain cutoff:** admin picks, runoff, or coin flip?
 5. **Scramble:** confirm one card per team with a designated scorer.
 6. **Handicaps / net scoring:** gross only for v1, as in iOS?
-7. **Points to win:** use `floor(matches / 2) + 0.5` as the setup sheet footer implies, and fix iOS to match?
+7. **Points to win:** `matches / 2 + 0.5`, as the setup sheet footer states. Implemented in iOS; confirm.
 8. **Code delivery:** printed cards and QR only, or also email and SMS (adds a provider and cost)?
 9. **Course data:** `courses.json` currently ships inside the iOS bundle (17 KB). Move it into a database table so both clients share it?
 10. **Spectators:** do non-players need a public live-standings link?

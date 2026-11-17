@@ -86,7 +86,7 @@ struct NewTournamentSheet: View {
             } header: {
                 Text("Number of Matches")
             } footer: {
-                Text("Points to win: \(String(format: "%.1f", Double(totalMatches) / 2.0 + 0.5))")
+                Text("Points to win: \(String(format: "%.1f", TournamentStore.defaultPointsToWin(totalMatches: totalMatches)))")
                     .font(.custom("Baskerville", size: 12))
             }
         }

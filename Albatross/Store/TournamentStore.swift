@@ -184,15 +184,23 @@ final class TournamentStore: ObservableObject {
 
     // MARK: - Creation
 
+    /// Points needed to win: a majority of the points available (each match is worth 1).
+    /// 3 matches -> 2.0, 4 matches -> 2.5. The old fixed default of 9.5 was unreachable
+    /// for any tournament with fewer than 10 matches.
+    static func defaultPointsToWin(totalMatches: Int) -> Double {
+        Double(totalMatches) / 2.0 + 0.5
+    }
+
     func createTournament(
         name: String,
         matchType: TournamentMatchType,
         totalMatches: Int,
-        pointsToWin: Double = 9.5,
+        pointsToWin: Double? = nil,
         courseNames: [String],
         matchTypes: [TournamentMatchType] = []
     ) async throws -> Tournament {
         guard let userID = authStore?.currentProfile?.id else { throw TournamentError.notSignedIn }
+        let pointsToWin = pointsToWin ?? Self.defaultPointsToWin(totalMatches: totalMatches)
 
         struct NewTournament: Encodable {
             let name: String
@@ -321,22 +329,45 @@ final class TournamentStore: ObservableObject {
         await reload(tournamentID)
     }
 
+    /// Submits exactly 2 distinct nominees in a single insert (all-or-nothing) and refuses
+    /// a second ballot from the same voter. Self-nomination is allowed (matches prior behavior).
+    /// The database should also enforce this: see docs/migrations/002_tournament_rules.sql.
     func submitCaptainVote(tournamentID: UUID, nomineeUserIDs: [UUID]) async throws {
         guard let voterID = authStore?.currentProfile?.id else { return }
+        var nominees: [UUID] = []
+        for id in nomineeUserIDs where !nominees.contains(id) { nominees.append(id) }
+        guard nominees.count == 2 else { throw TournamentError.invalidBallot }
+
+        let existing: [TournamentCaptainVote] = try await supabase
+            .from("tournament_captain_votes")
+            .select()
+            .eq("tournament_id", value: tournamentID.uuidString)
+            .eq("voter_user_id", value: voterID.uuidString)
+            .execute()
+            .value
+        guard existing.isEmpty else { throw TournamentError.alreadyVoted }
+
         struct NewVote: Encodable { let tournament_id: String; let voter_user_id: String; let nominee_user_id: String }
-        for nomineeID in nomineeUserIDs.prefix(2) {
-            try await supabase.from("tournament_captain_votes")
-                .insert(NewVote(
-                    tournament_id: tournamentID.uuidString,
-                    voter_user_id: voterID.uuidString,
-                    nominee_user_id: nomineeID.uuidString
-                ))
-                .execute()
+        let rows = nominees.map {
+            NewVote(
+                tournament_id: tournamentID.uuidString,
+                voter_user_id: voterID.uuidString,
+                nominee_user_id: $0.uuidString
+            )
         }
+        // One request with an array body: PostgREST inserts it as a single statement.
+        try await supabase.from("tournament_captain_votes")
+            .insert(rows)
+            .execute()
     }
 
-    /// Tallies votes, assigns top 2 vote-getters as captains of Team A and Team B.
-    func finalizeCaptains(tournamentID: UUID) async throws {
+    /// Tallies votes and assigns the top 2 vote-getters as captains of Team A and Team B,
+    /// and places each captain on their own team.
+    ///
+    /// Ordering is deterministic: votes descending, then user id. If the 2nd and 3rd place
+    /// vote totals are tied, this throws `captainTie` and the commissioner must choose the
+    /// winner(s) among the tied nominees via `tiebreakWinners`.
+    func finalizeCaptains(tournamentID: UUID, tiebreakWinners: [UUID]? = nil) async throws {
         let votes: [TournamentCaptainVote] = try await supabase
             .from("tournament_captain_votes")
             .select()
@@ -344,33 +375,70 @@ final class TournamentStore: ObservableObject {
             .execute()
             .value
 
-        // Count votes per nominee
         var tally: [UUID: Int] = [:]
         for v in votes { tally[v.nomineeUserID, default: 0] += 1 }
-        let sorted = tally.sorted { $0.value > $1.value }.map(\.key)
-        guard sorted.count >= 2 else { throw TournamentError.notEnoughVotes }
+        let ranked = tally.sorted {
+            $0.value != $1.value ? $0.value > $1.value : $0.key.uuidString < $1.key.uuidString
+        }
+        guard ranked.count >= 2 else { throw TournamentError.notEnoughVotes }
+
+        let captains: [UUID]
+        let cutoff = ranked[1].value
+        let clearlyIn = ranked.filter { $0.value > cutoff }.map(\.key)
+        let tied = ranked.filter { $0.value == cutoff }.map(\.key)
+        let slots = 2 - clearlyIn.count          // seats still open among the tied group
+        if tied.count > slots {
+            guard let winners = tiebreakWinners,
+                  winners.count == slots,
+                  Set(winners).count == slots,
+                  winners.allSatisfy({ tied.contains($0) }) else {
+                throw TournamentError.captainTie(candidates: tied, slots: slots)
+            }
+            captains = clearlyIn + winners
+        } else {
+            captains = Array(ranked.prefix(2).map(\.key))
+        }
 
         let teams = try await loadTeams(tournamentID: tournamentID)
         guard teams.count >= 2 else { throw TournamentError.teamsNotCreated }
 
         struct TeamUpdate: Encodable { let captain_user_id: String }
-        try await supabase.from("tournament_teams")
-            .update(TeamUpdate(captain_user_id: sorted[0].uuidString))
-            .eq("id", value: teams[0].id.uuidString)
-            .execute()
-        try await supabase.from("tournament_teams")
-            .update(TeamUpdate(captain_user_id: sorted[1].uuidString))
-            .eq("id", value: teams[1].id.uuidString)
-            .execute()
+        for (index, captainID) in captains.enumerated() {
+            try await supabase.from("tournament_teams")
+                .update(TeamUpdate(captain_user_id: captainID.uuidString))
+                .eq("id", value: teams[index].id.uuidString)
+                .execute()
+            // Captains play for their own team; they are not part of the draft pool.
+            try await assignPlayer(tournamentID: tournamentID, playerID: captainID, teamID: teams[index].id)
+        }
 
         await reload(tournamentID)
     }
 
+    /// Number of picks made so far. Captains are pre-placed on their teams, so they
+    /// are excluded from the count that drives snake order.
+    static func draftPickCount(players: [TournamentPlayer], teams: [TournamentTeam]) -> Int {
+        let captainIDs = Set(teams.compactMap(\.captainUserID))
+        return players.filter { $0.teamID != nil && !captainIDs.contains($0.userID) }.count
+    }
+
+    /// Makes a pick for `captainUserID`. Rejects the pick unless it is that captain's turn
+    /// and the player is an accepted, undrafted member of the pool. Checked against fresh
+    /// data; for a race-free guarantee use the `draft_pick` function in
+    /// docs/migrations/002_tournament_rules.sql.
     func draftPick(tournamentID: UUID, captainUserID: UUID, pickedPlayerID: UUID) async throws {
         let teams = try await loadTeams(tournamentID: tournamentID)
-        guard let team = teams.first(where: { $0.captainUserID == captainUserID }) else {
+        guard let team = teams.first(where: { $0.captainUserID == captainUserID }),
+              let teamIndex = teams.firstIndex(where: { $0.id == team.id }) else {
             throw TournamentError.notACaptain
         }
+        let players = try await loadPlayers(tournamentID: tournamentID)
+        let pickNumber = Self.draftPickCount(players: players, teams: teams)
+        let teamAOnClock = snakeIsTeamATurn(pickNumber: pickNumber)
+        guard (teamIndex == 0) == teamAOnClock else { throw TournamentError.notYourTurn }
+        guard let target = players.first(where: { $0.userID == pickedPlayerID }),
+              target.inviteStatus == .accepted,
+              target.teamID == nil else { throw TournamentError.playerUnavailable }
         try await assignPlayer(tournamentID: tournamentID, playerID: pickedPlayerID, teamID: team.id)
     }
 
@@ -574,7 +642,10 @@ final class TournamentStore: ObservableObject {
             let updatedMatchups = try await loadMatchups(tournamentID: tournament.id)
             let totalA = updatedMatchups.map(\.pointsTeamA).reduce(0, +)
             let totalB = updatedMatchups.map(\.pointsTeamB).reduce(0, +)
-            if totalA >= tournament.pointsToWin || totalB >= tournament.pointsToWin {
+            let allPlayed = !updatedMatchups.isEmpty && updatedMatchups.allSatisfy { $0.status == .complete }
+            // Finish on reaching the target, or once every match is played (covers an even
+            // split where neither side reaches the target).
+            if totalA >= tournament.pointsToWin || totalB >= tournament.pointsToWin || allPlayed {
                 try await updateTournamentStatus(tournament.id, status: .complete)
             }
         }
@@ -703,9 +774,20 @@ enum TournamentError: LocalizedError {
     case notEnoughVotes
     case teamsNotCreated
     case notACaptain
+    case invalidBallot
+    case alreadyVoted
+    case notYourTurn
+    case playerUnavailable
+    /// 2nd and 3rd place are tied; the commissioner must pick `slots` of `candidates`.
+    case captainTie(candidates: [UUID], slots: Int)
 
     var errorDescription: String? {
         switch self {
+        case .invalidBallot:     return "Pick exactly 2 different nominees."
+        case .alreadyVoted:      return "You have already voted."
+        case .notYourTurn:       return "It is not your turn to pick."
+        case .playerUnavailable: return "That player is not available to draft."
+        case .captainTie:        return "The vote is tied for the last captain spot. Choose who becomes captain."
         case .notSignedIn:     return "You must be signed in."
         case .notEnoughVotes:  return "Not enough votes to determine captains."
         case .teamsNotCreated: return "Teams have not been created yet."
