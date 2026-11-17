@@ -49,5 +49,5 @@ struct Course: Codable, Identifiable, Hashable {
     var yardages: [Int]   { sortedHoles.map(\.yardage) }
     var totalPar: Int     { holes.map(\.par).reduce(0, +) }
 
-    var locationDisplay: String { "\(city), \(state)" }
+    var locationDisplay: String { [city, state].filter { !$0.isEmpty }.joined(separator: ", ") }
 }

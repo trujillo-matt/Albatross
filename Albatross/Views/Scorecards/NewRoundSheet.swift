@@ -376,6 +376,11 @@ struct NewRoundSheet: View {
     ) {
         let roundID = UUID()
 
+        // A course typed in by hand is remembered, so it can be found in search next time.
+        if courseID == nil, let coursePars {
+            courseStore.addCustomCourse(name: courseName, pars: coursePars)
+        }
+
         // Save logo to disk if one was picked
         var logoFilename: String? = nil
         if let image = selectedLogoImage {

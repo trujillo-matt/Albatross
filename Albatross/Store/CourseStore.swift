@@ -18,8 +18,15 @@ final class CourseStore: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
 
+    /// Courses the user typed in themselves, kept on the phone so they turn up in search next time.
+    private static var customCoursesURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("customCourses.json")
+    }
+
     init() {
         loadBundle()
+        loadCustomCourses()
         setupSearch()
     }
 
@@ -40,6 +47,44 @@ final class CourseStore: ObservableObject {
                     .map { $0 }
             }
             .assign(to: &$results)
+    }
+
+    /// Saves a course entered by hand. A course with the same name is kept as it is.
+    @discardableResult
+    func addCustomCourse(name: String, pars: [Int]) -> Course? {
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty, pars.count == 18 else { return nil }
+        if let existing = allCourses.first(where: { $0.name.caseInsensitiveCompare(trimmed) == .orderedSame }) {
+            return existing
+        }
+        let course = Course(
+            id: "custom-\(UUID().uuidString)",
+            name: trimmed,
+            city: "",
+            state: "",
+            isPreloaded: false,
+            holes: pars.enumerated().map { index, par in
+                CourseHole(number: index + 1, par: par, handicap: index + 1, yardage: 0)
+            }
+        )
+        allCourses.insert(course, at: 0)
+        saveCustomCourses()
+        return course
+    }
+
+    private func loadCustomCourses() {
+        guard let data = try? Data(contentsOf: Self.customCoursesURL),
+              let courses = try? JSONDecoder().decode([Course].self, from: data) else { return }
+        allCourses.insert(contentsOf: courses, at: 0)
+    }
+
+    private func saveCustomCourses() {
+        let custom = allCourses.filter { $0.id.hasPrefix("custom-") }
+        do {
+            try JSONEncoder().encode(custom).write(to: Self.customCoursesURL, options: .atomic)
+        } catch {
+            print("CourseStore: failed to save custom courses — \(error)")
+        }
     }
 
     private func loadBundle() {
