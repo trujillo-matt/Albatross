@@ -132,13 +132,24 @@ final class TournamentStore: ObservableObject {
             .value
     }
 
+    /// Teams in a stable order: Team A first, Team B second.
+    /// Callers rely on `teams[0]` being Team A and `teams[1]` being Team B (snake draft
+    /// order, captain assignment, standings), and Postgres returns unordered rows without
+    /// an ORDER BY. Teams are created as "Team A" then "Team B" in `startDraft` and are
+    /// never renamed, so name order is the canonical side order. `id` is a final tie-break
+    /// so the result is deterministic even for unexpected data.
     private func loadTeams(tournamentID: UUID) async throws -> [TournamentTeam] {
-        try await supabase
+        let teams: [TournamentTeam] = try await supabase
             .from("tournament_teams")
             .select()
             .eq("tournament_id", value: tournamentID.uuidString)
+            .order("name")
             .execute()
             .value
+        return teams.sorted {
+            if $0.name != $1.name { return $0.name < $1.name }
+            return $0.id.uuidString < $1.id.uuidString
+        }
     }
 
     func loadMatchups(tournamentID: UUID) async throws -> [TournamentMatchup] {
