@@ -217,6 +217,8 @@ struct TournamentListView: View {
 
     private var emptyTournamentState: some View {
         VStack(alignment: .leading, spacing: 12) {
+            IconView("trophy", size: 32)
+                .foregroundStyle(Color.accentColor)
             Text("No tournaments yet")
                 .font(.headline)
             Text("Create one, invite friends, and score each match on a booklet.")

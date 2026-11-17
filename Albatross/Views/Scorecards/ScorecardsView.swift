@@ -18,6 +18,8 @@ struct ScorecardsView: View {
     @State private var showNewRound = false
     @State private var sortOrder: RoundSortOrder = .newest
     @State private var editingRound: Round? = nil
+    /// The card lifted in the stack, if any.
+    @State private var expandedRoundID: UUID? = nil
     /// "wallet" stacks the rounds like cards in Wallet; "shelves" lays covers out in rows.
     @AppStorage("scorecardLayout") private var layout = "wallet"
 
@@ -58,6 +60,14 @@ struct ScorecardsView: View {
         .sheet(item: $editingRound) { round in
             EditRoundSheet(round: round) { _ in }
         }
+        #if DEBUG
+        .onAppear {
+            // -demo-expand lifts the second card so its details can be looked at.
+            if CommandLine.arguments.contains("-demo-expand"), expandedRoundID == nil {
+                expandedRoundID = (inProgress + completed).dropFirst().first?.id
+            }
+        }
+        #endif
         .onChange(of: pendingRoundID.wrappedValue) { _, newValue in handlePendingRound(newValue) }
         .onChange(of: pendingNewRound.wrappedValue) { _, trigger in
             guard trigger else { return }
@@ -111,9 +121,25 @@ struct ScorecardsView: View {
         }
         .frequentAction()
         ToolbarItem(placement: .topBarLeading) {
-            if !completed.isEmpty { sortMenu }
+            if expandedRoundID != nil && layout == "wallet" {
+                Button {
+                    withAnimation(reduceMotion ? nil : .smooth(duration: 0.45)) { expandedRoundID = nil }
+                } label: {
+                    Label("Close", systemImage: "xmark")
+                }
+            } else if !completed.isEmpty {
+                sortMenu
+            }
         }
         ToolbarItem(placement: .topBarLeading) {
+            if expandedRoundID == nil || layout != "wallet" {
+                layoutButton
+            }
+        }
+    }
+
+    private var layoutButton: some View {
+        Group {
             Button { layout = layout == "wallet" ? "shelves" : "wallet" } label: {
                 Label(layout == "wallet" ? "Show as shelves" : "Show as a stack",
                       systemImage: layout == "wallet" ? "books.vertical" : "rectangle.stack")
@@ -150,6 +176,7 @@ struct ScorecardsView: View {
                         WalletStackView(
                             rounds: inProgress + completed,
                             namespace: coverNamespace,
+                            expandedID: $expandedRoundID,
                             onOpen: { path.append(.booklet($0.id, opensNextHole: false)) },
                             onEdit: { editingRound = $0 },
                             onDelete: { store.delete($0) })

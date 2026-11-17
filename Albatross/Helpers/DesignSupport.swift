@@ -65,3 +65,26 @@ extension Color {
     /// The same hue lifted for text and controls on dark surfaces, where #006747 would sink.
     static let brandGreenLight = Color(red: 65.0 / 255, green: 200.0 / 255, blue: 162.0 / 255)
 }
+
+// MARK: - Icons
+
+/// One of the app's own line icons (crests, flags, clubs), drawn on one grid in one stroke.
+/// They take the colour of the surrounding text unless given another.
+struct IconView: View {
+    let name: String
+    var size: CGFloat = 20
+
+    init(_ name: String, size: CGFloat = 20) {
+        self.name = name
+        self.size = size
+    }
+
+    var body: some View {
+        Image("icon-\(name)")
+            .renderingMode(.template)
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
+    }
+}

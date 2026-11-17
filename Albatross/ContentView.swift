@@ -13,7 +13,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Clubhouse", systemImage: "house.fill", value: 0) {
+            Tab("Clubhouse", image: "icon-clubhouse", value: 0) {
                 HomeView(
                     onOpenRound: { roundID in
                         selectedTab = 1
@@ -26,19 +26,19 @@ struct ContentView: View {
                 )
             }
 
-            Tab("Scorecards", systemImage: "list.clipboard.fill", value: 1) {
+            Tab("Scorecards", image: "icon-scorecard", value: 1) {
                 ScorecardsView(pendingRoundID: $pendingRoundID, pendingNewRound: $pendingNewRound)
             }
 
-            Tab("Tournaments", systemImage: "flag.2.crossed.fill", value: 4) {
+            Tab("Tournaments", image: "icon-trophy", value: 4) {
                 TournamentListView()
             }
 
-            Tab("Stats", systemImage: "chart.bar.fill", value: 2) {
+            Tab("Stats", image: "icon-stats", value: 2) {
                 StatsView()
             }
 
-            Tab("Profile", systemImage: "person.crop.circle.fill", value: 3) {
+            Tab("Profile", image: "icon-member", value: 3) {
                 ProfileView()
             }
         }

@@ -18,6 +18,16 @@ final class AlbatrossUITests: XCTestCase {
         app.buttons[name].firstMatch
     }
 
+    /// Taps a round's card. In the stack the card lifts first and "Open scorecard" opens it; on a shelf the tap opens it.
+    @MainActor
+    private func openRound(containing course: String) {
+        let cover = app.buttons.matching(NSPredicate(format: "label CONTAINS '\(course)'")).firstMatch
+        XCTAssertTrue(cover.waitForExistence(timeout: 10))
+        cover.tap()
+        let open = app.buttons["Open scorecard"].firstMatch
+        if open.waitForExistence(timeout: 3) { open.tap() }
+    }
+
     @MainActor
     func testTabNavigation() throws {
         XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
@@ -42,10 +52,8 @@ final class AlbatrossUITests: XCTestCase {
         XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
         tab("Scorecards").tap()
 
-        // Open the seeded booklet from its cover on the shelf.
-        let cover = app.buttons.matching(NSPredicate(format: "label CONTAINS 'UI Test Course'")).firstMatch
-        XCTAssertTrue(cover.waitForExistence(timeout: 10))
-        cover.tap()
+        // Open the seeded booklet from its card.
+        openRound(containing: "UI Test Course")
 
         // On the closed Duo the cover is page one: swipe to open it. The open Duo shows the pages directly.
         let hole = app.buttons["Hole 1, par 4"].firstMatch
@@ -69,14 +77,34 @@ final class AlbatrossUITests: XCTestCase {
         XCTAssertTrue(finish.waitForExistence(timeout: 8), "Finish Round (1/18) not found\n\(app.debugDescription)")
     }
 
+    /// Tapping a card lifts it and shows its details; Close puts it back.
+    @MainActor
+    func testCardLiftsAndCloses() throws {
+        XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
+        tab("Scorecards").tap()
+        let card = app.buttons.matching(NSPredicate(format: "label CONTAINS 'UI Test Course'")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 10))
+        card.tap()
+
+        // The card's details and actions appear.
+        XCTAssertTrue(app.buttons["Open scorecard"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Edit"].firstMatch.exists)
+        XCTAssertTrue(app.staticTexts["Front nine"].firstMatch.exists)
+
+        // Close drops it back into the stack.
+        let close = app.buttons["Close"].firstMatch
+        XCTAssertTrue(close.waitForExistence(timeout: 5))
+        close.tap()
+        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.buttons["Open scorecard"].firstMatch)
+        XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 6), .completed)
+    }
+
     /// The strip offers Triple and More, a double tap writes only one hole, and Undo takes a score back.
     @MainActor
     func testScoreEntryOptionsDoubleTapAndUndo() throws {
         XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
         tab("Scorecards").tap()
-        let cover = app.buttons.matching(NSPredicate(format: "label CONTAINS 'UI Test Course'")).firstMatch
-        XCTAssertTrue(cover.waitForExistence(timeout: 10))
-        cover.tap()
+        openRound(containing: "UI Test Course")
         if app.staticTexts["Swipe to open"].waitForExistence(timeout: 3) {
             app.swipeLeft()
         }

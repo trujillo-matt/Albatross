@@ -73,9 +73,8 @@ struct UserSearchView: View {
     private var emptyPrompt: some View {
         VStack(spacing: 12) {
             Spacer()
-            Image(systemName: "person.2.circle")
-                .scaledFont(size: 48)
-                .foregroundStyle(Color.accentColor.opacity(0.4))
+            IconView("crossed-clubs", size: 48)
+                .foregroundStyle(Color.accentColor.opacity(0.6))
             Text("Search for golfers")
                 .font(.body.weight(.semibold))
             Text("Find friends by their name or @username")

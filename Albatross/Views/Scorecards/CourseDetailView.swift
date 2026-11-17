@@ -63,9 +63,8 @@ struct CourseDetailView: View {
                 .frame(height: 180)
 
             // Subtle flag watermark
-            Image(systemName: "flag.fill")
-                .scaledFont(size: 80)
-                .foregroundStyle(.white.opacity(0.06))
+            IconView("flag", size: 96)
+                .foregroundStyle(.white.opacity(0.08))
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.trailing, 24)
                 .padding(.bottom, 16)

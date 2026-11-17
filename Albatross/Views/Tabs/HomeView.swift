@@ -109,6 +109,8 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 12) {
                 sectionHeader("Continue")
                 VStack(alignment: .leading, spacing: 12) {
+                    IconView("tee", size: 32)
+                        .foregroundStyle(Color.accentColor)
                     Text("No round in progress")
                         .font(.headline)
                     Text("Start one and it waits here until you pick it back up.")
@@ -184,6 +186,8 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity, minHeight: 80)
             } else if socialStore.following.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
+                    IconView("crossed-clubs", size: 32)
+                        .foregroundStyle(Color.accentColor)
                     Text("Follow friends to see their rounds here")
                         .font(.headline)
                     Text("Find golfers you know and their scores show up in this feed.")
@@ -301,9 +305,8 @@ struct FeedItemCard: View {
 
             // Course name
             HStack {
-                Image(systemName: "flag.fill")
-                    .scaledFont(size: 10)
-                    .foregroundStyle(Color.accentColor.opacity(0.7))
+                IconView("flag", size: 14)
+                    .foregroundStyle(Color.accentColor.opacity(0.8))
                 Text(round.courseName)
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(.primary)

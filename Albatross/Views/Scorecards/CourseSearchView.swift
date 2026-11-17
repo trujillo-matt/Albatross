@@ -181,8 +181,7 @@ struct CourseSearchView: View {
 
     private var noResults: some View {
         VStack(spacing: 10) {
-            Image(systemName: "flag.slash")
-                .scaledFont(size: 28)
+            IconView("map", size: 32)
                 .foregroundStyle(Color(.tertiaryLabel))
             Text("No courses found for \"\(courseStore.searchText)\"")
                 .font(.subheadline)
