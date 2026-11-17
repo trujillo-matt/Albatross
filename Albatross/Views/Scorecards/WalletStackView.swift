@@ -247,12 +247,21 @@ private struct WalletCard: View {
             // What shows when the card is on top of the stack.
             VStack {
                 Spacer()
-                Image("black-browed-albatross")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 56, height: 56)
-                    .opacity(0.55)
-                    .blendMode(.multiply)
+                if let logo = CourseLogoCache.image(for: round.courseLogoURL) {
+                    Image(uiImage: logo)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: height * 0.55, maxHeight: max(height - peek - 16, 40))
+                        // White logo backgrounds disappear into the paper, as printed ink would.
+                        .blendMode(.multiply)
+                } else {
+                    Image("black-browed-albatross")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 56, height: 56)
+                        .opacity(0.55)
+                        .blendMode(.multiply)
+                }
                 Spacer()
             }
             .padding(.top, peek)
