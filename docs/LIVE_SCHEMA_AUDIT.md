@@ -66,5 +66,11 @@ Verified afterwards with read-only queries:
   before sending);
 - who can execute what is as designed (006).
 
-Not verified against the live project: behavior with real users and data (no end-to-end run yet), and the two edge
-functions, which still need deploying. `rollback_001_to_006.sql` backs everything out.
+Edge functions `redeem-code` and `admin-players` are deployed (ACTIVE, version 1, gateway JWT check off because players have
+no session yet and `admin-players` validates the caller's token itself). `CODE_PEPPER` is set; the first value was pasted into a
+chat by mistake, so it was rotated before any code existed, using a value generated and sent without being displayed.
+Smoke tests against the live functions: a wrong or malformed code returns a generic 401, `admin-players` rejects a caller
+who is not signed in, GET is refused, and the CORS preflight succeeds.
+
+Not verified against the live project: a successful code login and player creation (needs an admin sign-in), behavior with
+real users and data, and the Swift changes. `rollback_001_to_006.sql` backs the database changes out.
