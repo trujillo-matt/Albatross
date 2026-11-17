@@ -50,3 +50,21 @@ Migration `005_rls_fixes.sql`: fixes 1, 2, 3 (via `draft_pick` and the new `set_
   unsupported for now.
 - **Existing tournaments.** Migration 002 corrects `points_to_win` for non-complete tournaments still at 9.5 with
   fewer than 18 matches.
+
+## Applied to the live project (2026-11-17)
+
+Migrations 001 to 006 were applied to project `rtcyetcyhdrajvcstvlj` through the Supabase connector, one at a time.
+The project held no tournaments, teams or tournament rounds, so no existing data was changed (pre-flight counts: 0).
+
+Verified afterwards with read-only queries:
+- all 9 new columns, 3 new tables (row-level security on), the new constraint and indexes, and `tournament_teams`
+  in realtime;
+- the four replaced or added policies have the new definitions;
+- the three new triggers are enabled and the existing `on_auth_user_created` trigger is untouched;
+- every function body on the live project hashes identically to the locally tested copy (for
+  `compute_matchup_result` the comparison is against the comment-stripped body, since comment lines were stripped
+  before sending);
+- who can execute what is as designed (006).
+
+Not verified against the live project: behavior with real users and data (no end-to-end run yet), and the two edge
+functions, which still need deploying. `rollback_001_to_006.sql` backs everything out.

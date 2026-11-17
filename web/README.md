@@ -5,7 +5,7 @@ Shares the Supabase project with the iOS app. See `../docs/TOURNAMENT_WEB_APP_PL
 
 ## Status
 
-Built, type-checked, and tested in three layers. **The schema was audited read-only against the real project, but no migration has been applied to it and the app has not been run against it.**
+Built, type-checked, and tested in three layers. **Migrations 001 to 006 are applied to the live Supabase project and verified structurally (`docs/LIVE_SCHEMA_AUDIT.md`). The edge functions are not deployed and the app has not been run against the live project.**
 
 | Check | Command | What it proves |
 |---|---|---|
@@ -15,7 +15,7 @@ Built, type-checked, and tested in three layers. **The schema was audited read-o
 
 ## Setup
 
-1. Review and apply, in order, against a staging copy first: `../docs/migrations/001_*.sql` to `005_*.sql`. Run `../docs/tests/run.sh` first if you want to see them pass on a scratch database.
+1. Database: migrations 001 to 006 are already applied to the live project. For another project, apply them in order (`../docs/migrations/`); `../docs/tests/run.sh` proves them on a scratch database.
 2. Deploy the edge functions and set the pepper (any long random string; never commit it):
 
    ```bash
