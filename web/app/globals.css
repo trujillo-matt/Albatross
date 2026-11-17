@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { @apply bg-stone-50 text-stone-900 font-serif; }
+.card { @apply rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200; }
+.btn { @apply inline-flex items-center justify-center rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white disabled:opacity-40; }
+.btn-ghost { @apply inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-brand ring-1 ring-brand/40 disabled:opacity-40; }
+.input { @apply w-full rounded-xl border border-stone-300 bg-white px-3 py-3 text-base; }
+.h2 { @apply text-lg font-bold; }
+.muted { @apply text-sm text-stone-500; }
