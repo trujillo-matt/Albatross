@@ -8,10 +8,11 @@ import { useTournament } from "@/lib/useTournament";
 import { draftPickCount, orderedTeams } from "@/lib/draft";
 import { MATCH_LABEL, type RoundRow, type TMatchup, type TournamentData } from "@/lib/types";
 import { formatCode } from "@/lib/code";
+import { downloadText, toCsv } from "@/lib/csv";
 import Standings from "@/components/Standings";
 import AdminSignIn from "@/components/AdminSignIn";
 
-type Tab = "overview" | "roster" | "vote" | "matches" | "scores" | "standings";
+type Tab = "overview" | "roster" | "vote" | "matches" | "scores" | "standings" | "audit";
 interface CodeStatus { user_id: string; status: string; code_hint: string | null; last_used_at: string | null }
 
 export default function AdminTournament() {
@@ -36,7 +37,7 @@ export default function AdminTournament() {
     reload();
   };
 
-  const tabs: Tab[] = ["overview", "roster", "vote", "matches", "scores", "standings"];
+  const tabs: Tab[] = ["overview", "roster", "vote", "matches", "scores", "standings", "audit"];
   return (
     <div className="space-y-4">
       <Link href="/admin" className="muted underline print:hidden">All tournaments</Link>
@@ -53,6 +54,7 @@ export default function AdminTournament() {
       {tab === "matches" && <Matches data={data} act={act} />}
       {tab === "scores" && <Scores data={data} setMsg={setMsg} reload={reload} />}
       {tab === "standings" && <Standings data={data} />}
+      {tab === "audit" && <Audit id={id} />}
     </div>
   );
 }
@@ -86,6 +88,7 @@ function Overview({ data, act }: { data: TournamentData; act: Act }) {
           <button className="btn mt-3 w-full" disabled={accepted.length < 2} onClick={startDraft}>Start captain vote and draft</button></>}
         {t.status === "draft" && <p className="muted mt-1">{voters} of {accepted.length} players have voted. Use Vote and draft to finalize.</p>}
       </div>
+      <SpectatorLink id={t.id} />
       <div className="card">
         <h2 className="h2">Courses</h2>
         {data.courses.map((c) => (
@@ -139,7 +142,10 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
         <div className="card">
           <div className="flex items-center justify-between print:hidden">
             <h2 className="h2">New codes (shown once)</h2>
-            <button className="btn-ghost !py-2" onClick={() => window.print()}>Print cards</button>
+            <span className="flex gap-2">
+              <button className="btn-ghost !py-2" onClick={() => downloadText("player-codes.csv", toCsv([["name", "code"], ...issued.map((i) => [i.name, formatCode(i.code)])]))}>Download CSV</button>
+              <button className="btn-ghost !py-2" onClick={() => window.print()}>Print cards</button>
+            </span>
           </div>
           <p className="muted print:hidden">Codes are stored hashed, so they cannot be shown again. Print or copy them now.</p>
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 print:grid-cols-2">
@@ -342,8 +348,26 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
     if (error) setMsg(error.message); else { setMsg(null); reload(); }
   };
 
+  const exportResults = () => {
+    const team = (id: string) => data.teams.find((t) => t.id === id)?.name ?? "";
+    downloadText(`${data.tournament.name}-results.csv`, toCsv([
+      ["match", "format", "course", "team A", "team B", "points A", "points B", "status"],
+      ...data.matchups.map((m) => [m.matchup_number, MATCH_LABEL[m.match_type], data.courses.find((c) => c.round_number === m.matchup_number)?.course_name ?? "",
+        team(m.team_a_id), team(m.team_b_id), m.points_team_a, m.points_team_b, m.status]),
+    ]));
+  };
+  const exportCards = () => downloadText(`${data.tournament.name}-scorecards.csv`, toCsv([
+    ["match", "player", "status", ...Array.from({ length: 18 }, (_, i) => `H${i + 1}`), "total"],
+    ...rounds.map((r) => [data.matchups.find((m) => m.id === r.matchup_id)?.matchup_number ?? "", nameOf(r.user_id), r.status,
+      ...r.scores, r.scores.reduce<number>((s, v) => s + (v ?? 0), 0)]),
+  ]));
+
   return (
     <div className="space-y-3">
+      <div className="flex gap-2">
+        <button className="btn-ghost flex-1" onClick={exportResults}>Export results CSV</button>
+        <button className="btn-ghost flex-1" onClick={exportCards}>Export scorecards CSV</button>
+      </div>
       {data.matchups.map((m) => (
         <div key={m.id} className="card space-y-2">
           <div className="flex items-center justify-between"><b>Match {m.matchup_number}</b>
@@ -358,6 +382,58 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
             </div>
           ))}
           {!rounds.some((r) => r.matchup_id === m.id) && <p className="muted">No scorecards started.</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SpectatorLink({ id }: { id: string }) {
+  const [token, setToken] = useState<string | null | undefined>(undefined);
+  const [err, setErr] = useState<string | null>(null);
+  const set = async (enable: boolean) => {
+    setErr(null);
+    const { data, error } = await supabase.rpc("set_spectator_link", { p_tournament: id, p_enable: enable });
+    if (error) setErr(error.message); else setToken(enable ? (data as string) : null);
+  };
+  const url = token ? `${window.location.origin}/watch/${token}` : null;
+  return (
+    <div className="card space-y-2">
+      <h2 className="h2">Spectator link</h2>
+      <p className="muted">A read-only live standings page anyone with the link can open. Turning it off breaks the old link.</p>
+      {url && <input className="input font-mono text-xs" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />}
+      <div className="flex gap-2">
+        <button className="btn-ghost flex-1" onClick={() => set(true)}>{token ? "Show link" : "Enable link"}</button>
+        {token && <button className="btn-ghost" onClick={() => set(false)}>Turn off</button>}
+      </div>
+      {err && <p className="text-sm text-red-600">{err}</p>}
+    </div>
+  );
+}
+
+interface AuditRow { created_at: string; actor_name: string | null; action: string; target_type: string | null; reason: string | null; before: unknown; after: unknown }
+function Audit({ id }: { id: string }) {
+  const [rows, setRows] = useState<AuditRow[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    supabase.rpc("admin_audit_log", { p_tournament: id }).then(({ data, error }) => {
+      if (error) setErr(error.message); else setRows((data as AuditRow[]) ?? []);
+    });
+  }, [id]);
+  if (err) return <p className="text-sm text-red-600">{err}</p>;
+  if (!rows) return <p className="muted">Loading...</p>;
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between">
+        <h2 className="h2">Audit log</h2>
+        <button className="btn-ghost !py-1" onClick={() => downloadText(`audit-${id}.csv`, toCsv([["time", "who", "action", "target", "reason"], ...rows.map((r) => [r.created_at, r.actor_name, r.action, r.target_type, r.reason])]))}>Export CSV</button>
+      </div>
+      {rows.length === 0 && <p className="muted">No admin changes recorded yet.</p>}
+      {rows.map((r, i) => (
+        <div key={i} className="card text-sm">
+          <div className="flex justify-between"><b>{r.action.replace(/_/g, " ")}</b><span className="muted">{new Date(r.created_at).toLocaleString()}</span></div>
+          <div className="muted">{r.actor_name ?? "Unknown"}{r.reason ? ` · ${r.reason}` : ""}</div>
+          {r.before != null && r.after != null && <div className="mt-1 font-mono text-xs">{JSON.stringify(r.before)}<br />to {JSON.stringify(r.after)}</div>}
         </div>
       ))}
     </div>

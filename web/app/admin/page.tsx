@@ -7,6 +7,7 @@ import { useAdminSession } from "@/lib/useAdmin";
 import { MATCH_LABEL, type MatchType, type Tournament } from "@/lib/types";
 import { defaultPointsToWin } from "@/lib/draft";
 import AdminSignIn from "@/components/AdminSignIn";
+import { findCourse, loadCourses, type CatalogCourse } from "@/lib/courses";
 
 const FORMATS = Object.keys(MATCH_LABEL) as MatchType[];
 
@@ -20,6 +21,8 @@ export default function AdminHome() {
   const [courses, setCourses] = useState<string[]>(["", "", ""]);
   const [formats, setFormats] = useState<MatchType[]>(["best_ball", "best_ball", "best_ball"]);
   const [err, setErr] = useState<string | null>(null);
+  const [catalog, setCatalog] = useState<CatalogCourse[]>([]);
+  useEffect(() => { loadCourses().then(setCatalog); }, []);
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -48,7 +51,10 @@ export default function AdminHome() {
       points_to_win: defaultPointsToWin(n),
     }).select().single();
     if (error || !t) { setErr(error?.message ?? "Could not create"); return; }
-    const rows = courses.map((c, i) => ({ tournament_id: t.id, course_name: c.trim(), round_number: i + 1, match_type: formats[i] }));
+    const rows = courses.map((c, i) => {
+      const match = findCourse(catalog, c);
+      return { tournament_id: t.id, course_name: match?.name ?? c.trim(), round_number: i + 1, match_type: formats[i], ...(match ? { course_id: match.id } : {}) };
+    });
     const c1 = await supabase.from("tournament_courses").insert(rows);
     const c2 = await supabase.from("tournament_players").insert({ tournament_id: t.id, user_id: user.id, invite_status: "accepted", is_admin: true });
     if (c1.error || c2.error) { setErr((c1.error ?? c2.error)!.message); return; }
@@ -80,10 +86,11 @@ export default function AdminHome() {
             <input className="input mt-1" type="number" min={1} max={18} value={n} onChange={(e) => setCount(Number(e.target.value) || 1)} />
           </label>
           <p className="muted">Points to win: {defaultPointsToWin(n).toFixed(1)}</p>
+          <datalist id="course-list">{catalog.map((c) => <option key={c.id} value={c.name} />)}</datalist>
           {courses.map((c, i) => (
             <div key={i} className="space-y-1">
               <div className="muted">Match {i + 1}</div>
-              <input className="input" placeholder="Course name" value={c} onChange={(e) => setCourses(courses.map((x, j) => (j === i ? e.target.value : x)))} />
+              <input className="input" list="course-list" placeholder="Course name (pick from the list for real pars)" value={c} onChange={(e) => setCourses(courses.map((x, j) => (j === i ? e.target.value : x)))} />
               <select className="input" value={formats[i]} onChange={(e) => setFormats(formats.map((x, j) => (j === i ? (e.target.value as MatchType) : x)))}>
                 {FORMATS.map((f) => <option key={f} value={f}>{MATCH_LABEL[f]}</option>)}
               </select>

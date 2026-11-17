@@ -1,6 +1,7 @@
 "use client";
 import { MATCH_LABEL, type TournamentData } from "@/lib/types";
 import { orderedTeams } from "@/lib/draft";
+import { renderStandingsImage, shareOrDownload } from "@/lib/shareImage";
 
 export default function Standings({ data }: { data: TournamentData }) {
   const [a, b] = orderedTeams(data.teams);
@@ -31,6 +32,9 @@ export default function Standings({ data }: { data: TournamentData }) {
           )}
         </div>
       ))}
+      <button className="btn-ghost w-full" onClick={async () => {
+        try { await shareOrDownload(await renderStandingsImage(data), "standings.png"); } catch { /* user cancelled share */ }
+      }}>Share standings image</button>
     </div>
   );
 }

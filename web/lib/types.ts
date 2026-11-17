@@ -18,7 +18,7 @@ export interface Tournament {
   total_matches: number;
   points_to_win: number;
 }
-export interface TCourse { id: string; tournament_id: string; course_name: string; round_number: number; match_type: MatchType | null }
+export interface TCourse { id: string; tournament_id: string; course_name: string; round_number: number; match_type: MatchType | null; course_id?: string | null }
 export interface TPlayer {
   id: string; tournament_id: string; user_id: string; team_id: string | null;
   invite_status: "pending" | "accepted" | "declined"; is_admin: boolean;

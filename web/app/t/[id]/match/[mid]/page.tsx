@@ -75,7 +75,9 @@ export default function MatchPage() {
 
   const startCard = async () => {
     setMsg(null);
-    const catalog = findCourse(await loadCourses(), courseName);
+    const list = await loadCourses();
+    const courseId = data.courses.find((c) => c.round_number === matchup.matchup_number)?.course_id;
+    const catalog = (courseId ? list.find((c) => c.id === courseId) : undefined) ?? findCourse(list, courseName);
     const pars = catalog ? [...catalog.holes].sort((a, b) => a.number - b.number) : null;
     const row = {
       id: crypto.randomUUID(), user_id: userId, course_name: courseName,

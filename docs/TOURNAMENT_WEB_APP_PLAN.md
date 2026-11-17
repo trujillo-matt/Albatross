@@ -62,6 +62,8 @@ These matter because the web app will sit on the same data. Each is verified by 
 
 ### Fix status for section 3
 
+**Update:** migrations 001 to 004 now apply and pass `docs/tests/run.sh` on a scratch Postgres 16 with a stub schema. That is stronger than untested, but it is not your real Supabase schema.
+
 iOS changes are in the Swift code (not compiled here). Database changes are in `docs/migrations/` and are **not applied or tested**. The web app does not exist yet; its column reads the migration column.
 
 | # | iOS | Database / web |
