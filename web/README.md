@@ -5,17 +5,17 @@ Shares the Supabase project with the iOS app. See `../docs/TOURNAMENT_WEB_APP_PL
 
 ## Status
 
-Built, type-checked, and tested in three layers. **Still not run against your real Supabase project.**
+Built, type-checked, and tested in three layers. **The schema was audited read-only against the real project, but no migration has been applied to it and the app has not been run against it.**
 
 | Check | Command | What it proves |
 |---|---|---|
 | Unit tests (scoring, snake order, codes, CSV) | `npm test` | Logic matches the Swift code |
 | Browser end-to-end, Supabase API mocked | `npm run test:e2e` | The app's flows work: code login, scoring, offline queue, finish, spectator page. Does **not** exercise the real database, RLS or edge functions |
-| SQL tests on a scratch Postgres 16 with a stub schema | `docs/tests/run.sh` | Migrations 001 to 004 apply and their functions behave (voting, ties, draft turns, scoring, triggers, audit, spectator link, RLS on the new tables). The stub schema is my inference, so differences from production are untested |
+| SQL tests on a scratch Postgres 16 with a local copy of the **live** schema and RLS policies (captured read-only, no data) | `docs/tests/run.sh` | Migrations 001 to 005 apply; each audited bug is shown real before 005 and gone after; functions behave (voting, ties, draft turns, scoring, triggers, audit, spectator link). Not run against the live project itself. See `docs/LIVE_SCHEMA_AUDIT.md` |
 
 ## Setup
 
-1. Review and apply, in order, against a staging copy first: `../docs/migrations/001_*.sql` to `004_*.sql`. Run `../docs/tests/run.sh` first if you want to see them pass on a scratch database.
+1. Review and apply, in order, against a staging copy first: `../docs/migrations/001_*.sql` to `005_*.sql`. Run `../docs/tests/run.sh` first if you want to see them pass on a scratch database.
 2. Deploy the edge functions and set the pepper (any long random string; never commit it):
 
    ```bash

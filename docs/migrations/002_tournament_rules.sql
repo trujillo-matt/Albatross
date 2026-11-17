@@ -29,8 +29,7 @@ alter table tournament_matchups add column if not exists scorer_user_id uuid ref
 -- ---------------------------------------------------------------------------
 -- Problem 5: voting rules. One ballot per voter, exactly 2 distinct nominees.
 -- ---------------------------------------------------------------------------
-create unique index if not exists tournament_captain_votes_unique
-  on tournament_captain_votes (tournament_id, voter_user_id, nominee_user_id);
+-- The unique (tournament_id, voter_user_id, nominee_user_id) constraint already exists in the live database.
 
 -- Both writes the ballot atomically and rejects invalid ones.
 -- Self-nomination is allowed (matches the iOS behavior); add a check here to forbid it.

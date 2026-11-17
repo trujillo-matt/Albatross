@@ -422,24 +422,28 @@ final class TournamentStore: ObservableObject {
         return players.filter { $0.teamID != nil && !captainIDs.contains($0.userID) }.count
     }
 
-    /// Makes a pick for `captainUserID`. Rejects the pick unless it is that captain's turn
-    /// and the player is an accepted, undrafted member of the pool. Checked against fresh
-    /// data; for a race-free guarantee use the `draft_pick` function in
-    /// docs/migrations/002_tournament_rules.sql.
+    /// Makes a pick for `captainUserID`. Goes through the `draft_pick` database function, which checks
+    /// that it is that captain's turn and that the player is an accepted, undrafted member of the pool.
+    /// A direct table update cannot be used here: row-level security only lets the commissioner (or the
+    /// player themselves) update tournament_players rows, so a captain's direct update was silently ignored.
+    /// Requires docs/migrations/001 and 002 to be applied.
     func draftPick(tournamentID: UUID, captainUserID: UUID, pickedPlayerID: UUID) async throws {
         let teams = try await loadTeams(tournamentID: tournamentID)
-        guard let team = teams.first(where: { $0.captainUserID == captainUserID }),
-              let teamIndex = teams.firstIndex(where: { $0.id == team.id }) else {
+        guard teams.contains(where: { $0.captainUserID == captainUserID }) else {
             throw TournamentError.notACaptain
         }
-        let players = try await loadPlayers(tournamentID: tournamentID)
-        let pickNumber = Self.draftPickCount(players: players, teams: teams)
-        let teamAOnClock = snakeIsTeamATurn(pickNumber: pickNumber)
-        guard (teamIndex == 0) == teamAOnClock else { throw TournamentError.notYourTurn }
-        guard let target = players.first(where: { $0.userID == pickedPlayerID }),
-              target.inviteStatus == .accepted,
-              target.teamID == nil else { throw TournamentError.playerUnavailable }
-        try await assignPlayer(tournamentID: tournamentID, playerID: pickedPlayerID, teamID: team.id)
+        struct Params: Encodable { let p_tournament: String; let p_player: String }
+        do {
+            try await supabase.rpc("draft_pick", params: Params(
+                p_tournament: tournamentID.uuidString,
+                p_player: pickedPlayerID.uuidString
+            )).execute()
+        } catch {
+            let message = String(describing: error)
+            if message.contains("not your turn") { throw TournamentError.notYourTurn }
+            if message.contains("not available") { throw TournamentError.playerUnavailable }
+            throw error
+        }
     }
 
     func overrideDraftAssignment(tournamentID: UUID, playerID: UUID, newTeamID: UUID) async throws {
@@ -490,24 +494,24 @@ final class TournamentStore: ObservableObject {
 
     // MARK: - Matchups
 
+    /// Goes through the `set_pairings` database function so a team captain (not only the commissioner)
+    /// can set pairings; the old direct update was creator-only under row-level security and a captain's
+    /// attempt was silently ignored. Requires docs/migrations/005 to be applied.
     func setMatchupPairings(
         matchupID: UUID,
         teamAPlayerIDs: [UUID],
         teamBPlayerIDs: [UUID]
     ) async throws {
-        struct Update: Encodable {
-            let team_a_player_ids: [String]
-            let team_b_player_ids: [String]
-            let status: String
+        struct Params: Encodable {
+            let p_matchup: String
+            let p_team_a: [String]
+            let p_team_b: [String]
         }
-        try await supabase.from("tournament_matchups")
-            .update(Update(
-                team_a_player_ids: teamAPlayerIDs.map(\.uuidString),
-                team_b_player_ids: teamBPlayerIDs.map(\.uuidString),
-                status: MatchupStatus.active.rawValue
-            ))
-            .eq("id", value: matchupID.uuidString)
-            .execute()
+        try await supabase.rpc("set_pairings", params: Params(
+            p_matchup: matchupID.uuidString,
+            p_team_a: teamAPlayerIDs.map(\.uuidString),
+            p_team_b: teamBPlayerIDs.map(\.uuidString)
+        )).execute()
     }
 
     func recordMatchupRound(matchupID: UUID, roundID: UUID, userID: UUID) async throws {

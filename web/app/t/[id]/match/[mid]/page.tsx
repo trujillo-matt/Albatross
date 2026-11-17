@@ -92,7 +92,7 @@ export default function MatchPage() {
     const { error } = await supabase.from("rounds").insert(row);
     if (error) { setMsg(error.message); return; }
     // Link at start so the database trigger sees it when the round completes.
-    const link = await supabase.from("tournament_matchup_rounds").upsert({ matchup_id: matchup.id, round_id: row.id, user_id: userId });
+    const link = await supabase.from("tournament_matchup_rounds").upsert({ matchup_id: matchup.id, round_id: row.id, user_id: userId }, { onConflict: "matchup_id,user_id" });
     if (link.error) setMsg(link.error.message);
     loadRound();
   };

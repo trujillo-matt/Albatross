@@ -10,18 +10,21 @@ create function t.anon() returns void language sql as
 -- Runs sql and requires it to fail with a message matching pattern.
 create function t.expect_error(sql text, pattern text) returns void language plpgsql as $$
 begin
-  execute sql;
-exception when others then
-  if sqlerrm !~* pattern then raise exception 'wrong error for [%]: got "%" expected /%/', sql, sqlerrm, pattern; end if;
-  return;
+  begin
+    execute sql;
+  exception when others then
+    if sqlerrm !~* pattern then raise exception 'wrong error for [%]: got "%" expected /%/', sql, sqlerrm, pattern; end if;
+    return;
+  end;
+  raise exception 'EXPECTED AN ERROR matching /%/ but the statement succeeded: %', pattern, sql;
 end $$;
 -- Note: when expect_error succeeds in catching, the failing statement is rolled back (subtransaction).
 create function t.assert(cond boolean, msg text) returns void language plpgsql as $$
 begin if not coalesce(cond, false) then raise exception 'ASSERT FAILED: %', msg; end if; end $$;
 
 -- Fixture: users 1..8. 1 = creator/admin. 2..8 = players. 9 = outsider.
-insert into profiles (id, display_name) select t.u(i), 'User ' || i from generate_series(1, 9) i;
-insert into auth.users select t.u(i) from generate_series(1, 9) i;
+insert into auth.users (id) select t.u(i) from generate_series(1, 9) i;   -- handle_new_user creates the profiles
+update profiles set display_name = 'User ' || right(id::text, 1) where id in (select t.u(i) from generate_series(1, 9) i);
 
 create function t.new_tournament(total int default 3, status text default 'draft') returns uuid language plpgsql as $$
 declare v uuid;
@@ -47,8 +50,8 @@ end $$;
 -- ---------------------------------------------------------------- 002: points to win correction is in the migration;
 -- verify the rule it applies using a legacy row.
 do $$ declare v uuid; begin
-  insert into tournaments (name, creator_user_id, total_matches, points_to_win, status)
-    values ('Legacy', t.u(1), 3, 9.5, 'draft') returning id into v;
+  insert into tournaments (name, creator_user_id, total_matches, points_to_win, status, match_type)
+    values ('Legacy', t.u(1), 3, 9.5, 'draft', 'best_ball') returning id into v;
   update tournaments set points_to_win = total_matches / 2.0 + 0.5
    where id = v and points_to_win = 9.5 and total_matches < 18 and status <> 'complete';
   perform t.assert((select points_to_win from tournaments where id = v) = 2.0, '3 matches -> 2.0 to win');
@@ -138,7 +141,7 @@ end $$;
 create function t.card(owner int, matchup uuid, scores jsonb, st text default 'in_progress') returns uuid language plpgsql as $$
 declare r uuid := gen_random_uuid();
 begin
-  insert into rounds (id, user_id, course_name, scores, status, matchup_id) values (r, t.u(owner), 'C', scores, st, matchup);
+  insert into rounds (id, user_id, course_name, date, scores, status, matchup_id) values (r, t.u(owner), 'C', now(), scores, st, matchup);
   return r;
 end $$;
 create function t.nulls() returns jsonb language sql immutable as $$ select to_jsonb(array_fill(null::int, array[18])) $$;
