@@ -11,6 +11,8 @@ import { FORMAT, shortDateTime } from "@/lib/labels";
 import { downloadText, toCsv } from "@/lib/csv";
 import { formatCode } from "@/lib/code";
 import Standings from "@/components/Standings";
+import DayBoard from "@/components/DayBoard";
+import { courseForMatch } from "@/lib/sessions";
 import AdminSignIn from "@/components/AdminSignIn";
 import CodeCard from "@/components/CodeCard";
 import Page from "@/components/Page";
@@ -67,7 +69,7 @@ export default function AdminTournament() {
         {tab === "overview" && <Overview data={data} act={act} />}
         {tab === "roster" && <Roster data={data} reload={reload} setMsg={setMsg} />}
         {tab === "vote" && <VoteDraft data={data} act={act} setMsg={setMsg} reload={reload} />}
-        {tab === "matches" && <Matches data={data} act={act} />}
+        {tab === "matches" && <Matches data={data} act={act} userId={user?.id ?? null} reload={reload} />}
         {tab === "scores" && <Scores data={data} setMsg={setMsg} reload={reload} />}
         {tab === "standings" && <div className="max-w-xl"><Standings data={data} /></div>}
         {tab === "audit" && <Audit id={id} />}
@@ -103,7 +105,7 @@ function Overview({ data, act }: { data: TournamentData; act: Act }) {
             <p className="muted">Add players on the Roster tab, then start the captain vote. You need at least 2 players</p>
             <button className="btn w-full" disabled={accepted.length < 2} onClick={startDraft}>Start captain vote and draft</button></>}
           {t.status === "draft" && <p className="muted"><span className="tnum">{voters}</span> of <span className="tnum">{accepted.length}</span> players have voted. Finalize on the Vote and draft tab</p>}
-          {t.status === "active" && <p className="muted">The tournament is under way. Set pairings on the Matches tab and watch cards come in on the Scores tab</p>}
+          {t.status === "active" && <p className="muted">The tournament is under way. Run the callouts on the Matches tab and watch cards come in on the Scores tab</p>}
           {t.status === "complete" && <p className="muted">The tournament is complete</p>}
         </div>
       </div>
@@ -112,7 +114,9 @@ function Overview({ data, act }: { data: TournamentData; act: Act }) {
         <div className="card">
           <h2 className="h2">Courses</h2>
           <ul className="rows mt-2">
-            {data.courses.map((c) => (
+            {data.sessions.length > 0 ? data.sessions.map((x) => (
+              <li key={x.id} className="row"><span>Day <span className="tnum">{x.day_number}</span>{x.label ? `, ${x.label}` : ""}, {x.course_name || "To be set"}</span><span className="muted">{FORMAT[x.match_type]}{x.match_count ? <>, <span className="tnum">{x.match_count}</span> matches</> : ""}</span></li>
+            )) : data.courses.map((c) => (
               <li key={c.id} className="row"><span>Round <span className="tnum">{c.round_number}</span>, {c.course_name || "To be set"}</span><span className="muted">{c.match_type ? FORMAT[c.match_type] : ""}</span></li>
             ))}
           </ul>
@@ -243,15 +247,8 @@ function VoteDraft({ data, act, setMsg, reload }: { data: TournamentData; act: A
     } else { setTie(null); reload(); }
   };
 
-  const startTournament = () => act(async () => {
-    const s = await supabase.from("tournaments").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", t.id);
-    if (s.error) return s;
-    const rows = Array.from({ length: t.total_matches }, (_, i) => ({
-      tournament_id: t.id, matchup_number: i + 1, team_a_id: a.id, team_b_id: b.id,
-      match_type: data.courses.find((c) => c.round_number === i + 1)?.match_type ?? t.match_type,
-    }));
-    return supabase.from("tournament_matchups").insert(rows);
-  });
+  // Matches for every session are created by the database from the rosters, then the first lineup is auto-filled.
+  const startTournament = () => act(() => supabase.rpc("start_tournament", { p_tournament: t.id }));
 
   if (t.status === "setup") return <p className="muted">Start the captain vote from the Overview tab first</p>;
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? uid.slice(0, 6);
@@ -327,7 +324,11 @@ function VoteDraft({ data, act, setMsg, reload }: { data: TournamentData; act: A
   );
 }
 
-function Matches({ data, act }: { data: TournamentData; act: Act }) {
+function Matches({ data, act, userId, reload }: { data: TournamentData; act: Act; userId: string | null; reload: () => void }) {
+  if (data.sessions.length > 0 && data.matchups.some((m) => m.session_id)) {
+    return <DayBoard data={data} userId={userId} isAdmin reload={reload} />;
+  }
+  // Tournaments started before sessions existed keep the old match-by-match editor.
   return (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
       {data.matchups.length === 0 && <p className="muted">Matches are created when the tournament starts</p>}
@@ -405,7 +406,7 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
     const team = (id: string) => data.teams.find((t) => t.id === id)?.name ?? "";
     downloadText(`${data.tournament.name}-results.csv`, toCsv([
       ["match", "format", "course", "team A", "team B", "points A", "points B", "status"],
-      ...data.matchups.map((m) => [m.matchup_number, FORMAT[m.match_type], data.courses.find((c) => c.round_number === m.matchup_number)?.course_name ?? "",
+      ...data.matchups.map((m) => [m.matchup_number, FORMAT[m.match_type], courseForMatch(data, m).name ?? "",
         team(m.team_a_id), team(m.team_b_id), m.points_team_a, m.points_team_b, m.status]),
     ]));
   };

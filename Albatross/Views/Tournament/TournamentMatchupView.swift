@@ -42,7 +42,11 @@ struct TournamentMatchupView: View {
     }
 
     private var courseName: String {
-        tournament.courses.first(where: { $0.roundNumber == current.matchupNumber })?.courseName ?? "TBD"
+        if let id = current.sessionID, let session = tournament.sessions.first(where: { $0.id == id }) {
+            if let name = session.courseName, !name.isEmpty { return name }
+            return tournament.courses.first(where: { $0.roundNumber == session.dayNumber })?.courseName ?? "TBD"
+        }
+        return tournament.courses.first(where: { $0.roundNumber == current.matchupNumber })?.courseName ?? "TBD"
     }
 
     var body: some View {
@@ -55,7 +59,7 @@ struct TournamentMatchupView: View {
                     .padding(.bottom, 8)
 
                 // ── Pairings ─────────────────────────────────────────────
-                if current.status == .pending && canSetPairings {
+                if current.status == .pending && canSetPairings && current.sessionID == nil {
                     pairingsEditor
                 } else {
                     confirmedPairings

@@ -6,6 +6,8 @@ import { useTournament, useUserId } from "@/lib/useTournament";
 import { supabase } from "@/lib/supabase";
 import { FORMAT } from "@/lib/labels";
 import { orderedTeams } from "@/lib/draft";
+import { courseForMatch } from "@/lib/sessions";
+import DayBoard from "@/components/DayBoard";
 import VotePanel from "@/components/VotePanel";
 import DraftPanel from "@/components/DraftPanel";
 import Standings from "@/components/Standings";
@@ -29,7 +31,6 @@ export default function PlayerHub() {
   const captainsSet = !!teamA?.captain_user_id && !!teamB?.captain_user_id;
   const meP = data.players.find((p) => p.user_id === userId);
   const myTeam = data.teams.find((x) => x.id === meP?.team_id);
-  const courseFor = (n: number) => data.courses.find((c) => c.round_number === n)?.course_name;
 
   return (
     <Page>
@@ -64,6 +65,12 @@ export default function PlayerHub() {
             {t.status === "draft" && captainsSet && <DraftPanel data={data} me={userId} reload={reload} />}
             {(t.status === "active" || t.status === "complete") && (
               <section className="space-y-3">
+                {data.sessions.length > 0 && data.matchups.some((m) => m.session_id) && (
+                  <>
+                    <h2 className="h2">Today</h2>
+                    <DayBoard data={data} userId={userId} isAdmin={false} reload={reload} />
+                  </>
+                )}
                 <h2 className="h2">Matches</h2>
                 <div className="card overflow-hidden p-0">
                   <ul className="rows">
@@ -75,7 +82,7 @@ export default function PlayerHub() {
                             <span className="min-w-0">
                               <span className="flex items-center gap-2 text-stone-900">Match <span className="tnum">{m.matchup_number}</span>
                                 {mine && <span className="rounded bg-brand-light px-2 text-xs leading-5 text-brand">You</span>}</span>
-                              <span className="muted block truncate">{FORMAT[m.match_type]}{courseFor(m.matchup_number) ? `, ${courseFor(m.matchup_number)}` : ""}</span>
+                              <span className="muted block truncate">{FORMAT[m.match_type]}{courseForMatch(data, m).name ? `, ${courseForMatch(data, m).name}` : ""}</span>
                             </span>
                             {m.status === "complete"
                               ? <span className="num text-lg text-stone-900">{Number(m.points_team_a).toFixed(1)} to {Number(m.points_team_b).toFixed(1)}</span>

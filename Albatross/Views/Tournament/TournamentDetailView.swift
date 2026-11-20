@@ -319,6 +319,34 @@ struct TournamentDetailView: View {
 
     private var activeBody: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Lineups and captain callouts for each session
+            if current.usesSessions {
+                NavigationLink(destination: TournamentSessionsView(tournamentID: current.id)) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "megaphone.fill")
+                            .foregroundStyle(Color.accentColor)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Lineups & Callouts")
+                                .font(.callout.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Text(current.currentSession.map { "\($0.title), \($0.status.displayName)" } ?? "")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .scaledFont(size: 13, weight: .semibold)
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                    .padding(16)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                }
+                .buttonStyle(.pressFeedback)
+            }
+
             // The board: team points and every match, each row opening its match
             TournamentLeaderboard(tournament: current) { matchup in
                 AnyView(TournamentMatchupView(tournament: current, matchup: matchup))

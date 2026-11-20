@@ -14,6 +14,7 @@ enum TournamentMatchType: String, Codable, CaseIterable {
     case bestBall   = "best_ball"
     case matchPlay  = "match_play"
     case strokePlay = "stroke_play"
+    case alternateShot = "alternate_shot"
 
     var displayName: String {
         switch self {
@@ -21,6 +22,7 @@ enum TournamentMatchType: String, Codable, CaseIterable {
         case .bestBall:   return "Best Ball"
         case .matchPlay:  return "Match Play"
         case .strokePlay: return "Stroke Play"
+        case .alternateShot: return "Alternate Shot"
         }
     }
 }
@@ -35,6 +37,25 @@ enum MatchupStatus: String, Codable {
     case pending  = "pending"
     case active   = "active"
     case complete = "complete"
+}
+
+/// Where a session is: a lineup is auto-filled, captains call out matchups, then the matches lock.
+enum SessionStatus: String, Codable {
+    case pending  = "pending"
+    case lineup   = "lineup"
+    case callouts = "callouts"
+    case locked   = "locked"
+    case complete = "complete"
+
+    var displayName: String {
+        switch self {
+        case .pending:  return "Up next"
+        case .lineup:   return "Lineup"
+        case .callouts: return "Callouts"
+        case .locked:   return "Locked in"
+        case .complete: return "Complete"
+        }
+    }
 }
 
 enum MatchResult: String, Codable {
@@ -133,6 +154,13 @@ struct TournamentMatchup: Identifiable, Codable {
     var result: MatchResult?
     var pointsTeamA: Double
     var pointsTeamB: Double
+    /// Nil on tournaments created before sessions existed.
+    var sessionID: UUID? = nil
+    var calledByTeamID: UUID? = nil
+    /// Set when the match is locked in by the callouts.
+    var calledAt: Date? = nil
+
+    var isLockedIn: Bool { calledAt != nil }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -147,6 +175,45 @@ struct TournamentMatchup: Identifiable, Codable {
         case result
         case pointsTeamA    = "points_team_a"
         case pointsTeamB    = "points_team_b"
+        case sessionID      = "session_id"
+        case calledByTeamID = "called_by_team_id"
+        case calledAt       = "called_at"
+    }
+}
+
+// MARK: - TournamentSession
+
+/// One block of play inside a day (for example the morning scramble). It has one format; its
+/// match count comes from the rosters when the tournament starts.
+struct TournamentSession: Identifiable, Codable {
+    var id: UUID
+    var tournamentID: UUID
+    var dayNumber: Int
+    var sessionNumber: Int
+    var label: String?
+    var matchType: TournamentMatchType
+    var courseName: String?
+    var matchCount: Int
+    var status: SessionStatus
+    var firstCallerTeamID: UUID?
+    var turnTeamID: UUID?
+    var consecutivePasses: Int
+
+    var title: String { (label?.isEmpty == false ? label! : "Session \(sessionNumber)") }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case tournamentID      = "tournament_id"
+        case dayNumber         = "day_number"
+        case sessionNumber     = "session_number"
+        case label
+        case matchType         = "match_type"
+        case courseName        = "course_name"
+        case matchCount        = "match_count"
+        case status
+        case firstCallerTeamID = "first_caller_team_id"
+        case turnTeamID        = "turn_team_id"
+        case consecutivePasses = "consecutive_passes"
     }
 }
 
@@ -184,6 +251,7 @@ struct Tournament: Identifiable, Codable {
     var playerPool: [TournamentPlayer] = []
     var teams: [TournamentTeam] = []
     var matchups: [TournamentMatchup] = []
+    var sessions: [TournamentSession] = []
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -276,7 +344,7 @@ func calculateMatchPoints(
 ) -> (teamA: Double, teamB: Double) {
     switch matchType {
     case .matchPlay:            return calculateMatchPlayPoints(teamARounds: teamARounds, teamBRounds: teamBRounds)
-    case .bestBall, .scramble:  return calculateBestBallPoints(teamARounds: teamARounds, teamBRounds: teamBRounds)
+    case .bestBall, .scramble, .alternateShot: return calculateBestBallPoints(teamARounds: teamARounds, teamBRounds: teamBRounds)
     case .strokePlay:           return calculateStrokePlayPoints(teamARounds: teamARounds, teamBRounds: teamBRounds)
     }
 }
@@ -298,7 +366,7 @@ extension TournamentMatchType {
     var playersPerSide: Int {
         switch self {
         case .matchPlay, .strokePlay: return 1
-        case .bestBall, .scramble:    return 2
+        case .bestBall, .scramble, .alternateShot: return 2
         }
     }
 
@@ -343,6 +411,9 @@ extension Tournament {
     var matchCount: Int {
         if !matchups.isEmpty { return matchups.count }
         let perTeam = playersPerTeam
+        if !sessions.isEmpty {
+            return sessions.reduce(0) { $0 + Tournament.matchCount(playersPerTeam: perTeam, matchType: $1.matchType) }
+        }
         return sortedCourses.reduce(0) { total, course in
             total + Tournament.matchCount(playersPerTeam: perTeam, matchType: course.matchType ?? matchType)
         }
@@ -353,10 +424,41 @@ extension Tournament {
         (Double(matchCount) / 2).rounded(.down) + 0.5
     }
 
+    /// Sessions in play order.
+    var sortedSessions: [TournamentSession] {
+        sessions.sorted { ($0.dayNumber, $0.sessionNumber) < ($1.dayNumber, $1.sessionNumber) }
+    }
+
+    /// True once matches belong to sessions. Older tournaments keep the slicing below.
+    var usesSessions: Bool { !sessions.isEmpty && matchups.contains { $0.sessionID != nil } }
+
+    /// The session being played: the first that is not complete.
+    var currentSession: TournamentSession? {
+        sortedSessions.first { $0.status != .complete } ?? sortedSessions.last
+    }
+
+    func matchups(in session: TournamentSession) -> [TournamentMatchup] {
+        matchups.filter { $0.sessionID == session.id }.sorted { $0.matchupNumber < $1.matchupNumber }
+    }
+
     /// The matches grouped by day, in play order.
     var days: [TournamentDay] {
         let ordered = matchups.sorted { $0.matchupNumber < $1.matchupNumber }
         guard !ordered.isEmpty else { return [] }
+        if usesSessions {
+            // A day is every session with that day number; its format is the first session's.
+            let numbers = Array(Set(sortedSessions.map(\.dayNumber))).sorted()
+            return numbers.map { number in
+                let inDay = sortedSessions.filter { $0.dayNumber == number }
+                let ids = Set(inDay.map(\.id))
+                return TournamentDay(
+                    number: number,
+                    course: courses.first(where: { $0.roundNumber == number }),
+                    matchType: inDay.first?.matchType ?? matchType,
+                    matchups: ordered.filter { match in match.sessionID.map { ids.contains($0) } ?? false }
+                )
+            }
+        }
         let plan = sortedCourses
         guard !plan.isEmpty else {
             return [TournamentDay(number: 1, course: nil, matchType: matchType, matchups: ordered)]
@@ -413,7 +515,7 @@ struct LiveMatchStatus: Equatable {
         switch matchType {
         case .matchPlay:
             return LiveMatchStatus(holesPlayed: played, lead: holesWonByA - holesWonByB)
-        case .strokePlay, .bestBall, .scramble:
+        case .strokePlay, .bestBall, .scramble, .alternateShot:
             return LiveMatchStatus(holesPlayed: played, lead: strokesB - strokesA)
         }
     }

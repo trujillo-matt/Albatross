@@ -16,6 +16,8 @@ struct NewTournamentSheet: View {
     // ── Step 2 ───────────────────────────────────────────────────────────
     @State private var courseNames: [String] = ["", "", ""]
     @State private var matchTypes: [TournamentMatchType] = [.bestBall, .bestBall, .bestBall]
+    /// An optional second session per day (the afternoon), with its own format.
+    @State private var secondSessions: [TournamentMatchType?] = [nil, nil, nil]
 
     // ── Step 3 ───────────────────────────────────────────────────────────
     @State private var searchQuery: String = ""
@@ -89,7 +91,7 @@ struct NewTournamentSheet: View {
             } header: {
                 Text("Days of play")
             } footer: {
-                Text("Each day has its own course and format. The matches in a day come from the players: every player plays once a day, so singles make one match per player and pairs make half as many. Points to win is set when the tournament starts.")
+                Text("Each day has its own course and one or two sessions, each with a format. The matches in a session come from the players: every player plays once, so singles make one match per player and pairs make half as many. Extra players sit out, and captains call out who plays whom before each session. Points to win is set when the tournament starts.")
                     .font(.caption)
             }
         }
@@ -114,7 +116,18 @@ struct NewTournamentSheet: View {
                                 Text(type.displayName).tag(type)
                             }
                         }
-                        .pickerStyle(.segmented)
+                        .pickerStyle(.menu)
+
+                        Toggle("Add an afternoon session", isOn: hasSecondBinding(for: index))
+                            .font(.callout)
+                        if hasSecondBinding(for: index).wrappedValue {
+                            Picker("Afternoon format", selection: secondTypeBinding(for: index)) {
+                                ForEach(TournamentMatchType.allCases, id: \.self) { type in
+                                    Text(type.displayName).tag(type)
+                                }
+                            }
+                            .pickerStyle(.menu)
+                        }
                     }
                     .padding(.vertical, 4)
                 }
@@ -326,10 +339,30 @@ struct NewTournamentSheet: View {
         if courseNames.count < count {
             courseNames.append(contentsOf: Array(repeating: "", count: count - courseNames.count))
             matchTypes.append(contentsOf: Array(repeating: .bestBall, count: count - matchTypes.count))
+            secondSessions.append(contentsOf: Array(repeating: nil, count: max(0, count - secondSessions.count)))
         } else if courseNames.count > count {
             courseNames = Array(courseNames.prefix(count))
             matchTypes = Array(matchTypes.prefix(count))
+            secondSessions = Array(secondSessions.prefix(count))
         }
+    }
+
+    private func hasSecondBinding(for index: Int) -> Binding<Bool> {
+        Binding(
+            get: { index < secondSessions.count && secondSessions[index] != nil },
+            set: { on in
+                if index < secondSessions.count { secondSessions[index] = on ? .alternateShot : nil }
+            }
+        )
+    }
+
+    private func secondTypeBinding(for index: Int) -> Binding<TournamentMatchType> {
+        Binding(
+            get: { (index < secondSessions.count ? secondSessions[index] : nil) ?? .alternateShot },
+            set: { value in
+                if index < secondSessions.count { secondSessions[index] = value }
+            }
+        )
     }
 
     private func courseNameBinding(for index: Int) -> Binding<String> {
@@ -361,7 +394,8 @@ struct NewTournamentSheet: View {
                     matchType: matchTypes.first ?? .bestBall,
                     days: days,
                     courseNames: names,
-                    matchTypes: matchTypes
+                    matchTypes: matchTypes,
+                    secondSessionTypes: secondSessions
                 )
                 // Send invites
                 for profile in invitedProfiles {

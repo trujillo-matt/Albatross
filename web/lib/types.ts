@@ -1,5 +1,6 @@
 export type TournamentStatus = "setup" | "draft" | "active" | "complete";
-export type MatchType = "scramble" | "best_ball" | "match_play" | "stroke_play";
+export type MatchType = "scramble" | "best_ball" | "match_play" | "stroke_play" | "alternate_shot";
+export type SessionStatus = "pending" | "lineup" | "callouts" | "locked" | "complete";
 export type MatchupStatus = "pending" | "active" | "complete";
 
 
@@ -24,11 +25,18 @@ export interface TMatchup {
   id: string; tournament_id: string; matchup_number: number; team_a_id: string; team_b_id: string;
   team_a_player_ids: string[]; team_b_player_ids: string[]; match_type: MatchType; status: MatchupStatus;
   result: "team_a_win" | "team_b_win" | "tie" | null; points_team_a: number; points_team_b: number;
+  /** Null on tournaments created before sessions existed. */
+  session_id?: string | null; called_by_team_id?: string | null; called_at?: string | null;
+}
+export interface TSession {
+  id: string; tournament_id: string; day_number: number; session_number: number; label: string | null;
+  match_type: MatchType; course_name: string | null; course_id: string | null; match_count: number;
+  status: SessionStatus; first_caller_team_id: string | null; turn_team_id: string | null; consecutive_passes: number;
 }
 export interface RoundRow {
   id: string; user_id: string; course_name: string; scores: (number | null)[]; status: "in_progress" | "completed";
   course_pars: number[] | null; course_yardages: number[] | null; matchup_id: string | null;
 }
 export interface TournamentData {
-  tournament: Tournament; courses: TCourse[]; players: TPlayer[]; teams: TTeam[]; matchups: TMatchup[]; votes: TVote[];
+  tournament: Tournament; courses: TCourse[]; players: TPlayer[]; teams: TTeam[]; matchups: TMatchup[]; votes: TVote[]; sessions: TSession[];
 }

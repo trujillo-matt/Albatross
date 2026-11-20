@@ -1,4 +1,5 @@
 "use client";
+import { courseForMatch } from "@/lib/sessions";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -74,12 +75,13 @@ export default function MatchPage() {
 
   const teamName = (tid: string) => data.teams.find((t) => t.id === tid)?.name ?? "Team";
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? "Player";
-  const courseName = data.courses.find((c) => c.round_number === matchup.matchup_number)?.course_name ?? "Tournament Match";
+  const course = courseForMatch(data, matchup);
+  const courseName = course.name ?? "Tournament Match";
 
   const startCard = async () => {
     setMsg(null);
     const list = await loadCourses();
-    const courseId = data.courses.find((c) => c.round_number === matchup.matchup_number)?.course_id;
+    const courseId = course.id;
     const catalog = (courseId ? list.find((c) => c.id === courseId) : undefined) ?? findCourse(list, courseName);
     const pars = catalog ? [...catalog.holes].sort((a, b) => a.number - b.number) : null;
     const row = {
@@ -148,11 +150,11 @@ export default function MatchPage() {
           {matchup.status === "complete" && <p className="text-stone-900">Final: <span className="num text-xl">{Number(matchup.points_team_a).toFixed(1)} to {Number(matchup.points_team_b).toFixed(1)}</span></p>}
         </div>
 
-        {matchup.status === "pending" && <p className="muted">Waiting for pairings to be set</p>}
+        {matchup.status === "pending" && <p className="muted">{matchup.session_id ? "Waiting for the captains to finish their callouts" : "Waiting for pairings to be set"}</p>}
 
         {matchup.status !== "pending" && mine && loaded && !round && (
           <div className="space-y-3">
-            {matchup.match_type === "scramble" && <p className="muted">Scramble: your team plays one ball, so only one teammate needs to enter the team scorecard</p>}
+            {(matchup.match_type === "scramble" || matchup.match_type === "alternate_shot") && <p className="muted">{matchup.match_type === "scramble" ? "Scramble" : "Alternate shot"}: your team plays one ball, so only one teammate needs to enter the team scorecard</p>}
             <button className="btn w-full" onClick={startCard}>Start scorecard</button>
           </div>
         )}

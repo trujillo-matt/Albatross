@@ -134,7 +134,20 @@ final class TournamentStore: ObservableObject {
         t.playerPool = try await loadPlayers(tournamentID: t.id)
         t.teams = try await loadTeams(tournamentID: t.id)
         t.matchups = try await loadMatchups(tournamentID: t.id)
+        // Sessions need migration 008. Without it the tournament still loads, just with no sessions.
+        t.sessions = (try? await loadSessions(tournamentID: t.id)) ?? []
         return t
+    }
+
+    private func loadSessions(tournamentID: UUID) async throws -> [TournamentSession] {
+        try await supabase
+            .from("tournament_sessions")
+            .select()
+            .eq("tournament_id", value: tournamentID.uuidString)
+            .order("day_number")
+            .order("session_number")
+            .execute()
+            .value
     }
 
     private func loadCourses(tournamentID: UUID) async throws -> [TournamentCourse] {
@@ -220,7 +233,8 @@ final class TournamentStore: ObservableObject {
         days: Int,
         pointsToWin: Double = 0.5,
         courseNames: [String],
-        matchTypes: [TournamentMatchType] = []
+        matchTypes: [TournamentMatchType] = [],
+        secondSessionTypes: [TournamentMatchType?] = []
     ) async throws -> Tournament {
         guard let userID = authStore?.currentProfile?.id else { throw TournamentError.notSignedIn }
 
@@ -264,6 +278,37 @@ final class TournamentStore: ObservableObject {
                     match_type: perMatchType.rawValue
                 ))
                 .execute()
+        }
+
+        // One session per day, plus an optional second one (for example a PM format). The database
+        // turns these into matches when the tournament starts.
+        struct NewSession: Encodable {
+            let tournament_id: String
+            let day_number: Int
+            let session_number: Int
+            let label: String?
+            let match_type: String
+            let course_name: String
+        }
+        for (index, courseName) in courseNames.enumerated() {
+            let first = index < matchTypes.count ? matchTypes[index] : matchType
+            let second: TournamentMatchType? = index < secondSessionTypes.count ? secondSessionTypes[index] : nil
+            try await supabase
+                .from("tournament_sessions")
+                .insert(NewSession(
+                    tournament_id: created.id.uuidString, day_number: index + 1, session_number: 1,
+                    label: second == nil ? nil : "AM", match_type: first.rawValue, course_name: courseName
+                ))
+                .execute()
+            if let second {
+                try await supabase
+                    .from("tournament_sessions")
+                    .insert(NewSession(
+                        tournament_id: created.id.uuidString, day_number: index + 1, session_number: 2,
+                        label: "PM", match_type: second.rawValue, course_name: courseName
+                    ))
+                    .execute()
+            }
         }
 
         // Add creator as an accepted admin player
@@ -481,47 +526,11 @@ final class TournamentStore: ObservableObject {
             .execute()
     }
 
+    /// The database creates every match of every session from the rosters (floor of the smaller team
+    /// over the format's side size, extras sit out), sets the points to win, and auto-fills the first lineup.
     func startTournament(tournamentID: UUID) async throws {
-        try await updateTournamentStatus(tournamentID, status: .active)
-
-        // Matches come from the players: every player on a team plays once each day,
-        // so a day of singles has one match per player and a day of pairs half as many.
-        guard let tournament = myTournaments.first(where: { $0.id == tournamentID }),
-              tournament.teams.count == 2 else { throw TournamentError.teamsNotCreated }
-
-        let teamA = tournament.teams[0]
-        let teamB = tournament.teams[1]
-
-        struct NewMatchup: Encodable {
-            let tournament_id: String; let matchup_number: Int
-            let team_a_id: String; let team_b_id: String
-            let match_type: String
-        }
-        let playersPerTeam = tournament.playersPerTeam
-        var matchNumber = 0
-        for course in tournament.sortedCourses.isEmpty ? [nil] : tournament.sortedCourses.map({ Optional($0) }) {
-            let dayType = course?.matchType ?? tournament.matchType
-            let count = Tournament.matchCount(playersPerTeam: playersPerTeam, matchType: dayType)
-            for _ in 0..<count {
-                matchNumber += 1
-                try await supabase.from("tournament_matchups")
-                    .insert(NewMatchup(
-                        tournament_id: tournamentID.uuidString,
-                        matchup_number: matchNumber,
-                        team_a_id: teamA.id.uuidString,
-                        team_b_id: teamB.id.uuidString,
-                        match_type: dayType.rawValue
-                    ))
-                    .execute()
-            }
-        }
-
-        // Now the match count is known, so the points needed to win are too.
-        struct Totals: Encodable { let total_matches: Int; let points_to_win: Double }
-        try await supabase.from("tournaments")
-            .update(Totals(total_matches: matchNumber, points_to_win: Tournament.pointsToWin(matchCount: matchNumber)))
-            .eq("id", value: tournamentID.uuidString)
-            .execute()
+        nonisolated struct Params: Encodable { let p_tournament: String }
+        try await supabase.rpc("start_tournament", params: Params(p_tournament: tournamentID.uuidString)).execute()
         await reload(tournamentID)
     }
 
@@ -545,6 +554,48 @@ final class TournamentStore: ObservableObject {
             p_team_a: teamAPlayerIDs.map(\.uuidString),
             p_team_b: teamBPlayerIDs.map(\.uuidString)
         )).execute()
+    }
+
+    // MARK: - Sessions and callouts
+
+    func autofillSession(_ session: TournamentSession) async throws {
+        nonisolated struct Params: Encodable { let p_session: String }
+        try await supabase.rpc("autofill_session", params: Params(p_session: session.id.uuidString)).execute()
+        await reload(session.tournamentID)
+    }
+
+    /// Swaps lineup for one team. `units` has one entry per match, in match order.
+    func setSessionSide(_ session: TournamentSession, teamID: UUID, units: [[UUID]]) async throws {
+        nonisolated struct Params: Encodable { let p_session: String; let p_team: String; let p_units: [[String]] }
+        try await supabase.rpc("set_session_side", params: Params(
+            p_session: session.id.uuidString, p_team: teamID.uuidString,
+            p_units: units.map { $0.map(\.uuidString) }
+        )).execute()
+        await reload(session.tournamentID)
+    }
+
+    func openCallouts(_ session: TournamentSession) async throws {
+        nonisolated struct Params: Encodable { let p_session: String }
+        try await supabase.rpc("open_callouts", params: Params(p_session: session.id.uuidString)).execute()
+        await reload(session.tournamentID)
+    }
+
+    /// The captain whose turn it is names one of their units and the opposing unit they want to face.
+    func makeCallout(_ session: TournamentSession, myUnit: [UUID], theirUnit: [UUID], asAdmin: Bool) async throws {
+        nonisolated struct Params: Encodable {
+            let p_session: String; let p_my_unit: [String]; let p_their_unit: [String]; let p_override: Bool
+        }
+        try await supabase.rpc("make_callout", params: Params(
+            p_session: session.id.uuidString, p_my_unit: myUnit.map(\.uuidString),
+            p_their_unit: theirUnit.map(\.uuidString), p_override: asAdmin
+        )).execute()
+        await reload(session.tournamentID)
+    }
+
+    func passCallout(_ session: TournamentSession, asAdmin: Bool) async throws {
+        nonisolated struct Params: Encodable { let p_session: String; let p_override: Bool }
+        try await supabase.rpc("pass_callout", params: Params(p_session: session.id.uuidString, p_override: asAdmin)).execute()
+        await reload(session.tournamentID)
     }
 
     func recordMatchupRound(matchupID: UUID, roundID: UUID, userID: UUID) async throws {
@@ -821,6 +872,14 @@ final class TournamentStore: ObservableObject {
         _ = channel.onPostgresChange(
             UpdateAction.self,
             table: "tournament_matchups",
+            filter: "tournament_id=eq.\(tournamentID.uuidString)"
+        ) { [weak self] _ in
+            Task { await self?.reload(tournamentID) }
+        }
+
+        _ = channel.onPostgresChange(
+            UpdateAction.self,
+            table: "tournament_sessions",
             filter: "tournament_id=eq.\(tournamentID.uuidString)"
         ) { [weak self] _ in
             Task { await self?.reload(tournamentID) }
