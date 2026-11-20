@@ -11,16 +11,15 @@ Built, type-checked, and tested in three layers. **Migrations 001 to 007 are app
 |---|---|---|
 | Unit tests (scoring, snake order, codes, CSV) | `npm test` | Logic matches the Swift code |
 | Browser end-to-end, Supabase API mocked | `npm run test:e2e` | The app's flows work: code login, scoring, offline queue, finish, spectator page. Does **not** exercise the real database, RLS or edge functions |
-| SQL tests on a scratch Postgres 16 with a local copy of the **live** schema and RLS policies (captured read-only, no data) | `docs/tests/run.sh` | Migrations 001 to 005 apply; each audited bug is shown real before 005 and gone after; functions behave (voting, ties, draft turns, scoring, triggers, audit, spectator link). Not run against the live project itself. See `docs/LIVE_SCHEMA_AUDIT.md` |
+| SQL tests on a scratch Postgres 16 with a local copy of the **live** schema and RLS policies (captured read-only, no data) | `docs/tests/run.sh` | Migrations 001 to 007 apply; each audited bug is shown real before its fix and gone after; functions behave (voting, ties, draft turns, scoring, triggers, audit, spectator link). Not run against the live project itself. See `docs/LIVE_SCHEMA_AUDIT.md` |
 
 ## Deployment
 
 Live at **https://albatross-tournaments.vercel.app** (Vercel project `albatross-tournaments`, Hobby plan, Node 22, root directory `web`).
-It was deployed as a production deployment from the `claude/busy-curie-b1j8xf` branch at commit `ba2ccfd`; later pushes to that
-branch create preview deployments only, so redeploy to production (or merge the branch into the default branch and point the
-project's production branch at it) to update the live site. The two Supabase values in `.env.example` are set as project
-environment variables. Vercel Authentication is limited to preview deployments so players can open the production site.
-A push to a branch without a `web/` folder (such as the default branch before this is merged) will fail to build, which is expected.
+Production deploys automatically from the `main` branch: every push to `main` builds and goes live. Other branches and pull
+requests get preview deployments, which sit behind Vercel Authentication. The two Supabase values in `.env.example` are set as
+project environment variables, and Vercel Authentication is limited to previews so players can open the production site.
+A push to a branch without a `web/` folder will fail to build, which is expected.
 
 ## Setup
 
