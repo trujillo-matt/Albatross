@@ -312,7 +312,7 @@ function MatchEditor({ m, data, act }: { m: TMatchup; data: TournamentData; act:
       <div className="flex gap-3">{side(m.team_a_id, a, setA)}{side(m.team_b_id, b, setB)}</div>
       {m.status !== "complete" && (
         <button className="btn w-full" disabled={!valid}
-          onClick={() => act(() => supabase.from("tournament_matchups").update({ team_a_player_ids: a, team_b_player_ids: b, status: "active" }).eq("id", m.id))}>
+          onClick={() => act(() => supabase.rpc("set_pairings", { p_matchup: m.id, p_team_a: a, p_team_b: b }))}>
           {m.status === "pending" ? "Confirm pairings" : "Update pairings"}
         </button>
       )}

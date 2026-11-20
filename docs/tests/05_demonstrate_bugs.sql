@@ -80,3 +80,13 @@ reset role;
 -- leave the fixtures clean for the post-fix tests
 update tournament_players set is_admin = false, team_id = 'a1000000-0000-4000-8000-000000000001'
  where tournament_id = 'aaaaaaaa-0000-4000-8000-000000000001' and user_id = b.u(22);
+
+-- BUG 6: signup trigger fails when Supabase Auth runs it (search_path = auth). Reproduced here by setting that path.
+do $$ begin
+  set local search_path = auth;
+  begin
+    insert into auth.users (id, raw_user_meta_data) values (b.u(90), '{"display_name":"Managed X"}');
+    raise exception 'EXPECTED BUG NOT FOUND: signup trigger worked under search_path=auth';
+  exception when undefined_table then null;   -- relation "profiles" does not exist
+  end;
+end $$;

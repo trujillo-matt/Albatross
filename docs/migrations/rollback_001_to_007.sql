@@ -1,7 +1,20 @@
--- Reverses migrations 001 to 006. Written from the live schema captured on 2026-11-17 (original policies restored
+-- Reverses migrations 001 to 007. Written from the live schema captured on 2026-11-17 (original policies restored
 -- verbatim, including the bugs). Run only if you need to back out; it drops the new tables and columns, and with
 -- them any data in them (access codes, audit log, sides, spectator tokens, course ratings).
 begin;
+
+-- 007: restores the ORIGINAL handle_new_user. Note the original is the version that fails whenever Supabase Auth creates a
+-- user (relation "profiles" does not exist), so running this re-breaks new-user creation. Skip it unless you must.
+create or replace function public.handle_new_user() returns trigger language plpgsql security definer as $$
+begin
+  insert into profiles (id, display_name, username)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', ''), new.raw_user_meta_data->>'username')
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;
+alter function public.trg_round_completed() reset search_path;
+alter function public.trg_matchup_round_linked() reset search_path;
 
 -- 006 (restore the default of PUBLIC execute)
 grant execute on function

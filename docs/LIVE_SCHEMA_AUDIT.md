@@ -74,3 +74,24 @@ who is not signed in, GET is refused, and the CORS preflight succeeds.
 
 Not verified against the live project: a successful code login and player creation (needs an admin sign-in), behavior with
 real users and data, and the Swift changes. `rollback_001_to_006.sql` backs the database changes out.
+
+## Live end-to-end run (2026-11-20)
+
+The web app (production build, served locally) was driven in a real browser against the live project: admin sign-in,
+create tournament, add two managed players, code login for both, captain vote, finalize captains, captain draft, start
+tournament, set pairings, both players score 18 holes, result computed by the database trigger, audited admin edit,
+spectator link opened signed out. The database was then checked directly: tournament complete, stroke play 1.0 to 0.0,
+captains, team placement, six vote rows, both cards completed with real course pars and rating, audit rows present.
+All test data was then deleted and the live database returned to its original state (one account, no tournaments).
+The script is `web/tests/live/live-flow.cjs`.
+
+**Bug found and fixed (migration 007).** Creating a managed player failed with "Database error creating new user". The
+cause was a bug that already existed: `handle_new_user()` referenced `profiles` without a schema and had no pinned
+`search_path`, so whenever Supabase Auth itself inserted a user (admin createUser, and by the same path public signup)
+the trigger failed with `relation "profiles" does not exist`. **[Inference]** new-account signup in the iOS app may
+therefore have been failing in production; this was proven for the admin path only. 007 qualifies the table and pins
+the search_path, and also pins the search_path on the two trigger functions from 002.
+
+**Not exercised in this run:** Realtime push updates (the sandbox proxy does not carry WebSockets, so the script
+reloads pages instead), the offline scoring queue against the live project (covered only by the mocked browser test),
+a physical phone, and the iOS app.

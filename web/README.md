@@ -5,7 +5,7 @@ Shares the Supabase project with the iOS app. See `../docs/TOURNAMENT_WEB_APP_PL
 
 ## Status
 
-Built, type-checked, and tested in three layers. **Migrations 001 to 006 are applied to the live Supabase project and verified structurally (`docs/LIVE_SCHEMA_AUDIT.md`). The edge functions are deployed and `CODE_PEPPER` is set. The app has not been run against the live project.**
+Built, type-checked, and tested in three layers. **Migrations 001 to 007 are applied to the live Supabase project, and a full tournament has been played through the real UI against it (`docs/LIVE_SCHEMA_AUDIT.md`, `tests/live/`). The edge functions are deployed and `CODE_PEPPER` is set. Realtime push and a physical phone have not been tested.**
 
 | Check | Command | What it proves |
 |---|---|---|
