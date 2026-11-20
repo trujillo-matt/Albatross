@@ -316,7 +316,15 @@ struct TournamentMatchupView: View {
             sectionHeader("Your Scorecard")
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
-                .padding(.bottom, 12)
+                .padding(.bottom, current.matchType == .scramble ? 4 : 12)
+
+            if current.matchType == .scramble {
+                Text("Scramble: your team plays one ball, so only one teammate needs to enter the team scorecard.")
+                    .font(.custom("Baskerville", size: 13))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
+            }
 
             let myRound = existingRound()
             if let round = myRound {

@@ -7,6 +7,7 @@ struct TournamentScorecardWrapperView: View {
     @EnvironmentObject private var roundStore: RoundStore
     @EnvironmentObject private var tournamentStore: TournamentStore
     @EnvironmentObject private var authStore: AuthStore
+    @EnvironmentObject private var courseStore: CourseStore
 
     let tournament: Tournament
     let matchup: TournamentMatchup
@@ -52,8 +53,21 @@ struct TournamentScorecardWrapperView: View {
         if let existing = existingRound {
             activeRound = existing
         } else {
+            // Tournament courses are stored by name only. Match against the course catalog
+            // so the scorecard gets real pars, handicaps, yardages and ratings instead of
+            // the generic fallback layout. Unmatched names keep the fallback.
+            let wanted = courseName.trimmingCharacters(in: .whitespaces).lowercased()
+            let course = courseStore.allCourses.first {
+                $0.name.lowercased() == wanted || $0.shortName?.lowercased() == wanted
+            }
             let newRound = Round(
                 courseName: courseName,
+                courseID: course?.id,
+                coursePars: course?.pars,
+                courseHandicaps: course?.handicaps,
+                courseYardages: course?.yardages,
+                courseRating: course?.courseRating,
+                slopeRating: course?.slopeRating,
                 tournamentMatchupID: matchup.id
             )
             roundStore.add(newRound)
@@ -82,9 +96,17 @@ struct TournamentScorecardWrapperView: View {
             let completedRounds = allRounds.filter { $0.status == .completed }
             let allPlayerIDs = matchup.teamAPlayerIDs + matchup.teamBPlayerIDs
 
-            // 3. If all players have completed rounds, calculate and save the result
-            if completedRounds.count >= allPlayerIDs.count {
-                let split = await splitRoundsByTeam(completedRounds)
+            // 3. Decide whether every required card is in.
+            //    Scramble: the team plays one ball, so one completed card per team is enough.
+            //    Other formats: one completed card per paired player.
+            let split = await splitRoundsByTeam(completedRounds)
+            let isReady: Bool
+            if matchup.matchType == .scramble {
+                isReady = !split.teamA.isEmpty && !split.teamB.isEmpty
+            } else {
+                isReady = completedRounds.count >= allPlayerIDs.count
+            }
+            if isReady {
                 try await tournamentStore.calculateAndSaveMatchupResult(
                     matchup: matchup,
                     teamARounds: split.teamA,

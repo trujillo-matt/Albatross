@@ -9,3 +9,9 @@ build/
 .build/
 .claude/
 testfile123.txt
+
+web/node_modules/
+web/.next/
+web/.env.local
+web/tsconfig.tsbuildinfo
+.e2e.pid
