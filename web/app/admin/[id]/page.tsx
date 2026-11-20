@@ -6,14 +6,22 @@ import { supabase } from "@/lib/supabase";
 import { callAdminFunction, useAdminSession } from "@/lib/useAdmin";
 import { useTournament } from "@/lib/useTournament";
 import { draftPickCount, orderedTeams } from "@/lib/draft";
-import { MATCH_LABEL, type RoundRow, type TMatchup, type TournamentData } from "@/lib/types";
-import { formatCode } from "@/lib/code";
+import type { RoundRow, TMatchup, TournamentData } from "@/lib/types";
+import { FORMAT, shortDateTime } from "@/lib/labels";
 import { downloadText, toCsv } from "@/lib/csv";
+import { formatCode } from "@/lib/code";
 import Standings from "@/components/Standings";
 import AdminSignIn from "@/components/AdminSignIn";
+import CodeCard from "@/components/CodeCard";
+import Page from "@/components/Page";
+import { CheckIcon, ChevronLeftIcon, Dot, MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
 
 type Tab = "overview" | "roster" | "vote" | "matches" | "scores" | "standings" | "audit";
+const TAB_LABEL: Record<Tab, string> = {
+  overview: "Overview", roster: "Roster", vote: "Vote and draft", matches: "Matches", scores: "Scores", standings: "Standings", audit: "Audit log",
+};
 interface CodeStatus { user_id: string; status: string; code_hint: string | null; last_used_at: string | null }
+type Act = (fn: () => PromiseLike<{ error: { message: string } | null }>) => Promise<void>;
 
 export default function AdminTournament() {
   const { id } = useParams<{ id: string }>();
@@ -22,44 +30,51 @@ export default function AdminTournament() {
   const [tab, setTab] = useState<Tab>("overview");
   const [msg, setMsg] = useState<string | null>(null);
 
-  if (!ready) return <p className="muted">Loading...</p>;
-  if (!user) return <AdminSignIn />;
-  if (error) return <p className="text-red-600">{error}</p>;
-  if (!data) return <p className="muted">Loading...</p>;
+  if (!ready) return <Page wide><p className="muted">Loading</p></Page>;
+  if (!user) return <Page><AdminSignIn /></Page>;
+  if (error) return <Page wide><p role="alert" className="text-bad">{error}</p></Page>;
+  if (!data) return <Page wide><p className="muted">Loading</p></Page>;
 
   const isAdmin = data.tournament.creator_user_id === user.id || data.players.some((p) => p.user_id === user.id && p.is_admin);
-  if (!isAdmin) return <p className="text-red-600">You are not an admin of this tournament.</p>;
+  if (!isAdmin) return <Page wide><p role="alert" className="text-bad">You are not an admin of this tournament</p></Page>;
 
-  const act = async (fn: () => PromiseLike<{ error: { message: string } | null }>) => {
+  const act: Act = async (fn) => {
     setMsg(null);
     const { error } = await fn();
     if (error) setMsg(error.message);
     reload();
   };
 
-  const tabs: Tab[] = ["overview", "roster", "vote", "matches", "scores", "standings", "audit"];
+  const tabs = Object.keys(TAB_LABEL) as Tab[];
   return (
-    <div className="space-y-4">
-      <Link href="/admin" className="muted underline print:hidden">All tournaments</Link>
-      <h1 className="text-2xl font-bold text-brand">{data.tournament.name}</h1>
-      <nav className="flex gap-1 overflow-x-auto print:hidden">
-        {tabs.map((t) => (
-          <button key={t} onClick={() => setTab(t)} className={`${tab === t ? "btn" : "btn-ghost"} !px-3 !py-2 capitalize`}>{t === "vote" ? "Vote & draft" : t}</button>
-        ))}
-      </nav>
-      {msg && <p className="text-sm text-red-600">{msg}</p>}
-      {tab === "overview" && <Overview data={data} act={act} />}
-      {tab === "roster" && <Roster data={data} reload={reload} setMsg={setMsg} />}
-      {tab === "vote" && <VoteDraft data={data} act={act} setMsg={setMsg} reload={reload} />}
-      {tab === "matches" && <Matches data={data} act={act} />}
-      {tab === "scores" && <Scores data={data} setMsg={setMsg} reload={reload} />}
-      {tab === "standings" && <Standings data={data} />}
-      {tab === "audit" && <Audit id={id} />}
-    </div>
+    <Page wide>
+      <div className="space-y-6">
+        <header className="space-y-3 print:hidden">
+          <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-stone-500 transition-colors duration-150 ease-out hover:text-stone-900">
+            <ChevronLeftIcon />All tournaments
+          </Link>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <h1 className="h1">{data.tournament.name}</h1>
+            <TournamentStatusLabel status={data.tournament.status} />
+          </div>
+        </header>
+        <nav className="tabs print:hidden" aria-label="Sections">
+          {tabs.map((t) => (
+            <button key={t} className="tab" aria-current={tab === t ? "page" : undefined} onClick={() => setTab(t)}>{TAB_LABEL[t]}</button>
+          ))}
+        </nav>
+        {msg && <p role="alert" className="text-sm text-bad print:hidden">{msg}</p>}
+        {tab === "overview" && <Overview data={data} act={act} />}
+        {tab === "roster" && <Roster data={data} reload={reload} setMsg={setMsg} />}
+        {tab === "vote" && <VoteDraft data={data} act={act} setMsg={setMsg} reload={reload} />}
+        {tab === "matches" && <Matches data={data} act={act} />}
+        {tab === "scores" && <Scores data={data} setMsg={setMsg} reload={reload} />}
+        {tab === "standings" && <div className="max-w-xl"><Standings data={data} /></div>}
+        {tab === "audit" && <Audit id={id} />}
+      </div>
+    </Page>
   );
 }
-
-type Act = (fn: () => PromiseLike<{ error: { message: string } | null }>) => Promise<void>;
 
 function Overview({ data, act }: { data: TournamentData; act: Act }) {
   const t = data.tournament;
@@ -73,27 +88,35 @@ function Overview({ data, act }: { data: TournamentData; act: Act }) {
       { tournament_id: t.id, name: "Team B", side: "B" },
     ]);
   });
+  const stat = (n: string, label: string) => (
+    <div><div className="num text-3xl text-stone-900">{n}</div><div className="muted">{label}</div></div>
+  );
   return (
-    <div className="space-y-3">
-      <div className="card grid grid-cols-3 text-center">
-        <div><div className="text-2xl font-bold">{accepted.length}</div><div className="muted">Players</div></div>
-        <div><div className="text-2xl font-bold">{t.total_matches}</div><div className="muted">Matches</div></div>
-        <div><div className="text-2xl font-bold">{Number(t.points_to_win).toFixed(1)}</div><div className="muted">To win</div></div>
+    <div className="grid gap-4 md:grid-cols-2">
+      <div className="space-y-4">
+        <div className="card grid grid-cols-3 gap-4">
+          {stat(String(accepted.length), "Players")}{stat(String(t.total_matches), "Matches")}{stat(Number(t.points_to_win).toFixed(1), "To win")}
+        </div>
+        <div className="card space-y-3">
+          <h2 className="h2">Next step</h2>
+          {t.status === "setup" && <>
+            <p className="muted">Add players on the Roster tab, then start the captain vote. You need at least 2 players</p>
+            <button className="btn w-full" disabled={accepted.length < 2} onClick={startDraft}>Start captain vote and draft</button></>}
+          {t.status === "draft" && <p className="muted"><span className="tnum">{voters}</span> of <span className="tnum">{accepted.length}</span> players have voted. Finalize on the Vote and draft tab</p>}
+          {t.status === "active" && <p className="muted">The tournament is under way. Set pairings on the Matches tab and watch cards come in on the Scores tab</p>}
+          {t.status === "complete" && <p className="muted">The tournament is complete</p>}
+        </div>
       </div>
-      <div className="card">
-        <div className="muted">Stage</div>
-        <div className="text-xl font-bold capitalize">{t.status}</div>
-        {t.status === "setup" && <>
-          <p className="muted mt-1">Add players on the Roster tab, then start the captain vote. Needs at least 2 players.</p>
-          <button className="btn mt-3 w-full" disabled={accepted.length < 2} onClick={startDraft}>Start captain vote and draft</button></>}
-        {t.status === "draft" && <p className="muted mt-1">{voters} of {accepted.length} players have voted. Use Vote and draft to finalize.</p>}
-      </div>
-      <SpectatorLink id={t.id} />
-      <div className="card">
-        <h2 className="h2">Courses</h2>
-        {data.courses.map((c) => (
-          <div key={c.id} className="flex justify-between text-sm"><span>R{c.round_number}: {c.course_name || "TBD"}</span><span className="muted">{c.match_type ? MATCH_LABEL[c.match_type] : ""}</span></div>
-        ))}
+      <div className="space-y-4">
+        <SpectatorLink id={t.id} />
+        <div className="card">
+          <h2 className="h2">Courses</h2>
+          <ul className="rows mt-2">
+            {data.courses.map((c) => (
+              <li key={c.id} className="row"><span>Round <span className="tnum">{c.round_number}</span>, {c.course_name || "To be set"}</span><span className="muted">{c.match_type ? FORMAT[c.match_type] : ""}</span></li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );
@@ -135,60 +158,66 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
     catch (e) { setMsg(e instanceof Error ? e.message : "failed"); }
   };
   const locked = data.tournament.status !== "setup";
+  const host = typeof window === "undefined" ? "" : window.location.host;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       {issued.length > 0 && (
-        <div className="card">
-          <div className="flex items-center justify-between print:hidden">
-            <h2 className="h2">New codes (shown once)</h2>
-            <span className="flex gap-2">
-              <button className="btn-ghost !py-2" onClick={() => downloadText("player-codes.csv", toCsv([["name", "code"], ...issued.map((i) => [i.name, formatCode(i.code)])]))}>Download CSV</button>
-              <button className="btn-ghost !py-2" onClick={() => window.print()}>Print cards</button>
-            </span>
-          </div>
-          <p className="muted print:hidden">Codes are stored hashed, so they cannot be shown again. Print or copy them now.</p>
-          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2 print:grid-cols-2">
-            {issued.map((i) => (
-              <div key={i.name} className="rounded-xl border border-dashed border-stone-400 p-3 text-center">
-                <div className="muted">{data.tournament.name}</div>
-                <div className="font-bold">{i.name}</div>
-                <div className="my-1 font-mono text-2xl tracking-widest">{formatCode(i.code)}</div>
-                <div className="text-xs text-stone-500">Enter this code at the tournament site</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      <div className="card space-y-2 print:hidden">
-        <h2 className="h2">Add players</h2>
-        <p className="muted">Creates a player account with a login code. One name per line to add several.</p>
-        <textarea className="input" rows={3} placeholder={"Jane Smith\nMike Jones"} value={bulk} onChange={(e) => setBulk(e.target.value)} />
-        <input className="input" placeholder="Or a single name" value={name} onChange={(e) => setName(e.target.value)} />
-        <button className="btn w-full" disabled={busy || locked || !(name.trim() || bulk.trim())}
-          onClick={() => create([...bulk.split("\n"), name].map((s) => s.trim()).filter(Boolean))}>
-          {busy ? "Creating..." : "Create players and codes"}
-        </button>
-        {locked && <p className="muted">Roster is locked once the draft starts.</p>}
-      </div>
-      <div className="space-y-2 print:hidden">
-        {data.players.map((p) => {
-          const c = codes.find((x) => x.user_id === p.user_id);
-          return (
-            <div key={p.id} className="card flex items-center justify-between">
-              <div>
-                <div className="font-semibold">{p.display_name}{p.is_admin && " ★"}</div>
-                <div className="muted">{p.invite_status}{c ? ` · code ${c.status}${c.code_hint ? ` (…${c.code_hint})` : ""}${c.last_used_at ? ` · last used ${new Date(c.last_used_at).toLocaleString()}` : " · not used yet"}` : ""}</div>
-              </div>
-              {c && (
-                <div className="flex gap-1">
-                  <button className="btn-ghost !px-3 !py-2" onClick={() => regen(p.user_id, p.display_name)}>New code</button>
-                  {c.status === "active" && <button className="btn-ghost !px-3 !py-2" onClick={() => revoke(p.user_id)}>Revoke</button>}
-                </div>
-              )}
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
+            <div>
+              <h2 className="h2">New player cards</h2>
+              <p className="muted">Codes are stored hashed, so they cannot be shown again. Print or download them now</p>
             </div>
-          );
-        })}
+            <div className="flex gap-2">
+              <button className="btn-ghost btn-sm" onClick={() => downloadText("player-codes.csv", toCsv([["name", "code"], ...issued.map((i) => [i.name, formatCode(i.code)])]))}>Download CSV</button>
+              <button className="btn btn-sm" onClick={() => window.print()}>Print cards</button>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 print:grid-cols-2 print:gap-2">
+            {issued.map((i) => <CodeCard key={i.name} tournament={data.tournament.name} player={i.name} code={i.code} host={host} />)}
+          </div>
+        </section>
+      )}
+      <div className="grid gap-4 print:hidden lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start">
+        <div className="card space-y-3">
+          <h2 className="h2">Add players</h2>
+          <p className="muted">Each player gets an account and a login code. Put one name per line to add several</p>
+          <textarea className="input" rows={4} aria-label="Player names, one per line" placeholder={"Jane Smith\nMike Jones"} value={bulk} onChange={(e) => setBulk(e.target.value)} />
+          <input className="input" aria-label="A single player name" placeholder="Or a single name" value={name} onChange={(e) => setName(e.target.value)} />
+          <button className="btn w-full" disabled={busy || locked || !(name.trim() || bulk.trim())}
+            onClick={() => create([...bulk.split("\n"), name].map((s) => s.trim()).filter(Boolean))}>
+            {busy ? "Creating" : "Create players and codes"}
+          </button>
+          {locked && <p className="muted">The roster is locked once the draft starts</p>}
+        </div>
+        <div className="card overflow-hidden p-0">
+          <ul className="rows">
+            {data.players.map((p) => {
+              const c = codes.find((x) => x.user_id === p.user_id);
+              return (
+                <li key={p.id} className="row px-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-stone-900">{p.display_name}{p.is_admin && <span className="text-xs text-stone-500">Admin</span>}</div>
+                    <div className="muted flex flex-wrap items-center gap-x-2">
+                      {c ? <>
+                        <span className="inline-flex items-center gap-2"><Dot tone={c.status === "active" ? "live" : "idle"} />Code {c.status}{c.code_hint ? `, ends ${c.code_hint}` : ""}</span>
+                        <span aria-hidden>·</span>
+                        <span>{c.last_used_at ? `Last used ${shortDateTime(c.last_used_at)}` : "Not used yet"}</span></>
+                        : <span>Signs in with email</span>}
+                    </div>
+                  </div>
+                  {c && (
+                    <div className="flex shrink-0 gap-2">
+                      <button className="btn-ghost btn-sm" onClick={() => regen(p.user_id, p.display_name)}>New code</button>
+                      {c.status === "active" && <button className="btn-ghost btn-sm" onClick={() => revoke(p.user_id)}>Revoke</button>}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </div>
   );
@@ -224,57 +253,74 @@ function VoteDraft({ data, act, setMsg, reload }: { data: TournamentData; act: A
     return supabase.from("tournament_matchups").insert(rows);
   });
 
-  if (t.status === "setup") return <p className="muted">Start the captain vote from the Overview tab first.</p>;
+  if (t.status === "setup") return <p className="muted">Start the captain vote from the Overview tab first</p>;
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? uid.slice(0, 6);
 
   return (
-    <div className="space-y-3">
+    <div className="grid gap-4 md:grid-cols-2 md:items-start">
       {!captainsSet && t.status === "draft" && (
-        <div className="card">
-          <h2 className="h2">Captain vote</h2>
-          <p className="muted">{new Set(data.votes.map((v) => v.voter_user_id)).size} of {accepted.length} voted. You always see live counts.</p>
-          {tally.map(({ p, n }) => <div key={p.id} className="flex justify-between py-1 text-sm"><span>{p.display_name}</span><b>{n}</b></div>)}
-          <button className="btn mt-3 w-full" onClick={() => finalize()}>Finalize captains</button>
+        <div className="card space-y-3">
+          <div>
+            <h2 className="h2">Captain vote</h2>
+            <p className="muted"><span className="tnum">{new Set(data.votes.map((v) => v.voter_user_id)).size}</span> of <span className="tnum">{accepted.length}</span> voted. You always see live counts</p>
+          </div>
+          <ul className="rows">
+            {tally.map(({ p, n }) => <li key={p.id} className="row"><span>{p.display_name}</span><span className="num text-xl">{n}</span></li>)}
+          </ul>
+          <button className="btn w-full" onClick={() => finalize()}>Finalize captains</button>
         </div>
       )}
       {tie && (
-        <div className="card ring-2 ring-amber-400">
-          <h2 className="h2">Break the tie</h2>
-          <p className="muted">Choose {tie.slots} of these tied nominees.</p>
-          {tie.candidates.map((c) => (
-            <button key={c} onClick={() => setPick((s) => s.includes(c) ? s.filter((x) => x !== c) : s.length < tie.slots ? [...s, c] : s)}
-              className={`mt-1 flex w-full justify-between rounded-xl px-3 py-2 ring-1 ring-stone-300 ${pick.includes(c) ? "bg-brand text-white" : ""}`}>
-              {nameOf(c)}{pick.includes(c) && <span>✓</span>}
-            </button>
-          ))}
-          <button className="btn mt-3 w-full" disabled={pick.length !== tie.slots} onClick={() => finalize(pick)}>Confirm</button>
+        <div className="card space-y-3 ring-2 ring-warn/40">
+          <div>
+            <h2 className="h2">Break the tie</h2>
+            <p className="muted">Choose <span className="tnum">{tie.slots}</span> of these tied nominees</p>
+          </div>
+          <ul className="rows">
+            {tie.candidates.map((c) => {
+              const on = pick.includes(c);
+              return (
+                <li key={c}><button className="pick rounded-lg" aria-pressed={on}
+                  onClick={() => setPick((s) => s.includes(c) ? s.filter((x) => x !== c) : s.length < tie.slots ? [...s, c] : s)}>
+                  <span>{nameOf(c)}</span>{on && <span className="text-brand-accent"><CheckIcon /></span>}
+                </button></li>
+              );
+            })}
+          </ul>
+          <button className="btn w-full" disabled={pick.length !== tie.slots} onClick={() => finalize(pick)}>Confirm captains</button>
         </div>
       )}
       {captainsSet && (
         <>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-2 gap-4 md:col-span-2">
             {[a, b].map((tm) => (
-              <div key={tm.id} className="card flex-1">
-                <div className="font-bold">{tm.name}</div>
-                {accepted.filter((p) => p.team_id === tm.id).map((p) => <div key={p.id} className="text-sm">{p.display_name}{p.user_id === tm.captain_user_id && " (C)"}</div>)}
+              <div key={tm.id} className="card">
+                <h2 className="h2">{tm.name}</h2>
+                <ul className="mt-2 space-y-1 text-sm text-stone-700">
+                  {accepted.filter((p) => p.team_id === tm.id).map((p) => (
+                    <li key={p.id}>{p.display_name}{p.user_id === tm.captain_user_id && <span className="ml-2 text-xs text-stone-500">Captain</span>}</li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
           {t.status === "draft" && undrafted.length > 0 && (
-            <div className="card">
-              <h2 className="h2">Override: assign a player</h2>
-              <p className="muted">{draftPickCount(accepted, data.teams)} picks made. Use only if a captain is unavailable.</p>
-              {undrafted.map((p) => (
-                <div key={p.id} className="flex items-center justify-between py-1">
-                  <span>{p.display_name}</span>
-                  <span className="flex gap-1">
-                    {[a, b].map((tm) => <button key={tm.id} className="btn-ghost !px-3 !py-1" onClick={() => act(() => supabase.from("tournament_players").update({ team_id: tm.id }).eq("id", p.id))}>{tm.name}</button>)}
-                  </span>
-                </div>
-              ))}
+            <div className="card md:col-span-2">
+              <h2 className="h2">Assign a player</h2>
+              <p className="muted"><span className="tnum">{draftPickCount(accepted, data.teams)}</span> picks made. Use this only if a captain cannot pick</p>
+              <ul className="rows mt-2">
+                {undrafted.map((p) => (
+                  <li key={p.id} className="row">
+                    <span>{p.display_name}</span>
+                    <span className="flex gap-2">
+                      {[a, b].map((tm) => <button key={tm.id} className="btn-ghost btn-sm" onClick={() => act(() => supabase.from("tournament_players").update({ team_id: tm.id }).eq("id", p.id))}>{tm.name}</button>)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
-          {t.status === "draft" && undrafted.length === 0 && <button className="btn w-full" onClick={startTournament}>Start tournament</button>}
+          {t.status === "draft" && undrafted.length === 0 && <button className="btn md:col-span-2" onClick={startTournament}>Start tournament</button>}
         </>
       )}
     </div>
@@ -283,8 +329,8 @@ function VoteDraft({ data, act, setMsg, reload }: { data: TournamentData; act: A
 
 function Matches({ data, act }: { data: TournamentData; act: Act }) {
   return (
-    <div className="space-y-3">
-      {data.matchups.length === 0 && <p className="muted">Matches are created when the tournament starts.</p>}
+    <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+      {data.matchups.length === 0 && <p className="muted">Matches are created when the tournament starts</p>}
       {data.matchups.map((m) => <MatchEditor key={m.id} m={m} data={data} act={act} />)}
     </div>
   );
@@ -298,25 +344,33 @@ function MatchEditor({ m, data, act }: { m: TMatchup; data: TournamentData; act:
     set(list.includes(id) ? list.filter((x) => x !== id) : list.length < 2 ? [...list, id] : list);
   const valid = a.length > 0 && a.length === b.length;
   const side = (tid: string, sel: string[], set: (x: string[]) => void) => (
-    <div className="flex-1">
-      <div className="muted">{data.teams.find((t) => t.id === tid)?.name}</div>
-      {pool(tid).map((p) => (
-        <button key={p.id} disabled={m.status === "complete"} onClick={() => toggle(sel, set, p.user_id)}
-          className={`mt-1 block w-full rounded-lg px-2 py-2 text-left text-sm ring-1 ring-stone-300 ${sel.includes(p.user_id) ? "bg-brand text-white" : ""}`}>{p.display_name}</button>
-      ))}
+    <div className="min-w-0 flex-1">
+      <div className="muted mb-2">{data.teams.find((t) => t.id === tid)?.name}</div>
+      <ul className="divide-y divide-hair overflow-hidden rounded-lg ring-1 ring-hair">
+        {pool(tid).map((p) => (
+          <li key={p.id}><button className="pick py-2 text-sm" aria-pressed={sel.includes(p.user_id)} disabled={m.status === "complete"} onClick={() => toggle(sel, set, p.user_id)}>
+            <span className="truncate">{p.display_name}</span>{sel.includes(p.user_id) && <span className="text-brand-accent"><CheckIcon /></span>}
+          </button></li>
+        ))}
+      </ul>
     </div>
   );
   return (
-    <div className="card space-y-2">
-      <div className="flex justify-between"><b>Match {m.matchup_number} · {MATCH_LABEL[m.match_type]}</b><span className="muted">{m.status}</span></div>
+    <div className="card space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="h2">Match <span className="tnum">{m.matchup_number}</span>, {FORMAT[m.match_type]}</h2>
+        <MatchupStatusLabel status={m.status} />
+      </div>
       <div className="flex gap-3">{side(m.team_a_id, a, setA)}{side(m.team_b_id, b, setB)}</div>
       {m.status !== "complete" && (
-        <button className="btn w-full" disabled={!valid}
-          onClick={() => act(() => supabase.rpc("set_pairings", { p_matchup: m.id, p_team_a: a, p_team_b: b }))}>
-          {m.status === "pending" ? "Confirm pairings" : "Update pairings"}
-        </button>
+        <>
+          <button className="btn w-full" disabled={!valid}
+            onClick={() => act(() => supabase.rpc("set_pairings", { p_matchup: m.id, p_team_a: a, p_team_b: b }))}>
+            {m.status === "pending" ? "Confirm pairings" : "Update pairings"}
+          </button>
+          {!valid && <p className="muted">Pick the same number of players (1 or 2) on each side</p>}
+        </>
       )}
-      {!valid && <p className="muted">Pick the same number of players (1 or 2) on each side.</p>}
     </div>
   );
 }
@@ -336,7 +390,7 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
 
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? "Player";
   const edit = async (r: RoundRow, hole: number) => {
-    const v = prompt(`New score for hole ${hole + 1} (blank to clear)`, String(r.scores[hole] ?? ""));
+    const v = prompt(`New score for hole ${hole + 1} (leave blank to clear)`, String(r.scores[hole] ?? ""));
     if (v === null) return;
     const reason = prompt("Reason for this change (required, saved to the audit log)");
     if (!reason) return;
@@ -347,12 +401,11 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
     const { error } = await supabase.rpc("admin_recompute_matchup", { p_matchup: mid });
     if (error) setMsg(error.message); else { setMsg(null); reload(); }
   };
-
   const exportResults = () => {
     const team = (id: string) => data.teams.find((t) => t.id === id)?.name ?? "";
     downloadText(`${data.tournament.name}-results.csv`, toCsv([
       ["match", "format", "course", "team A", "team B", "points A", "points B", "status"],
-      ...data.matchups.map((m) => [m.matchup_number, MATCH_LABEL[m.match_type], data.courses.find((c) => c.round_number === m.matchup_number)?.course_name ?? "",
+      ...data.matchups.map((m) => [m.matchup_number, FORMAT[m.match_type], data.courses.find((c) => c.round_number === m.matchup_number)?.course_name ?? "",
         team(m.team_a_id), team(m.team_b_id), m.points_team_a, m.points_team_b, m.status]),
     ]));
   };
@@ -363,27 +416,39 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
   ]));
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
-        <button className="btn-ghost flex-1" onClick={exportResults}>Export results CSV</button>
-        <button className="btn-ghost flex-1" onClick={exportCards}>Export scorecards CSV</button>
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <button className="btn-ghost btn-sm" onClick={exportResults}>Export results CSV</button>
+        <button className="btn-ghost btn-sm" onClick={exportCards}>Export scorecards CSV</button>
       </div>
-      {data.matchups.map((m) => (
-        <div key={m.id} className="card space-y-2">
-          <div className="flex items-center justify-between"><b>Match {m.matchup_number}</b>
-            <button className="btn-ghost !px-3 !py-1" onClick={() => recompute(m.id)}>Recompute result</button></div>
-          {rounds.filter((r) => r.matchup_id === m.id).map((r) => (
-            <div key={r.id}>
-              <div className="flex justify-between text-sm"><span className="font-semibold">{nameOf(r.user_id)}</span>
-                <span className="muted">{r.status} · {r.scores.reduce<number>((s, v) => s + (v ?? 0), 0)}</span></div>
-              <div className="grid grid-cols-9 gap-1 text-center text-xs">
-                {r.scores.map((s, i) => <button key={i} onClick={() => edit(r, i)} className="rounded bg-stone-100 py-1"><div className="opacity-50">{i + 1}</div>{s ?? "·"}</button>)}
-              </div>
+      <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+        {data.matchups.map((m) => (
+          <div key={m.id} className="card space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="h2">Match <span className="tnum">{m.matchup_number}</span></h2>
+              <button className="btn-ghost btn-sm" onClick={() => recompute(m.id)}>Recompute result</button>
             </div>
-          ))}
-          {!rounds.some((r) => r.matchup_id === m.id) && <p className="muted">No scorecards started.</p>}
-        </div>
-      ))}
+            {rounds.filter((r) => r.matchup_id === m.id).map((r) => (
+              <div key={r.id} className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-stone-900">{nameOf(r.user_id)}</span>
+                  <span className="muted inline-flex items-center gap-2"><Dot tone={r.status === "completed" ? "idle" : "live"} />{r.status === "completed" ? "Submitted" : "In progress"}
+                    <span className="num text-base text-stone-900">{r.scores.reduce<number>((s, v) => s + (v ?? 0), 0)}</span></span>
+                </div>
+                <div className="grid grid-cols-9 gap-1 text-center">
+                  {r.scores.map((s, i) => (
+                    <button key={i} aria-label={`Edit hole ${i + 1}`} onClick={() => edit(r, i)}
+                      className="rounded-md bg-stone-100 py-1 transition-colors duration-150 ease-out hover:bg-stone-200">
+                      <div className="num text-xs text-stone-500">{i + 1}</div><div className="num">{s ?? "·"}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+            {!rounds.some((r) => r.matchup_id === m.id) && <p className="muted">No scorecards started</p>}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -398,15 +463,15 @@ function SpectatorLink({ id }: { id: string }) {
   };
   const url = token ? `${window.location.origin}/watch/${token}` : null;
   return (
-    <div className="card space-y-2">
+    <div className="card space-y-3">
       <h2 className="h2">Spectator link</h2>
-      <p className="muted">A read-only live standings page anyone with the link can open. Turning it off breaks the old link.</p>
-      {url && <input className="input font-mono text-xs" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />}
+      <p className="muted">A read-only live standings page for anyone with the link. Turning it off breaks the old link</p>
+      {url && <input className="input font-mono text-xs" aria-label="Spectator link" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />}
       <div className="flex gap-2">
         <button className="btn-ghost flex-1" onClick={() => set(true)}>{token ? "Show link" : "Enable link"}</button>
         {token && <button className="btn-ghost" onClick={() => set(false)}>Turn off</button>}
       </div>
-      {err && <p className="text-sm text-red-600">{err}</p>}
+      {err && <p role="alert" className="text-sm text-bad">{err}</p>}
     </div>
   );
 }
@@ -420,22 +485,29 @@ function Audit({ id }: { id: string }) {
       if (error) setErr(error.message); else setRows((data as AuditRow[]) ?? []);
     });
   }, [id]);
-  if (err) return <p className="text-sm text-red-600">{err}</p>;
-  if (!rows) return <p className="muted">Loading...</p>;
+  if (err) return <p role="alert" className="text-sm text-bad">{err}</p>;
+  if (!rows) return <p className="muted">Loading</p>;
+  const sentence = (a: string) => { const s = a.replace(/_/g, " "); return s.charAt(0).toUpperCase() + s.slice(1); };
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
         <h2 className="h2">Audit log</h2>
-        <button className="btn-ghost !py-1" onClick={() => downloadText(`audit-${id}.csv`, toCsv([["time", "who", "action", "target", "reason"], ...rows.map((r) => [r.created_at, r.actor_name, r.action, r.target_type, r.reason])]))}>Export CSV</button>
+        <button className="btn-ghost btn-sm" onClick={() => downloadText(`audit-${id}.csv`, toCsv([["time", "who", "action", "target", "reason"], ...rows.map((r) => [r.created_at, r.actor_name, r.action, r.target_type, r.reason])]))}>Export CSV</button>
       </div>
-      {rows.length === 0 && <p className="muted">No admin changes recorded yet.</p>}
-      {rows.map((r, i) => (
-        <div key={i} className="card text-sm">
-          <div className="flex justify-between"><b>{r.action.replace(/_/g, " ")}</b><span className="muted">{new Date(r.created_at).toLocaleString()}</span></div>
-          <div className="muted">{r.actor_name ?? "Unknown"}{r.reason ? ` · ${r.reason}` : ""}</div>
-          {r.before != null && r.after != null && <div className="mt-1 font-mono text-xs">{JSON.stringify(r.before)}<br />to {JSON.stringify(r.after)}</div>}
+      {rows.length === 0 && <p className="muted">No admin changes recorded yet</p>}
+      {rows.length > 0 && (
+        <div className="card overflow-hidden p-0">
+          <ul className="rows">
+            {rows.map((r, i) => (
+              <li key={i} className="space-y-1 px-4 py-3 text-sm">
+                <div className="flex items-center justify-between gap-3"><span className="text-stone-900">{sentence(r.action)}</span><span className="muted">{shortDateTime(r.created_at)}</span></div>
+                <div className="muted">{r.actor_name ?? "Unknown"}{r.reason ? `, ${r.reason}` : ""}</div>
+                {r.before != null && r.after != null && <div className="font-mono text-xs text-stone-500">{JSON.stringify(r.before)} to {JSON.stringify(r.after)}</div>}
+              </li>
+            ))}
+          </ul>
         </div>
-      ))}
+      )}
     </div>
   );
 }

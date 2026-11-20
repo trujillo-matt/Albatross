@@ -4,11 +4,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useTournament, useUserId } from "@/lib/useTournament";
 import { supabase } from "@/lib/supabase";
-import { MATCH_LABEL } from "@/lib/types";
+import { FORMAT } from "@/lib/labels";
 import { orderedTeams } from "@/lib/draft";
 import VotePanel from "@/components/VotePanel";
 import DraftPanel from "@/components/DraftPanel";
 import Standings from "@/components/Standings";
+import Page from "@/components/Page";
+import { MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
 
 export default function PlayerHub() {
   const { id } = useParams<{ id: string }>();
@@ -19,8 +21,8 @@ export default function PlayerHub() {
 
   useEffect(() => { if (ready && !userId) router.replace("/join"); }, [ready, userId, router]);
 
-  if (error) return <p className="text-red-600">{error}</p>;
-  if (!data || !userId) return <p className="muted">Loading...</p>;
+  if (error) return <Page><p role="alert" className="text-bad">{error}</p></Page>;
+  if (!data || !userId) return <Page><p className="muted">Loading</p></Page>;
 
   const { tournament: t } = data;
   const [teamA, teamB] = orderedTeams(data.teams);
@@ -30,49 +32,65 @@ export default function PlayerHub() {
   const courseFor = (n: number) => data.courses.find((c) => c.round_number === n)?.course_name;
 
   return (
-    <div className="space-y-4">
-      <header className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-brand">{t.name}</h1>
-          <p className="muted">{meP?.display_name}{myTeam ? ` · ${myTeam.name}` : ""} · {t.status}</p>
-        </div>
-        <button className="muted underline" onClick={async () => { await supabase.auth.signOut(); router.replace("/join"); }}>Sign out</button>
-      </header>
+    <Page>
+      <div className="space-y-6">
+        <header className="flex items-start justify-between gap-4">
+          <div className="min-w-0 space-y-1">
+            <h1 className="h1 truncate">{t.name}</h1>
+            <p className="muted flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>{meP?.display_name}{myTeam ? `, ${myTeam.name}` : ""}</span>
+              <TournamentStatusLabel status={t.status} />
+            </p>
+          </div>
+          <button className="btn-ghost btn-sm shrink-0" onClick={async () => { await supabase.auth.signOut(); router.replace("/join"); }}>Sign out</button>
+        </header>
 
-      <nav className="grid grid-cols-2 gap-2">
-        <button className={tab === "play" ? "btn" : "btn-ghost"} onClick={() => setTab("play")}>Play</button>
-        <button className={tab === "standings" ? "btn" : "btn-ghost"} onClick={() => setTab("standings")}>Standings</button>
-      </nav>
+        <nav className="tabs" aria-label="Tournament sections">
+          <button className="tab" aria-current={tab === "play" ? "page" : undefined} onClick={() => setTab("play")}>Play</button>
+          <button className="tab" aria-current={tab === "standings" ? "page" : undefined} onClick={() => setTab("standings")}>Standings</button>
+        </nav>
 
-      {tab === "standings" && <Standings data={data} />}
+        {tab === "standings" && <Standings data={data} />}
 
-      {tab === "play" && (
-        <>
-          {t.status === "setup" && (
-            <div className="card"><h2 className="h2">Waiting for the draft</h2>
-              <p className="muted">The admin will start the captain vote soon. {data.players.filter((p) => p.invite_status === "accepted").length} players are in.</p></div>
-          )}
-          {t.status === "draft" && !captainsSet && <VotePanel data={data} me={userId} reload={reload} />}
-          {t.status === "draft" && captainsSet && <DraftPanel data={data} me={userId} reload={reload} />}
-          {(t.status === "active" || t.status === "complete") && (
-            <div className="space-y-2">
-              <h2 className="h2">Matches</h2>
-              {data.matchups.map((m) => {
-                const mine = m.team_a_player_ids.includes(userId) || m.team_b_player_ids.includes(userId);
-                return (
-                  <Link key={m.id} href={`/t/${id}/match/${m.id}`} className="card flex items-center justify-between">
-                    <div>
-                      <div className="font-bold">Match {m.matchup_number}{mine && <span className="ml-2 rounded-full bg-brand-light px-2 py-0.5 text-xs">You</span>}</div>
-                      <div className="muted">{MATCH_LABEL[m.match_type]}{courseFor(m.matchup_number) ? ` · ${courseFor(m.matchup_number)}` : ""}</div>
-                    </div>
-                    <span className="muted">{m.status === "complete" ? `${Number(m.points_team_a).toFixed(1)} to ${Number(m.points_team_b).toFixed(1)}` : m.status}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </>
-      )}
-    </div>
+        {tab === "play" && (
+          <>
+            {t.status === "setup" && (
+              <div className="card space-y-1">
+                <h2 className="h2">Waiting for the draft</h2>
+                <p className="muted">The organizer will start the captain vote soon. <span className="tnum">{data.players.filter((p) => p.invite_status === "accepted").length}</span> players are in</p>
+              </div>
+            )}
+            {t.status === "draft" && !captainsSet && <VotePanel data={data} me={userId} reload={reload} />}
+            {t.status === "draft" && captainsSet && <DraftPanel data={data} me={userId} reload={reload} />}
+            {(t.status === "active" || t.status === "complete") && (
+              <section className="space-y-3">
+                <h2 className="h2">Matches</h2>
+                <div className="card overflow-hidden p-0">
+                  <ul className="rows">
+                    {data.matchups.map((m) => {
+                      const mine = m.team_a_player_ids.includes(userId) || m.team_b_player_ids.includes(userId);
+                      return (
+                        <li key={m.id}>
+                          <Link href={`/t/${id}/match/${m.id}`} className="pick">
+                            <span className="min-w-0">
+                              <span className="flex items-center gap-2 text-stone-900">Match <span className="tnum">{m.matchup_number}</span>
+                                {mine && <span className="rounded bg-brand-light px-2 text-xs leading-5 text-brand">You</span>}</span>
+                              <span className="muted block truncate">{FORMAT[m.match_type]}{courseFor(m.matchup_number) ? `, ${courseFor(m.matchup_number)}` : ""}</span>
+                            </span>
+                            {m.status === "complete"
+                              ? <span className="num text-lg text-stone-900">{Number(m.points_team_a).toFixed(1)} to {Number(m.points_team_b).toFixed(1)}</span>
+                              : <MatchupStatusLabel status={m.status} />}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+      </div>
+    </Page>
   );
 }

@@ -4,7 +4,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTournament, useUserId } from "@/lib/useTournament";
-import { MATCH_LABEL, type RoundRow } from "@/lib/types";
+import type { RoundRow } from "@/lib/types";
+import { FORMAT } from "@/lib/labels";
+import Page from "@/components/Page";
+import { CheckIcon, ChevronLeftIcon, Dot } from "@/components/ui";
 import { findCourse, loadCourses } from "@/lib/courses";
 import { enqueue, flush, pendingCount } from "@/lib/scoreQueue";
 import { matchPlayStatus } from "@/lib/scoring";
@@ -67,7 +70,7 @@ export default function MatchPage() {
     return () => clearInterval(t);
   }, [matchup, round, mid]);
 
-  if (!data || !matchup || !userId) return <p className="muted">Loading...</p>;
+  if (!data || !matchup || !userId) return <Page><p className="muted">Loading</p></Page>;
 
   const teamName = (tid: string) => data.teams.find((t) => t.id === tid)?.name ?? "Team";
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? "Player";
@@ -125,78 +128,88 @@ export default function MatchPage() {
   const val = round?.scores[hole] ?? null;
   const bigOver = val !== null && val - pars[hole] >= 5;
 
+  const overLabel = diff === 0 ? "E" : diff > 0 ? `+${diff}` : String(diff);
+  const pad = (on: boolean) =>
+    `num h-14 rounded-lg text-2xl ring-1 transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.97] ${on ? "bg-brand text-paper ring-brand" : "bg-white text-stone-900 ring-hair hover:bg-stone-100"}`;
+
   return (
-    <div className="space-y-4">
-      <Link href={`/t/${id}`} className="muted underline">Back</Link>
-      <div className="card">
-        <div className="flex justify-between">
-          <div><div className="font-bold">{teamName(matchup.team_a_id)}</div>
-            <div className="muted">{matchup.team_a_player_ids.map(nameOf).join(", ") || "TBD"}</div></div>
-          <div className="text-right"><div className="font-bold">{teamName(matchup.team_b_id)}</div>
-            <div className="muted">{matchup.team_b_player_ids.map(nameOf).join(", ") || "TBD"}</div></div>
+    <Page>
+      <div className="space-y-4">
+        <Link href={`/t/${id}`} className="inline-flex items-center gap-1 text-sm text-stone-500 transition-colors duration-150 ease-out hover:text-stone-900"><ChevronLeftIcon />Back</Link>
+        <div className="card space-y-3">
+          <div className="flex justify-between gap-4">
+            <div className="min-w-0"><div className="text-stone-900">{teamName(matchup.team_a_id)}</div>
+              <div className="muted truncate">{matchup.team_a_player_ids.map(nameOf).join(", ") || "To be set"}</div></div>
+            <div className="min-w-0 text-right"><div className="text-stone-900">{teamName(matchup.team_b_id)}</div>
+              <div className="muted truncate">{matchup.team_b_player_ids.map(nameOf).join(", ") || "To be set"}</div></div>
+          </div>
+          <p className="muted">Match <span className="tnum">{matchup.matchup_number}</span> · {FORMAT[matchup.match_type]} · {courseName}</p>
+          {live && <p className="text-sm text-brand-accent">{live}</p>}
+          {matchup.status === "complete" && <p className="text-stone-900">Final: <span className="num text-xl">{Number(matchup.points_team_a).toFixed(1)} to {Number(matchup.points_team_b).toFixed(1)}</span></p>}
         </div>
-        <p className="muted mt-2">Match {matchup.matchup_number} · {MATCH_LABEL[matchup.match_type]} · {courseName}</p>
-        {live && <p className="mt-1 font-semibold text-brand-accent">{live}</p>}
-        {matchup.status === "complete" && <p className="mt-1 font-bold">Final: {Number(matchup.points_team_a).toFixed(1)} to {Number(matchup.points_team_b).toFixed(1)}</p>}
-      </div>
 
-      {matchup.status === "pending" && <p className="muted">Waiting for pairings to be set.</p>}
+        {matchup.status === "pending" && <p className="muted">Waiting for pairings to be set</p>}
 
-      {matchup.status !== "pending" && mine && loaded && !round && (
-        <div className="space-y-2">
-          {matchup.match_type === "scramble" && <p className="muted">Scramble: your team plays one ball, so only one teammate needs to enter the team scorecard.</p>}
-          <button className="btn w-full" onClick={startCard}>Start scorecard</button>
-        </div>
-      )}
-      {matchup.status !== "pending" && !mine && <p className="muted">You are not playing in this match.</p>}
+        {matchup.status !== "pending" && mine && loaded && !round && (
+          <div className="space-y-3">
+            {matchup.match_type === "scramble" && <p className="muted">Scramble: your team plays one ball, so only one teammate needs to enter the team scorecard</p>}
+            <button className="btn w-full" onClick={startCard}>Start scorecard</button>
+          </div>
+        )}
+        {matchup.status !== "pending" && !mine && <p className="muted">You are not playing in this match</p>}
 
-      {round && (
-        <>
-          <div className="card">
-            <div className="flex items-baseline justify-between">
-              <h2 className="h2">Hole {hole + 1}</h2>
-              <span className="muted">Par {pars[hole]}{yards ? ` · ${yards} yds` : ""}</span>
-            </div>
-            <div className="my-3 text-center text-6xl font-bold">{val ?? "–"}</div>
-            {bigOver && !locked && <p className="text-center text-sm text-amber-700">That is {val! - pars[hole]} over par. Tap a different number to change it.</p>}
-            {!locked && (
-              <div className="grid grid-cols-5 gap-2">
-                {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
-                  <button key={n} onClick={() => setScore(n)} className={`rounded-xl py-4 text-xl font-bold ring-1 ring-stone-300 ${val === n ? "bg-brand text-white" : "bg-white"}`}>{n}</button>
-                ))}
-                <button onClick={() => setScore(val !== null && val >= 10 && val < 20 ? val + 1 : 11)} className="col-span-4 rounded-xl bg-white py-4 text-sm font-semibold ring-1 ring-stone-300">11 and up (tap to add 1)</button>
-                <button onClick={() => setScore(null)} className="rounded-xl bg-white py-4 text-sm ring-1 ring-stone-300">Clear</button>
+        {round && (
+          <>
+            <div className="card space-y-4">
+              <div className="flex items-baseline justify-between">
+                <h2 className="font-serif text-2xl text-stone-900">Hole <span className="tnum">{hole + 1}</span></h2>
+                <span className="muted">Par {pars[hole]}{yards ? ` · ${yards} yds` : ""}</span>
               </div>
+              <div className="num text-center text-8xl leading-none text-stone-900" aria-live="polite">{val ?? "–"}</div>
+              {bigOver && !locked && <p className="text-center text-sm text-warn">That is {val! - pars[hole]} over par. Tap a different number to change it</p>}
+              {!locked && (
+                <div className="grid grid-cols-5 gap-2">
+                  {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                    <button key={n} onClick={() => setScore(n)} aria-pressed={val === n} className={pad(val === n)}>{n}</button>
+                  ))}
+                  <button onClick={() => setScore(val !== null && val >= 10 && val < 20 ? val + 1 : 11)} aria-pressed={val !== null && val >= 11}
+                    className={`col-span-4 h-14 rounded-lg text-sm ring-1 transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98] ${val !== null && val >= 11 ? "bg-brand text-paper ring-brand" : "bg-white text-stone-700 ring-hair hover:bg-stone-100"}`}>
+                    {val !== null && val >= 11 ? `${val}, tap to add one` : "11 or more"}
+                  </button>
+                  <button onClick={() => setScore(null)} className="h-14 rounded-lg bg-white text-sm text-stone-600 ring-1 ring-hair transition-[background-color,transform] duration-150 ease-out hover:bg-stone-100 active:scale-[0.98]">Clear</button>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <button className="btn-ghost" disabled={hole === 0} onClick={() => setHole(hole - 1)}>Previous</button>
+                <button className="btn-ghost" disabled={hole === 17} onClick={() => setHole(hole + 1)}>Next</button>
+              </div>
+            </div>
+
+            <div className="card space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-stone-600"><span className="tnum">{filled}</span>/18 holes</span>
+                <span className="text-stone-900"><span className="num text-xl">{total}</span> <span className="muted">({overLabel})</span></span>
+                <span className="inline-flex items-center gap-2 text-stone-600"><Dot tone={pending ? "warn" : "live"} />{pending ? `${pending} unsynced` : "Synced"}</span>
+              </div>
+              <div className="grid grid-cols-9 gap-1 text-center">
+                {round.scores.map((s, i) => (
+                  <button key={i} onClick={() => setHole(i)} aria-label={`Hole ${i + 1}`} aria-current={i === hole ? "true" : undefined}
+                    className={`rounded-md py-1 transition-colors duration-150 ease-out ${i === hole ? "bg-brand text-paper" : "bg-stone-100 text-stone-900 hover:bg-stone-200"}`}>
+                    <div className={`num text-xs ${i === hole ? "text-paper/70" : "text-stone-500"}`}>{i + 1}</div><div className="num text-lg leading-6">{s ?? "·"}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {!locked ? (
+              <button className="btn w-full" disabled={filled < 18} onClick={finish}>Finish and submit scorecard</button>
+            ) : (
+              <p className="inline-flex w-full items-center justify-center gap-2 text-sm text-brand-accent"><CheckIcon />Scorecard submitted. Only the admin can change it now</p>
             )}
-            <div className="mt-3 flex justify-between">
-              <button className="btn-ghost" disabled={hole === 0} onClick={() => setHole(hole - 1)}>Prev</button>
-              <button className="btn-ghost" disabled={hole === 17} onClick={() => setHole(hole + 1)}>Next</button>
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="mb-2 flex justify-between text-sm">
-              <span>{filled}/18 holes</span>
-              <span className="font-bold">{total} ({diff === 0 ? "E" : diff > 0 ? `+${diff}` : diff})</span>
-              <span className={pending ? "text-amber-700" : "muted"}>{pending ? `${pending} unsynced` : "Synced"}</span>
-            </div>
-            <div className="grid grid-cols-9 gap-1 text-center text-sm">
-              {round.scores.map((s, i) => (
-                <button key={i} onClick={() => setHole(i)} className={`rounded-md py-1 ${i === hole ? "bg-brand text-white" : "bg-stone-100"}`}>
-                  <div className="text-[10px] opacity-60">{i + 1}</div>{s ?? "·"}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {!locked ? (
-            <button className="btn w-full" disabled={filled < 18} onClick={finish}>Finish and submit scorecard</button>
-          ) : (
-            <p className="text-center font-semibold text-brand-accent">Scorecard submitted. Only the admin can change it now.</p>
-          )}
-        </>
-      )}
-      {msg && <p className="text-sm text-red-600">{msg}</p>}
-    </div>
+          </>
+        )}
+        {msg && <p role="alert" className="text-sm text-bad">{msg}</p>}
+      </div>
+    </Page>
   );
 }

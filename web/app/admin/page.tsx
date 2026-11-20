@@ -4,12 +4,15 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useAdminSession } from "@/lib/useAdmin";
-import { MATCH_LABEL, type MatchType, type Tournament } from "@/lib/types";
+import { type MatchType, type Tournament } from "@/lib/types";
+import { FORMAT } from "@/lib/labels";
 import { defaultPointsToWin } from "@/lib/draft";
 import AdminSignIn from "@/components/AdminSignIn";
+import Page from "@/components/Page";
+import { TournamentStatusLabel } from "@/components/ui";
 import { findCourse, loadCourses, type CatalogCourse } from "@/lib/courses";
 
-const FORMATS = Object.keys(MATCH_LABEL) as MatchType[];
+const FORMATS = Object.keys(FORMAT) as MatchType[];
 
 export default function AdminHome() {
   const { user, ready } = useAdminSession();
@@ -61,48 +64,63 @@ export default function AdminHome() {
     router.push(`/admin/${t.id}`);
   };
 
-  if (!ready) return <p className="muted">Loading...</p>;
-  if (!user) return <AdminSignIn />;
+  if (!ready) return <Page><p className="muted">Loading</p></Page>;
+  if (!user) return <Page><AdminSignIn /></Page>;
 
   return (
-    <div className="space-y-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-brand">Your tournaments</h1>
-        <button className="muted underline" onClick={() => supabase.auth.signOut()}>Sign out</button>
-      </header>
-      {list.map((t) => (
-        <Link key={t.id} href={`/admin/${t.id}`} className="card flex items-center justify-between">
-          <div><div className="font-bold">{t.name}</div><div className="muted">{t.total_matches} matches</div></div>
-          <span className="rounded-full bg-stone-100 px-3 py-1 text-xs">{t.status}</span>
-        </Link>
-      ))}
-      {list.length === 0 && <p className="muted">No tournaments yet.</p>}
+    <Page wide>
+      <div className="space-y-6">
+        <header className="flex items-end justify-between gap-4">
+          <h1 className="h1">Your tournaments</h1>
+          <button className="btn-ghost btn-sm" onClick={() => supabase.auth.signOut()}>Sign out</button>
+        </header>
 
-      {!creating ? <button className="btn w-full" onClick={() => setCreating(true)}>New tournament</button> : (
-        <div className="card space-y-3">
-          <h2 className="h2">New tournament</h2>
-          <input className="input" placeholder="Name, e.g. Ryder Cup 2026" value={name} onChange={(e) => setName(e.target.value)} />
-          <label className="muted block">Matches (1 to 18)
-            <input className="input mt-1" type="number" min={1} max={18} value={n} onChange={(e) => setCount(Number(e.target.value) || 1)} />
-          </label>
-          <p className="muted">Points to win: {defaultPointsToWin(n).toFixed(1)}</p>
-          <datalist id="course-list">{catalog.map((c) => <option key={c.id} value={c.name} />)}</datalist>
-          {courses.map((c, i) => (
-            <div key={i} className="space-y-1">
-              <div className="muted">Match {i + 1}</div>
-              <input className="input" list="course-list" placeholder="Course name (pick from the list for real pars)" value={c} onChange={(e) => setCourses(courses.map((x, j) => (j === i ? e.target.value : x)))} />
-              <select className="input" value={formats[i]} onChange={(e) => setFormats(formats.map((x, j) => (j === i ? (e.target.value as MatchType) : x)))}>
-                {FORMATS.map((f) => <option key={f} value={f}>{MATCH_LABEL[f]}</option>)}
-              </select>
-            </div>
-          ))}
-          <div className="flex gap-2">
-            <button className="btn flex-1" disabled={!name.trim()} onClick={create}>Create</button>
-            <button className="btn-ghost" onClick={() => setCreating(false)}>Cancel</button>
+        {list.length > 0 && (
+          <div className="card overflow-hidden p-0">
+            <ul className="rows">
+              {list.map((t) => (
+                <li key={t.id}>
+                  <Link href={`/admin/${t.id}`} className="pick">
+                    <span><span className="text-stone-900">{t.name}</span><span className="muted block"><span className="tnum">{t.total_matches}</span> matches</span></span>
+                    <TournamentStatusLabel status={t.status} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
-          {err && <p className="text-sm text-red-600">{err}</p>}
-        </div>
-      )}
-    </div>
+        )}
+        {list.length === 0 && <p className="muted">No tournaments yet</p>}
+
+        {!creating ? <button className="btn w-full sm:w-auto" onClick={() => setCreating(true)}>New tournament</button> : (
+          <div className="card max-w-2xl space-y-4">
+            <h2 className="h2">New tournament</h2>
+            <input className="input" aria-label="Tournament name" placeholder="Name, for example Ryder Cup 2026" value={name} onChange={(e) => setName(e.target.value)} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="label block">Matches, 1 to 18
+                <input className="input mt-1" type="number" min={1} max={18} value={n} onChange={(e) => setCount(Number(e.target.value) || 1)} />
+              </label>
+              <div className="label">Points to win<div className="num mt-3 text-3xl text-stone-900">{defaultPointsToWin(n).toFixed(1)}</div></div>
+            </div>
+            <datalist id="course-list">{catalog.map((c) => <option key={c.id} value={c.name} />)}</datalist>
+            <ul className="rows">
+              {courses.map((c, i) => (
+                <li key={i} className="space-y-2 py-3">
+                  <div className="muted">Match <span className="tnum">{i + 1}</span></div>
+                  <input className="input" list="course-list" aria-label={`Course for match ${i + 1}`} placeholder="Course name. Pick from the list for real pars" value={c} onChange={(e) => setCourses(courses.map((x, j) => (j === i ? e.target.value : x)))} />
+                  <select className="input" aria-label={`Format for match ${i + 1}`} value={formats[i]} onChange={(e) => setFormats(formats.map((x, j) => (j === i ? (e.target.value as MatchType) : x)))}>
+                    {FORMATS.map((f) => <option key={f} value={f}>{FORMAT[f]}</option>)}
+                  </select>
+                </li>
+              ))}
+            </ul>
+            <div className="flex gap-2">
+              <button className="btn flex-1" disabled={!name.trim()} onClick={create}>Create tournament</button>
+              <button className="btn-ghost" onClick={() => setCreating(false)}>Cancel</button>
+            </div>
+            {err && <p role="alert" className="text-sm text-bad">{err}</p>}
+          </div>
+        )}
+      </div>
+    </Page>
   );
 }

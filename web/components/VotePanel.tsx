@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { TournamentData } from "@/lib/types";
+import { CheckIcon } from "./ui";
 
 export default function VotePanel({ data, me, reload }: { data: TournamentData; me: string; reload: () => void }) {
   const pool = data.players.filter((p) => p.invite_status === "accepted");
@@ -22,33 +23,38 @@ export default function VotePanel({ data, me, reload }: { data: TournamentData; 
   };
 
   return (
-    <div className="space-y-3">
-      <div className="card">
-        <div className="muted">Phase 1</div>
-        <h2 className="h2">Vote for captains</h2>
-        <p className="muted">Choose exactly 2 nominees. The top 2 vote-getters become team captains.</p>
-        <p className="muted mt-2">{voters} of {pool.length} players voted</p>
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <p className="muted">Phase 1</p>
+        <h2 className="font-serif text-2xl text-stone-900">Vote for captains</h2>
+        <p className="muted">Choose exactly 2 nominees. The top 2 vote-getters become team captains</p>
+        <p className="muted"><span className="tnum">{voters}</span> of <span className="tnum">{pool.length}</span> players voted</p>
       </div>
-      {pool.map((p) => {
-        const on = sel.includes(p.user_id);
-        const count = data.votes.filter((v) => v.nominee_user_id === p.user_id).length;
-        return (
-          <button key={p.id} disabled={voted} onClick={() => toggle(p.user_id)}
-            className={`card flex w-full items-center justify-between text-left ${on ? "ring-2 ring-brand-accent" : ""}`}>
-            <span className="font-semibold">{p.display_name}</span>
-            <span className="flex items-center gap-2">
-              {voted && count > 0 && <span className="font-bold text-brand-accent">{count}</span>}
-              {on && <span>✓</span>}
-            </span>
-          </button>
-        );
-      })}
+      <div className="card overflow-hidden p-0">
+        <ul className="rows">
+          {pool.map((p) => {
+            const on = sel.includes(p.user_id);
+            const count = data.votes.filter((v) => v.nominee_user_id === p.user_id).length;
+            return (
+              <li key={p.id}>
+                <button className="pick" aria-pressed={on} disabled={voted} onClick={() => toggle(p.user_id)}>
+                  <span className="text-stone-900">{p.display_name}</span>
+                  <span className="flex items-center gap-3 text-brand-accent">
+                    {voted && count > 0 && <span className="num text-xl text-stone-900">{count}</span>}
+                    {on && <CheckIcon />}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
       {voted ? (
-        <p className="muted text-center">Your vote has been submitted. Counts are hidden until you vote.</p>
+        <p className="muted text-center">Your vote is in. Counts stay hidden until you vote</p>
       ) : (
-        <button className="btn w-full" disabled={sel.length !== 2 || busy} onClick={submit}>Submit votes ({sel.length}/2)</button>
+        <button className="btn w-full" disabled={sel.length !== 2 || busy} onClick={submit}>Submit votes ({sel.length} of 2)</button>
       )}
-      {err && <p className="text-sm text-red-600">{err}</p>}
+      {err && <p role="alert" className="text-sm text-bad">{err}</p>}
     </div>
   );
 }

@@ -2,12 +2,6 @@ export type TournamentStatus = "setup" | "draft" | "active" | "complete";
 export type MatchType = "scramble" | "best_ball" | "match_play" | "stroke_play";
 export type MatchupStatus = "pending" | "active" | "complete";
 
-export const MATCH_LABEL: Record<MatchType, string> = {
-  scramble: "Scramble",
-  best_ball: "Best Ball",
-  match_play: "Match Play",
-  stroke_play: "Stroke Play",
-};
 
 export interface Tournament {
   id: string;

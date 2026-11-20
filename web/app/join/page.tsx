@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { functionsUrl, supabase } from "@/lib/supabase";
 import { normalizeCode } from "@/lib/code";
+import Page from "@/components/Page";
 
 export default function Join() {
   const router = useRouter();
@@ -33,13 +34,17 @@ export default function Join() {
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4 pt-10">
-      <h1 className="text-2xl font-bold text-brand">Enter your player code</h1>
-      <p className="muted">Your tournament admin gave you an 8 character code, like K7M2-9QXH.</p>
-      <input className="input text-center text-2xl tracking-widest" autoFocus autoCapitalize="characters" autoCorrect="off"
-        placeholder="XXXX-XXXX" value={code} onChange={(e) => setCode(e.target.value)} />
-      <button className="btn w-full" disabled={busy || normalizeCode(code).length < 8}>{busy ? "Checking..." : "Continue"}</button>
-      {err && <p className="text-sm text-red-600">{err}</p>}
-    </form>
+    <Page>
+      <form onSubmit={submit} className="space-y-6 pt-12">
+        <div className="space-y-2">
+          <h1 className="h1">Enter your player code</h1>
+          <p className="muted">Your organizer gave you an 8 character code, like K7M2-9QXH</p>
+        </div>
+        <input className="input text-center font-mono text-2xl tracking-widest" autoFocus autoCapitalize="characters" autoCorrect="off"
+          aria-label="Player code" placeholder="XXXX-XXXX" value={code} onChange={(e) => setCode(e.target.value)} />
+        <button className="btn w-full" disabled={busy || normalizeCode(code).length < 8}>{busy ? "Checking" : "Continue"}</button>
+        {err && <p role="alert" className="text-sm text-bad">{err}</p>}
+      </form>
+    </Page>
   );
 }

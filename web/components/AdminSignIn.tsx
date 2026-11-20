@@ -14,13 +14,17 @@ export default function AdminSignIn() {
     setBusy(false);
   };
   return (
-    <form onSubmit={go} className="space-y-3 pt-10">
-      <h1 className="text-2xl font-bold text-brand">Admin sign in</h1>
-      <p className="muted">Use the same email and password as the Albatross app.</p>
-      <input className="input" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <input className="input" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+    <form onSubmit={go} className="space-y-6 pt-12">
+      <div className="space-y-2">
+        <h1 className="h1">Admin sign in</h1>
+        <p className="muted">Use the email and password from the Albatross app</p>
+      </div>
+      <div className="space-y-3">
+        <input className="input" type="email" autoComplete="email" aria-label="Email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input className="input" type="password" autoComplete="current-password" aria-label="Password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      </div>
       <button className="btn w-full" disabled={busy || !email || !password}>Sign in</button>
-      {err && <p className="text-sm text-red-600">{err}</p>}
+      {err && <p role="alert" className="text-sm text-bad">{err}</p>}
     </form>
   );
 }

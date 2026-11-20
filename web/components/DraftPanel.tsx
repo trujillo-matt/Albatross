@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { draftPickCount, orderedTeams, snakeIsTeamATurn } from "@/lib/draft";
 import type { TournamentData } from "@/lib/types";
+import { Dot } from "./ui";
 
 export default function DraftPanel({ data, me, reload }: { data: TournamentData; me: string; reload: () => void }) {
   const [a, b] = orderedTeams(data.teams);
@@ -22,35 +23,42 @@ export default function DraftPanel({ data, me, reload }: { data: TournamentData;
   };
 
   const col = (t: typeof a, isClock: boolean) => (
-    <div className={`card flex-1 ${isClock ? "ring-2 ring-green-500" : ""}`}>
-      <div className="font-bold">{t?.name}{isClock && " ●"}</div>
-      <div className="mt-2 space-y-1 text-sm">
-        {accepted.filter((p) => p.team_id === t?.id).map((p) => (
-          <div key={p.id}>{p.display_name}{p.user_id === t?.captain_user_id && <span className="muted"> (C)</span>}</div>
-        ))}
+    <div className="card flex-1">
+      <div className="flex items-center justify-between gap-2">
+        <span className="h2">{t?.name}</span>
+        {isClock && <span className="inline-flex items-center gap-2 text-xs text-stone-600"><Dot tone="live" />On the clock</span>}
       </div>
+      <ul className="mt-3 space-y-1 text-sm text-stone-700">
+        {accepted.filter((p) => p.team_id === t?.id).map((p) => (
+          <li key={p.id}>{p.display_name}{p.user_id === t?.captain_user_id && <span className="ml-2 text-xs text-stone-500">Captain</span>}</li>
+        ))}
+      </ul>
     </div>
   );
 
   return (
-    <div className="space-y-3">
-      <div className="card">
-        <div className="muted">Phase 2</div>
-        <h2 className="h2">Snake draft</h2>
-        <p className="muted">{undrafted.length === 0 ? "All players drafted." : `${onClock?.name} is on the clock.`}</p>
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <p className="muted">Phase 2</p>
+        <h2 className="font-serif text-2xl text-stone-900">Snake draft</h2>
+        <p className="muted">{undrafted.length === 0 ? "All players are drafted" : `${onClock?.name} is on the clock`}</p>
       </div>
       <div className="flex gap-3">{col(a, aTurn && undrafted.length > 0)}{col(b, !aTurn && undrafted.length > 0)}</div>
       {iAmOnClock && undrafted.length > 0 && (
         <div className="space-y-2">
           <h3 className="h2">Your pick</h3>
-          {undrafted.map((p) => (
-            <button key={p.id} className="card flex w-full justify-between text-left" onClick={() => pick(p.user_id)}>
-              <span className="font-semibold">{p.display_name}</span><span>+</span>
-            </button>
-          ))}
+          <div className="card overflow-hidden p-0">
+            <ul className="rows">
+              {undrafted.map((p) => (
+                <li key={p.id}><button className="pick" onClick={() => pick(p.user_id)}>
+                  <span className="text-stone-900">{p.display_name}</span><span className="text-sm text-brand-accent">Draft</span>
+                </button></li>
+              ))}
+            </ul>
+          </div>
         </div>
       )}
-      {err && <p className="text-sm text-red-600">{err}</p>}
+      {err && <p role="alert" className="text-sm text-bad">{err}</p>}
     </div>
   );
 }

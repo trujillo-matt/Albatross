@@ -49,24 +49,24 @@ const step = (n) => { out.steps.push(n); console.log("STEP", n); };
     // ---- create tournament (1 match, stroke play, Pebble Beach)
     step("create tournament");
     await admin.page.getByRole("button", { name: "New tournament" }).click();
-    await admin.page.getByPlaceholder(/Name, e\.g\./).fill("E2E Test Cup");
+    await admin.page.getByPlaceholder(/Name, for example/).fill("E2E Test Cup");
     await admin.page.locator('input[type="number"]').fill("1");
     await admin.page.getByPlaceholder(/Course name/).fill("Pebble Beach Golf Links");
     await admin.page.locator("select").selectOption("stroke_play");
     await shot(admin, "01-create-form");
-    await admin.page.getByRole("button", { name: "Create", exact: true }).click();
+    await admin.page.getByRole("button", { name: "Create tournament" }).click();
     await admin.page.waitForURL(/\/admin\/[0-9a-f-]{36}$/);
     const tid = admin.page.url().split("/").pop(); out.ids.tournament = tid;
     await admin.page.getByRole("heading", { name: "E2E Test Cup" }).waitFor();
 
     // ---- roster: two managed players
     step("add managed players");
-    await tab(admin, "roster");
+    await tab(admin, "Roster");
     await admin.page.locator("textarea").fill("E2E One\nE2E Two");
     await admin.page.getByRole("button", { name: "Create players and codes" }).click();
-    await admin.page.locator("div.border-dashed").nth(1).waitFor({ timeout: 60000 });
-    const cards = await admin.page.evaluate(() => [...document.querySelectorAll("div.border-dashed")].map((c) => ({
-      name: c.querySelector(".font-bold")?.textContent?.trim(), code: c.querySelector(".font-mono")?.textContent?.trim() })));
+    await admin.page.locator("[data-code-card]").nth(1).waitFor({ timeout: 60000 });
+    const cards = await admin.page.evaluate(() => [...document.querySelectorAll("[data-code-card]")].map((c) => ({
+      name: c.getAttribute("data-player"), code: c.querySelector(".font-mono")?.textContent?.trim() })));
     const code = Object.fromEntries(cards.map((c) => [c.name, c.code]));
     if (!code["E2E One"] || !code["E2E Two"]) throw new Error("codes missing: " + JSON.stringify(cards.map((c) => c.name)));
     await shot(admin, "02-codes-issued");
@@ -74,9 +74,9 @@ const step = (n) => { out.steps.push(n); console.log("STEP", n); };
 
     // ---- start vote
     step("start captain vote");
-    await tab(admin, "overview");
+    await tab(admin, "Overview");
     await admin.page.getByRole("button", { name: "Start captain vote and draft" }).click();
-    await admin.page.getByText("Use Vote and draft to finalize").waitFor();
+    await admin.page.getByText("Finalize on the Vote and draft tab").waitFor();
 
     // ---- players redeem codes
     for (const [p, nm] of [[one, "E2E One"], [two, "E2E Two"]]) {
@@ -93,8 +93,8 @@ const step = (n) => { out.steps.push(n); console.log("STEP", n); };
     const vote = async (p, a, b) => {
       await p.page.getByRole("button", { name: new RegExp(a) }).first().click();
       await p.page.getByRole("button", { name: new RegExp(b) }).first().click();
-      await p.page.getByRole("button", { name: /Submit votes \(2\/2\)/ }).click();
-      await p.page.getByText("Your vote has been submitted").waitFor();
+      await p.page.getByRole("button", { name: /Submit votes \(2 of 2\)/ }).click();
+      await p.page.getByText("Your vote is in").waitFor();
     };
     step("votes"); await vote(one, "E2E One", "E2E Two"); await vote(two, "E2E One", "E2E Admin");
     await admin.page.goto(`${BASE}/t/${tid}`); await admin.page.getByRole("heading", { name: "Vote for captains" }).waitFor();
@@ -102,26 +102,26 @@ const step = (n) => { out.steps.push(n); console.log("STEP", n); };
 
     // ---- finalize captains
     step("finalize captains");
-    await admin.page.goto(`${BASE}/admin/${tid}`); await tab(admin, "Vote & draft");
+    await admin.page.goto(`${BASE}/admin/${tid}`); await tab(admin, "Vote and draft");
     await admin.page.getByRole("button", { name: "Finalize captains" }).click();
-    await admin.page.getByText("(C)").first().waitFor();
+    await admin.page.getByText("Captain").first().waitFor();
     await shot(admin, "04-captains-final");
 
     // ---- captain One drafts the admin (pick 0 belongs to team A)
     step("captain drafts");
     await one.page.reload(); await one.page.getByRole("heading", { name: "Snake draft" }).waitFor();
     await one.page.getByRole("button", { name: /E2E Admin/ }).click();
-    await one.page.getByText("All players drafted").waitFor();
+    await one.page.getByText("All players are drafted").waitFor();
     await shot(one, "05-draft-done");
 
     // ---- start tournament, pair players
     step("start tournament");
-    await admin.page.reload(); await tab(admin, "Vote & draft");
+    await admin.page.reload(); await tab(admin, "Vote and draft");
     const started = admin.page.waitForResponse((r) => r.url().includes("/tournament_matchups") && r.request().method() === "POST");
     await admin.page.getByRole("button", { name: "Start tournament" }).click();
     const sr = await started; if (sr.status() >= 300) throw new Error("matchups insert failed " + sr.status());
     step("set pairings");
-    await admin.page.reload(); await tab(admin, "matches");
+    await admin.page.reload(); await tab(admin, "Matches");
     await admin.page.getByRole("button", { name: "E2E One" }).click();
     await admin.page.getByRole("button", { name: "E2E Two" }).click();
     const paired = admin.page.waitForResponse((r) => r.url().includes("/rpc/set_pairings"));
@@ -159,16 +159,16 @@ const step = (n) => { out.steps.push(n); console.log("STEP", n); };
     step("admin edit + audit");
     admin.page.removeAllListeners("dialog"); let n = 0;
     admin.page.on("dialog", (d) => d.accept(n++ === 0 ? "3" : "e2e check"));
-    await admin.page.goto(`${BASE}/admin/${tid}`); await tab(admin, "scores");
-    await admin.page.locator("button.rounded.bg-stone-100").first().click();
+    await admin.page.goto(`${BASE}/admin/${tid}`); await tab(admin, "Scores");
+    await admin.page.locator('[aria-label^="Edit hole"]').first().click();
     await admin.page.waitForTimeout(2500);
-    await tab(admin, "audit");
-    await admin.page.getByText("edit hole score").waitFor();
+    await tab(admin, "Audit log");
+    await admin.page.getByText("Edit hole score").waitFor();
     await shot(admin, "08-audit");
 
     // ---- spectator link
     step("spectator link");
-    await tab(admin, "overview");
+    await tab(admin, "Overview");
     await admin.page.getByRole("button", { name: "Enable link" }).click();
     await admin.page.locator('input[readonly]').waitFor();
     const url = await admin.page.locator('input[readonly]').inputValue();

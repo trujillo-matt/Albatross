@@ -162,7 +162,8 @@ test("spectator page renders live standings from the public token, and shows a d
   };
   await page.goto(`${BASE}/watch/${"a".repeat(64)}`);
   await page.getByRole("heading", { name: "Spectator Cup" }).waitFor();
-  await page.getByText("Team A 1.0 to 0.0 Team B").waitFor();
+  await page.getByText("1.0 to 0.0").first().waitFor();
+  await page.getByText("Team A vs Team B").waitFor();
 
   s.publicData = null;
   await page.goto(`${BASE}/watch/${"b".repeat(64)}`);
