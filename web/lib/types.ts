@@ -27,6 +27,8 @@ export interface TMatchup {
   result: "team_a_win" | "team_b_win" | "tie" | null; points_team_a: number; points_team_b: number;
   /** Null on tournaments created before sessions existed. */
   session_id?: string | null; called_by_team_id?: string | null; called_at?: string | null;
+  /** The player keeping score for the whole group, or null when each player scores their own card. */
+  scorer_user_id?: string | null;
 }
 export interface TSession {
   id: string; tournament_id: string; day_number: number; session_number: number; label: string | null;

@@ -9,6 +9,7 @@ import type { RoundRow } from "@/lib/types";
 import { FORMAT } from "@/lib/labels";
 import Page from "@/components/Page";
 import { CheckIcon, ChevronLeftIcon, Dot } from "@/components/ui";
+import GroupScoring from "@/components/GroupScoring";
 import { findCourse, loadCourses } from "@/lib/courses";
 import { enqueue, flush, pendingCount } from "@/lib/scoreQueue";
 import { matchPlayStatus } from "@/lib/scoring";
@@ -19,7 +20,7 @@ export default function MatchPage() {
   const { id, mid } = useParams<{ id: string; mid: string }>();
   const router = useRouter();
   const { userId, ready } = useUserId();
-  const { data } = useTournament(id);
+  const { data, reload } = useTournament(id);
   const [round, setRound] = useState<RoundRow | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [hole, setHole] = useState(0);
@@ -152,7 +153,11 @@ export default function MatchPage() {
 
         {matchup.status === "pending" && <p className="muted">{matchup.session_id ? "Waiting for the captains to finish their callouts" : "Waiting for pairings to be set"}</p>}
 
-        {matchup.status !== "pending" && mine && loaded && !round && (
+        {userId && ((mine && matchup.status === "active") || matchup.scorer_user_id) && (
+          <GroupScoring data={data} matchup={matchup} me={userId} courseName={courseName} courseId={course.id} onChanged={reload} />
+        )}
+
+        {matchup.status !== "pending" && mine && loaded && !round && !matchup.scorer_user_id && (
           <div className="space-y-3">
             {(matchup.match_type === "scramble" || matchup.match_type === "alternate_shot") && <p className="muted">{matchup.match_type === "scramble" ? "Scramble" : "Alternate shot"}: your team plays one ball, so only one teammate needs to enter the team scorecard</p>}
             <button className="btn w-full" onClick={startCard}>Start scorecard</button>
@@ -160,7 +165,7 @@ export default function MatchPage() {
         )}
         {matchup.status !== "pending" && !mine && <p className="muted">You are not playing in this match</p>}
 
-        {round && (
+        {round && !matchup.scorer_user_id && (
           <>
             <div className="card space-y-4">
               <div className="flex items-baseline justify-between">

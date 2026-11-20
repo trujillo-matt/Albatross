@@ -398,6 +398,10 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
     const { error } = await supabase.rpc("admin_set_hole_score", { p_round: r.id, p_hole: hole + 1, p_strokes: v === "" ? null : Number(v), p_reason: reason });
     if (error) setMsg(error.message); else load();
   };
+  const assignScorer = async (mid: string, uid: string) => {
+    const { error } = await supabase.rpc("set_scorer", { p_matchup: mid, p_scorer: uid || null });
+    if (error) setMsg(error.message); else { setMsg(null); reload(); }
+  };
   const recompute = async (mid: string) => {
     const { error } = await supabase.rpc("admin_recompute_matchup", { p_matchup: mid });
     if (error) setMsg(error.message); else { setMsg(null); reload(); }
@@ -429,6 +433,16 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
               <h2 className="h2">Match <span className="tnum">{m.matchup_number}</span></h2>
               <button className="btn-ghost btn-sm" onClick={() => recompute(m.id)}>Recompute result</button>
             </div>
+            {m.status === "active" && (
+              <label className="flex items-center justify-between gap-3 text-sm text-stone-600">
+                <span>Keeps score for the group</span>
+                <select className="input w-auto max-w-[60%] py-2 text-sm" aria-label={`Scorer for match ${m.matchup_number}`}
+                  value={m.scorer_user_id ?? ""} onChange={(e) => assignScorer(m.id, e.target.value)}>
+                  <option value="">Each player scores their own card</option>
+                  {[...m.team_a_player_ids, ...m.team_b_player_ids].map((uid) => <option key={uid} value={uid}>{nameOf(uid)}</option>)}
+                </select>
+              </label>
+            )}
             {rounds.filter((r) => r.matchup_id === m.id).map((r) => (
               <div key={r.id} className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
