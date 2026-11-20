@@ -287,7 +287,7 @@ struct TournamentDraftView: View {
                         .foregroundStyle(.secondary)
                         .padding(.top, 8)
 
-                    Button(action: finalizeCaptains) {
+                    Button(action: { finalizeCaptains() }) {
                         Group {
                             if isFinalizingCaptains {
                                 ProgressView().tint(.white)

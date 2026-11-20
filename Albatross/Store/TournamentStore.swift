@@ -187,7 +187,7 @@ final class TournamentStore: ObservableObject {
     /// Points needed to win: a majority of the points available (each match is worth 1).
     /// 3 matches -> 2.0, 4 matches -> 2.5. The old fixed default of 9.5 was unreachable
     /// for any tournament with fewer than 10 matches.
-    static func defaultPointsToWin(totalMatches: Int) -> Double {
+    nonisolated static func defaultPointsToWin(totalMatches: Int) -> Double {
         Double(totalMatches) / 2.0 + 0.5
     }
 
@@ -417,7 +417,7 @@ final class TournamentStore: ObservableObject {
 
     /// Number of picks made so far. Captains are pre-placed on their teams, so they
     /// are excluded from the count that drives snake order.
-    static func draftPickCount(players: [TournamentPlayer], teams: [TournamentTeam]) -> Int {
+    nonisolated static func draftPickCount(players: [TournamentPlayer], teams: [TournamentTeam]) -> Int {
         let captainIDs = Set(teams.compactMap(\.captainUserID))
         return players.filter { $0.teamID != nil && !captainIDs.contains($0.userID) }.count
     }
