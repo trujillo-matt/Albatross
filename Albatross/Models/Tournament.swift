@@ -159,6 +159,8 @@ struct TournamentMatchup: Identifiable, Codable {
     var calledByTeamID: UUID? = nil
     /// Set when the match is locked in by the callouts.
     var calledAt: Date? = nil
+    /// The player keeping score for the whole group, or nil when each player scores their own card.
+    var scorerUserID: UUID? = nil
 
     var isLockedIn: Bool { calledAt != nil }
 
@@ -178,6 +180,7 @@ struct TournamentMatchup: Identifiable, Codable {
         case sessionID      = "session_id"
         case calledByTeamID = "called_by_team_id"
         case calledAt       = "called_at"
+        case scorerUserID   = "scorer_user_id"
     }
 }
 
