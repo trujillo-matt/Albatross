@@ -15,6 +15,10 @@ struct TournamentDraftView: View {
     @State private var isFinalizingCaptains = false
     @State private var isStartingTournament = false
     @State private var errorMessage: String? = nil
+    @State private var tieCandidates: [UUID] = []
+    @State private var tieSlots = 0
+    @State private var tieSelection: [UUID] = []
+    @State private var showTieSheet = false
 
     private var current: Tournament { liveT ?? tournament }
     private var myUserID: UUID? { authStore.currentProfile?.id }
@@ -49,8 +53,9 @@ struct TournamentDraftView: View {
     }
 
     /// Current pick number = total players already drafted
+    /// Captains are pre-placed on their teams, so they do not count as picks.
     private var currentPickNumber: Int {
-        teamAPlayers.count + teamBPlayers.count
+        TournamentStore.draftPickCount(players: tournamentStore.draftPlayers, teams: teams)
     }
 
     private var isTeamATurn: Bool {
@@ -110,6 +115,46 @@ struct TournamentDraftView: View {
         }
         .onDisappear {
             Task { await tournamentStore.unsubscribeFromDraftRoom() }
+        }
+        .sheet(isPresented: $showTieSheet) { tieBreakSheet }
+    }
+
+    // MARK: - Tie break (commissioner)
+
+    private var tieBreakSheet: some View {
+        NavigationStack {
+            List(tieCandidates, id: \.self) { id in
+                let name = current.playerPool.first(where: { $0.userID == id })?.profile?.displayName ?? "Player"
+                let selected = tieSelection.contains(id)
+                Button {
+                    if selected { tieSelection.removeAll { $0 == id } }
+                    else if tieSelection.count < tieSlots { tieSelection.append(id) }
+                } label: {
+                    HStack {
+                        Text(name).font(.custom("Baskerville", size: 15)).foregroundStyle(.primary)
+                        Spacer()
+                        if selected { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) }
+                    }
+                }
+            }
+            .navigationTitle("Break the Tie")
+            .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .top) {
+                Text("These nominees are tied. Choose \(tieSlots) to become captain.")
+                    .font(.custom("Baskerville", size: 13))
+                    .foregroundStyle(.secondary)
+                    .padding()
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { showTieSheet = false } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Confirm") {
+                        showTieSheet = false
+                        finalizeCaptains(tiebreakWinners: tieSelection)
+                    }
+                    .disabled(tieSelection.count != tieSlots)
+                }
+            }
         }
     }
 
@@ -175,9 +220,10 @@ struct TournamentDraftView: View {
 
                         Spacer()
 
-                        // Show vote count for this player
+                        // Live counts are hidden from voters until they have voted, so early
+                        // results do not sway the ballot. The commissioner always sees them.
                         let voteCount = tournamentStore.captainVotes.filter { $0.nomineeUserID == player.userID }.count
-                        if voteCount > 0 {
+                        if voteCount > 0 && (isCommissioner || alreadyVoted) {
                             Text("\(voteCount)")
                                 .font(.custom("Baskerville-Bold", size: 15))
                                 .foregroundStyle(Color.accentColor)
@@ -241,7 +287,7 @@ struct TournamentDraftView: View {
                         .foregroundStyle(.secondary)
                         .padding(.top, 8)
 
-                    Button(action: finalizeCaptains) {
+                    Button(action: { finalizeCaptains() }) {
                         Group {
                             if isFinalizingCaptains {
                                 ProgressView().tint(.white)
@@ -525,12 +571,21 @@ struct TournamentDraftView: View {
         }
     }
 
-    private func finalizeCaptains() {
+    private func finalizeCaptains(tiebreakWinners: [UUID]? = nil) {
         isFinalizingCaptains = true
+        errorMessage = nil
         Task {
             do {
-                try await tournamentStore.finalizeCaptains(tournamentID: current.id)
+                try await tournamentStore.finalizeCaptains(
+                    tournamentID: current.id,
+                    tiebreakWinners: tiebreakWinners
+                )
                 await refreshTournament()
+            } catch let TournamentError.captainTie(candidates, slots) {
+                tieCandidates = candidates
+                tieSlots = slots
+                tieSelection = []
+                showTieSheet = true
             } catch {
                 errorMessage = error.localizedDescription
             }
