@@ -10,6 +10,7 @@ import { FORMAT } from "@/lib/labels";
 import Page from "@/components/Page";
 import { CaptainBadge, CheckIcon, ChevronLeftIcon, Dot } from "@/components/ui";
 import GroupScoring from "@/components/GroupScoring";
+import { foursomeOf } from "@/lib/groupScoring";
 import { findCourse, loadCourses } from "@/lib/courses";
 import { enqueue, flush, pendingCount } from "@/lib/scoreQueue";
 import { matchPlayStatus } from "@/lib/scoring";
@@ -32,6 +33,8 @@ export default function MatchPage() {
 
   const matchup = data?.matchups.find((m) => m.id === mid);
   const mine = !!userId && !!matchup && (matchup.team_a_player_ids.includes(userId) || matchup.team_b_player_ids.includes(userId));
+  // Players in the other match of a singles foursome can score the whole group too.
+  const inFoursome = !!userId && !!matchup && !!data && foursomeOf(matchup, data.matchups).some((x) => x.team_a_player_ids.includes(userId) || x.team_b_player_ids.includes(userId));
 
   const loadRound = useCallback(async () => {
     if (!userId) return;
@@ -156,7 +159,7 @@ export default function MatchPage() {
 
         {matchup.status === "pending" && <p className="muted">{matchup.session_id ? "Waiting for the captains to finish their callouts" : "Waiting for pairings to be set"}</p>}
 
-        {userId && ((mine && matchup.status === "active") || matchup.scorer_user_id) && (
+        {userId && ((inFoursome && matchup.status === "active") || matchup.scorer_user_id) && (
           <GroupScoring data={data} matchup={matchup} me={userId} courseName={courseName} courseId={course.id} onChanged={reload} />
         )}
 

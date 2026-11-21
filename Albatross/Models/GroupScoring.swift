@@ -40,6 +40,30 @@ extension TournamentMatchup {
     }
 }
 
+// MARK: - Foursomes
+
+extension TournamentMatchup {
+    /// The matches played together as a foursome (mirrors `foursome_of` in migration 012). In singles formats a
+    /// session's matches are played two at a time, in match order: 1 and 2, 3 and 4. Any other format is one match.
+    func foursome(in all: [TournamentMatchup]) -> [TournamentMatchup] {
+        guard let sessionID, matchType == .matchPlay || matchType == .strokePlay else { return [self] }
+        let inSession = all.filter { $0.sessionID == sessionID }.sorted { $0.matchupNumber < $1.matchupNumber }
+        guard let index = inSession.firstIndex(where: { $0.id == id }) else { return [self] }
+        let start = index - (index % 2)
+        return Array(inSession[start..<min(start + 2, inSession.count)])
+    }
+
+    /// Whether a player is in this match.
+    func includes(_ userID: UUID) -> Bool {
+        teamAPlayerIDs.contains(userID) || teamBPlayerIDs.contains(userID)
+    }
+}
+
+extension Array where Element == TournamentMatchup {
+    /// Card owners across the foursome, in display order.
+    var groupCardOwnerIDs: [UUID] { flatMap(\.groupCardOwnerIDs) }
+}
+
 // MARK: - Entry flow
 
 enum GroupScoring {

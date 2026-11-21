@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardOwners, orderCards, nextEmptyCell, groupComplete, groupHasAllCards, sideOf } from "./groupScoring.ts";
+import { cardOwners, foursomeOf, orderCards, nextEmptyCell, groupComplete, groupHasAllCards, sideOf } from "./groupScoring.ts";
 
 const blank = () => Array<number | null>(18).fill(null);
 const m = (type: "best_ball" | "scramble", a: string[], b: string[]) => ({ match_type: type, team_a_player_ids: a, team_b_player_ids: b }) as never;
@@ -56,4 +56,25 @@ test("a group is not complete with one hole missing", () => {
   const cards = [{ scores: Array<number | null>(18).fill(4) }, { scores: Array<number | null>(18).fill(4) }];
   cards[1].scores[17] = null;
   assert.equal(groupComplete(cards), false);
+});
+
+const single = (n: number, type: "match_play" | "best_ball", session: string | null, a: string, b: string) =>
+  ({ id: `m${n}`, matchup_number: n, session_id: session, match_type: type, team_a_player_ids: [a], team_b_player_ids: [b] }) as never as import("./types").TMatchup;
+
+test("foursome: singles matches in a session are played two at a time", () => {
+  const all = [1, 2, 3, 4, 5].map((n) => single(n, "match_play", "s1", `a${n}`, `b${n}`));
+  assert.deepEqual(foursomeOf(all[0], all).map((x) => x.id), ["m1", "m2"]);
+  assert.deepEqual(foursomeOf(all[1], all).map((x) => x.id), ["m1", "m2"]);
+  assert.deepEqual(foursomeOf(all[2], all).map((x) => x.id), ["m3", "m4"]);
+  assert.deepEqual(foursomeOf(all[4], all).map((x) => x.id), ["m5"]);
+});
+test("foursome: a pairs match is already a foursome, and so is a match outside a session", () => {
+  const bb = single(1, "best_ball", "s1", "a1", "b1");
+  assert.deepEqual(foursomeOf(bb, [bb, single(2, "best_ball", "s1", "a2", "b2")]).map((x) => x.id), ["m1"]);
+  const loose = single(1, "match_play", null, "a1", "b1");
+  assert.deepEqual(foursomeOf(loose, [loose, single(2, "match_play", null, "a2", "b2")]).map((x) => x.id), ["m1"]);
+});
+test("foursome: one scorer owns the cards of both matches", () => {
+  const all = [1, 2].map((n) => single(n, "match_play", "s1", `a${n}`, `b${n}`));
+  assert.deepEqual(cardOwners(foursomeOf(all[0], all)), ["a1", "b1", "a2", "b2"]);
 });

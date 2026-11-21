@@ -44,6 +44,12 @@ struct TournamentMatchupView: View {
         tournament.playerPool.filter { $0.teamID == current.teamBID }
     }
 
+    /// In singles, the other match of the foursome counts too: its players can keep score for everyone.
+    private var iAmInFoursome: Bool {
+        guard let me = myUserID else { return false }
+        return current.foursome(in: tournament.matchups).contains { $0.includes(me) }
+    }
+
     private var iAmInThisMatchup: Bool {
         guard let me = myUserID else { return false }
         return current.teamAPlayerIDs.contains(me) || current.teamBPlayerIDs.contains(me)
@@ -395,8 +401,8 @@ struct TournamentMatchupView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
             Text(current.scorerUserID == myUserID
-                 ? "You are keeping score for everyone in this match."
-                 : "\(scorerNameText) is keeping score for everyone in this match.")
+                 ? "You are keeping score for everyone in your foursome."
+                 : "\(scorerNameText) is keeping score for everyone in the foursome.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
@@ -413,7 +419,7 @@ struct TournamentMatchupView: View {
     /// Players can volunteer to keep score for the whole group. Shown above their own scorecard until someone does.
     @ViewBuilder
     private var volunteerButton: some View {
-        if current.status == .active && iAmInThisMatchup && current.scorerUserID == nil, let me = myUserID {
+        if current.status == .active && iAmInFoursome && current.scorerUserID == nil, let me = myUserID {
             Button {
                 Task { await assignScorer(me) }
             } label: {

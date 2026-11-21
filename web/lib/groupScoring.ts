@@ -8,21 +8,42 @@ export const DEFAULT_PARS = [4, 4, 3, 4, 5, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 5, 
 export const isTeamCardFormat = (t: MatchType) => t === "scramble" || t === "alternate_shot";
 
 type Sides = Pick<TMatchup, "match_type" | "team_a_player_ids" | "team_b_player_ids">;
+/** One match, or the matches of a foursome. */
+type Group = Sides | Sides[];
+const list = (g: Group): Sides[] => (Array.isArray(g) ? g : [g]);
 
-/** Who owns each card, in display order: side A first. Matches what start_group_scoring creates. */
-export function cardOwners(m: Sides): string[] {
-  if (isTeamCardFormat(m.match_type)) return [m.team_a_player_ids[0], m.team_b_player_ids[0]].filter(Boolean);
-  return [...m.team_a_player_ids, ...m.team_b_player_ids];
+/**
+ * The matches played together as a foursome (mirrors foursome_of in migration 012). In singles formats a session's
+ * matches are played two at a time, in match order: 1 and 2, 3 and 4. Any other format is one match on its own.
+ */
+export function foursomeOf(m: TMatchup, all: TMatchup[]): TMatchup[] {
+  if (!m.session_id || (m.match_type !== "match_play" && m.match_type !== "stroke_play")) return [m];
+  const inSession = all.filter((x) => x.session_id === m.session_id).sort((a, b) => a.matchup_number - b.matchup_number);
+  const at = inSession.findIndex((x) => x.id === m.id);
+  if (at < 0) return [m];
+  const start = at - (at % 2);
+  return inSession.slice(start, start + 2);
+}
+
+/** Who owns each card, in display order: side A first within each match. Matches what start_group_scoring creates. */
+export function cardOwners(g: Group): string[] {
+  return list(g).flatMap((m) =>
+    isTeamCardFormat(m.match_type) ? [m.team_a_player_ids[0], m.team_b_player_ids[0]].filter(Boolean) : [...m.team_a_player_ids, ...m.team_b_player_ids]);
+}
+
+/** The match in the group a player belongs to. */
+export function matchOf<T extends Sides>(group: T[], userId: string): T | undefined {
+  return group.find((m) => m.team_a_player_ids.includes(userId) || m.team_b_player_ids.includes(userId));
 }
 
 export const sideOf = (m: Sides, userId: string): "A" | "B" => (m.team_a_player_ids.includes(userId) ? "A" : "B");
 
 /** Orders fetched cards to match cardOwners, dropping any card that is not part of the group. */
-export function orderCards<T extends { user_id: string }>(m: Sides, cards: T[]): T[] {
+export function orderCards<T extends { user_id: string }>(m: Group, cards: T[]): T[] {
   return cardOwners(m).map((o) => cards.find((c) => c.user_id === o)).filter((c): c is T => !!c);
 }
 
-export function groupHasAllCards(m: Sides, cards: { user_id: string }[]): boolean {
+export function groupHasAllCards(m: Group, cards: { user_id: string }[]): boolean {
   return cardOwners(m).every((o) => cards.some((c) => c.user_id === o));
 }
 

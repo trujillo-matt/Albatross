@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import type { RoundRow, TMatchup, TournamentData } from "@/lib/types";
 import { enqueue, flush, pendingCount } from "@/lib/scoreQueue";
 import { findCourse, loadCourses } from "@/lib/courses";
-import { cardTotal, DEFAULT_PARS, groupComplete, groupFilled, groupHasAllCards, isTeamCardFormat, nextEmptyCell, orderCards, sideOf } from "@/lib/groupScoring";
+import { cardTotal, DEFAULT_PARS, foursomeOf, groupComplete, groupFilled, groupHasAllCards, isTeamCardFormat, matchOf, nextEmptyCell, orderCards, sideOf } from "@/lib/groupScoring";
 import { CaptainBadge, CheckIcon, Dot } from "./ui";
 
 interface Props {
@@ -24,6 +24,9 @@ interface Props {
  *  - someone else is: a read-only live view of the group's cards.
  */
 export default function GroupScoring({ data, matchup, me, courseName, courseId, onChanged }: Props) {
+  // The foursome: this match, plus the one it is played alongside in singles formats. One scorer keeps all the cards.
+  const group = foursomeOf(matchup, data.matchups);
+  const groupKey = group.map((x) => x.id).join(",");
   const scorerId = matchup.scorer_user_id ?? null;
   const iAmScorer = scorerId === me;
   const [cards, setCards] = useState<RoundRow[]>([]);
@@ -35,18 +38,20 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
   const [err, setErr] = useState<string | null>(null);
 
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? "Player";
-  const teamOf = (uid: string) => data.teams.find((t) => t.id === (sideOf(matchup, uid) === "A" ? matchup.team_a_id : matchup.team_b_id))?.name ?? "Team";
+  const matchFor = (uid: string) => matchOf(group, uid) ?? matchup;
+  const teamOf = (uid: string) => { const m = matchFor(uid); return data.teams.find((t) => t.id === (sideOf(m, uid) === "A" ? m.team_a_id : m.team_b_id))?.name ?? "Team"; };
   // A captain's yellow C goes before their own name; a team-card format shows the team name instead.
   const captainMark = (uid: string) => !isTeamCardFormat(matchup.match_type) && data.teams.some((t) => t.captain_user_id === uid) ? <CaptainBadge /> : null;
   const label = (uid: string) => isTeamCardFormat(matchup.match_type) ? teamOf(uid) : nameOf(uid);
-  const sub = (uid: string) => isTeamCardFormat(matchup.match_type)
-    ? (sideOf(matchup, uid) === "A" ? matchup.team_a_player_ids : matchup.team_b_player_ids).map(nameOf).join(", ") : teamOf(uid);
+  const sub = (uid: string) => { const m = matchFor(uid); return isTeamCardFormat(matchup.match_type)
+    ? (sideOf(m, uid) === "A" ? m.team_a_player_ids : m.team_b_player_ids).map(nameOf).join(", ") : teamOf(uid); };
 
   const load = useCallback(async () => {
-    const { data: rs } = await supabase.from("rounds").select("*").eq("matchup_id", matchup.id);
-    setCards(orderCards(matchup, (rs as RoundRow[]) ?? []));
+    const { data: rs } = await supabase.from("rounds").select("*").in("matchup_id", groupKey.split(","));
+    setCards(orderCards(group, (rs as RoundRow[]) ?? []));
     setLoaded(true);
-  }, [matchup]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupKey]);
 
   // Cards for everyone watching or scoring; the scorer's own screen refreshes on every action, watchers poll.
   useEffect(() => {
@@ -124,7 +129,7 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
     return (
       <div className="card space-y-3">
         <h2 className="h2">Keep score for the whole group</h2>
-        <p className="muted">One player can enter everyone&apos;s strokes on a single phone. The others follow along</p>
+        <p className="muted">{group.length > 1 ? "One player can enter everyone's strokes in the foursome, across both matches, on a single phone. The others follow along" : "One player can enter everyone's strokes on a single phone. The others follow along"}</p>
         <button className="btn w-full" disabled={busy} onClick={volunteer}>I&apos;ll keep score for the group</button>
         {err && <p role="alert" className="text-sm text-bad">{err}</p>}
       </div>
@@ -134,7 +139,7 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
   const scorerName = nameOf(scorerId);
   const pars = cards[0]?.course_pars ?? DEFAULT_PARS;
   const yards = cards[0]?.course_yardages?.[hole];
-  const allThere = groupHasAllCards(matchup, cards);
+  const allThere = groupHasAllCards(group, cards);
   const done = cards.length > 0 && cards.every((c) => c.status === "completed");
   const complete = groupComplete(cards);
   const filled = groupFilled(cards);

@@ -716,13 +716,13 @@ final class TournamentStore: ObservableObject {
         await reload(tournamentID)
     }
 
-    /// Every card for a match, with its owner. Members of the tournament can read all of them.
-    func fetchGroupCards(matchupID: UUID) async -> [GroupCard] {
+    /// Every card for the matches of a foursome, with its owner. Members of the tournament can read all of them.
+    func fetchGroupCards(matchupIDs: [UUID]) async -> [GroupCard] {
         do {
             let rows: [GroupCard] = try await supabase
                 .from("rounds")
                 .select()
-                .eq("matchup_id", value: matchupID.uuidString)
+                .in("matchup_id", values: matchupIDs.map(\.uuidString))
                 .execute()
                 .value
             return rows

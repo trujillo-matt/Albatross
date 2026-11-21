@@ -30,16 +30,20 @@ struct GroupScorecardView: View {
         tournament.playerPool.first(where: { $0.userID == ownerID })?.profile?.displayName ?? "Player"
     }
 
+    /// This match and, in singles, the one it is played alongside. One scorer keeps all the cards.
+    private var group: [TournamentMatchup] { matchup.foursome(in: tournament.matchups) }
+
     private func label(for card: GroupCard) -> String {
         guard matchup.scoresOneCardPerSide else { return name(of: card.ownerID) }
-        let isA = matchup.teamAPlayerIDs.contains(card.ownerID)
-        let team = tournament.teams.first(where: { $0.id == (isA ? matchup.teamAID : matchup.teamBID) })
+        let owning = group.first(where: { $0.includes(card.ownerID) }) ?? matchup
+        let isA = owning.teamAPlayerIDs.contains(card.ownerID)
+        let team = tournament.teams.first(where: { $0.id == (isA ? owning.teamAID : owning.teamBID) })
         return team?.name ?? (isA ? "Team A" : "Team B")
     }
 
-    /// Cards in display order (side A first), matching the database's owners.
+    /// Cards in display order (side A first within each match), matching the database's owners.
     private var ordered: [GroupCard] {
-        let order = matchup.groupCardOwnerIDs
+        let order = group.groupCardOwnerIDs
         return cards.sorted {
             (order.firstIndex(of: $0.ownerID) ?? 99) < (order.firstIndex(of: $1.ownerID) ?? 99)
         }
@@ -105,6 +109,7 @@ struct GroupScorecardView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(iAmScorer ? "You are keeping score for the group" : "\(scorerName) is keeping score for this group")
+                .accessibilityHint(group.count > 1 ? "Covers both matches in the foursome" : "")
                 .font(.body.weight(.semibold))
             Text(allSubmitted ? "Submitted. The match result is final."
                  : iAmScorer ? "Enter every player's strokes. Everyone else can watch along."
@@ -273,7 +278,7 @@ struct GroupScorecardView: View {
     }
 
     private func refresh(initial: Bool) async {
-        let fetched = await tournamentStore.fetchGroupCards(matchupID: matchup.id)
+        let fetched = await tournamentStore.fetchGroupCards(matchupIDs: group.map(\.id))
         loaded = true
         guard !fetched.isEmpty else { cards = []; return }
         cards = fetched
