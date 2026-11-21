@@ -5,7 +5,7 @@ import { orderedTeams } from "@/lib/draft";
 import { FORMAT, SESSION_STATUS } from "@/lib/labels";
 import { calloutState, isLocked, sameUnit, sideOf, sitOuts, unitOf } from "@/lib/sessions";
 import type { TMatchup, TSession, TournamentData } from "@/lib/types";
-import { Status, type Tone } from "@/components/ui";
+import { CaptainBadge, Status, type Tone } from "@/components/ui";
 
 interface Props {
   data: TournamentData;
@@ -62,7 +62,7 @@ export default function CalloutBoard({ data, session, matchups, userId, isAdmin,
 
   const chip = (team: string, uid: string) => (
     <button key={uid} className="pick py-2 text-sm" aria-pressed={picked?.uid === uid} disabled={busy || !canEdit(team)} onClick={() => tapPlayer(team, uid)}>
-      <span className="truncate">{name(uid)}</span>
+      <span className="flex min-w-0 items-center">{data.teams.some((t) => t.captain_user_id === uid) && <CaptainBadge />}<span className="truncate">{name(uid)}</span></span>
     </button>
   );
 

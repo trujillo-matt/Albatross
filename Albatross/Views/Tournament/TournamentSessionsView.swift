@@ -288,7 +288,10 @@ struct TournamentSessionsView: View {
                         Button {
                             tapPlayer(player.userID, team: team.id, session: session, tournament: t)
                         } label: {
-                            Text(player.profile?.displayName ?? "Player")
+                            HStack(spacing: 6) {
+                                if t.isCaptain(player.userID) { CaptainBadge() }
+                                Text(player.profile?.displayName ?? "Player")
+                            }
                                 .font(.callout)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 8)

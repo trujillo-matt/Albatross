@@ -242,9 +242,12 @@ struct TournamentDetailView: View {
                 )
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(player.profile?.displayName ?? "Player")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
+                HStack(spacing: 6) {
+                    if current.isCaptain(player.userID) { CaptainBadge() }
+                    Text(player.profile?.displayName ?? "Player")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.primary)
+                }
                 if let username = player.profile?.username {
                     Text("@\(username)")
                         .font(.caption)

@@ -12,7 +12,7 @@ import VotePanel from "@/components/VotePanel";
 import DraftPanel from "@/components/DraftPanel";
 import Standings from "@/components/Standings";
 import Page from "@/components/Page";
-import { MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
+import { CaptainBadge, MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
 
 export default function PlayerHub() {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +39,7 @@ export default function PlayerHub() {
           <div className="min-w-0 space-y-1">
             <h1 className="h1 truncate">{t.name}</h1>
             <p className="muted flex flex-wrap items-center gap-x-3 gap-y-1">
-              <span>{meP?.display_name}{myTeam ? `, ${myTeam.name}` : ""}</span>
+              <span>{meP && data.teams.some((x) => x.captain_user_id === meP.user_id) && <CaptainBadge />}{meP?.display_name}{myTeam ? `, ${myTeam.name}` : ""}</span>
               <TournamentStatusLabel status={t.status} />
             </p>
           </div>

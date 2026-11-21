@@ -5,7 +5,7 @@ import type { RoundRow, TMatchup, TournamentData } from "@/lib/types";
 import { enqueue, flush, pendingCount } from "@/lib/scoreQueue";
 import { findCourse, loadCourses } from "@/lib/courses";
 import { cardTotal, DEFAULT_PARS, groupComplete, groupFilled, groupHasAllCards, isTeamCardFormat, nextEmptyCell, orderCards, sideOf } from "@/lib/groupScoring";
-import { CheckIcon, Dot } from "./ui";
+import { CaptainBadge, CheckIcon, Dot } from "./ui";
 
 interface Props {
   data: TournamentData;
@@ -36,6 +36,8 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
 
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? "Player";
   const teamOf = (uid: string) => data.teams.find((t) => t.id === (sideOf(matchup, uid) === "A" ? matchup.team_a_id : matchup.team_b_id))?.name ?? "Team";
+  // A captain's yellow C goes before their own name; a team-card format shows the team name instead.
+  const captainMark = (uid: string) => !isTeamCardFormat(matchup.match_type) && data.teams.some((t) => t.captain_user_id === uid) ? <CaptainBadge /> : null;
   const label = (uid: string) => isTeamCardFormat(matchup.match_type) ? teamOf(uid) : nameOf(uid);
   const sub = (uid: string) => isTeamCardFormat(matchup.match_type)
     ? (sideOf(matchup, uid) === "A" ? matchup.team_a_player_ids : matchup.team_b_player_ids).map(nameOf).join(", ") : teamOf(uid);
@@ -159,7 +161,7 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
           <tbody>
             {cards.map((c) => (
               <tr key={c.id} className="border-t border-hair">
-                <td className="max-w-[7rem] truncate py-2 pr-3 text-left text-stone-900">{label(c.user_id)}</td>
+                <td className="max-w-[7rem] truncate py-2 pr-3 text-left text-stone-900">{captainMark(c.user_id)}{label(c.user_id)}</td>
                 {c.scores.map((s, i) => <td key={i} className="num text-base text-stone-800">{s ?? "·"}</td>)}
                 <td className="num pl-3 text-right text-lg text-stone-900">{cardTotal(c.scores)}</td>
               </tr>
@@ -208,7 +210,7 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
             {cards.map((c, i) => (
               <li key={c.id}>
                 <button className="pick" aria-pressed={i === active} onClick={() => setActive(i)}>
-                  <span className="min-w-0"><span className="block truncate text-stone-900">{label(c.user_id)}</span><span className="muted block truncate">{sub(c.user_id)}</span></span>
+                  <span className="min-w-0"><span className="block truncate text-stone-900">{captainMark(c.user_id)}{label(c.user_id)}</span><span className="muted block truncate">{sub(c.user_id)}</span></span>
                   <span className="num text-3xl text-stone-900" aria-label={`${label(c.user_id)}, hole ${hole + 1}`}>{c.scores[hole] ?? "–"}</span>
                 </button>
               </li>

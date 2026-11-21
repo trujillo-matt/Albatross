@@ -253,6 +253,11 @@ struct Tournament: Identifiable, Codable {
     var courses: [TournamentCourse] = []
     var playerPool: [TournamentPlayer] = []
     var teams: [TournamentTeam] = []
+
+    /// Whether this user captains one of the teams.
+    func isCaptain(_ userID: UUID) -> Bool {
+        teams.contains { $0.captainUserID == userID }
+    }
     var matchups: [TournamentMatchup] = []
     var sessions: [TournamentSession] = []
 

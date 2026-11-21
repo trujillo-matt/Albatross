@@ -244,6 +244,7 @@ struct TournamentMatchupView: View {
                                     .foregroundStyle(isSelected ? .white : Color.accentColor)
                             )
 
+                        if tournament.isCaptain(player.userID) { CaptainBadge() }
                         Text(player.profile?.displayName ?? "Player")
                             .font(.subheadline)
                             .foregroundStyle(.primary)
@@ -320,6 +321,7 @@ struct TournamentMatchupView: View {
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(Color.accentColor)
                         )
+                    if tournament.isCaptain(uid) { CaptainBadge() }
                     Text(player?.profile?.displayName ?? "Player")
                         .font(.subheadline)
                         .foregroundStyle(.primary)

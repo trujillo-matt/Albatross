@@ -8,7 +8,7 @@ import { useTournament, useUserId } from "@/lib/useTournament";
 import type { RoundRow } from "@/lib/types";
 import { FORMAT } from "@/lib/labels";
 import Page from "@/components/Page";
-import { CheckIcon, ChevronLeftIcon, Dot } from "@/components/ui";
+import { CaptainBadge, CheckIcon, ChevronLeftIcon, Dot } from "@/components/ui";
 import GroupScoring from "@/components/GroupScoring";
 import { findCourse, loadCourses } from "@/lib/courses";
 import { enqueue, flush, pendingCount } from "@/lib/scoreQueue";
@@ -76,6 +76,9 @@ export default function MatchPage() {
 
   const teamName = (tid: string) => data.teams.find((t) => t.id === tid)?.name ?? "Team";
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? "Player";
+  const names = (ids: string[]) => ids.length === 0 ? "To be set" : ids.map((uid, i) => (
+    <span key={uid}>{i > 0 && ", "}{data.teams.some((t) => t.captain_user_id === uid) && <CaptainBadge />}{nameOf(uid)}</span>
+  ));
   const course = courseForMatch(data, matchup);
   const courseName = course.name ?? "Tournament Match";
 
@@ -142,9 +145,9 @@ export default function MatchPage() {
         <div className="card space-y-3">
           <div className="flex justify-between gap-4">
             <div className="min-w-0"><div className="text-stone-900">{teamName(matchup.team_a_id)}</div>
-              <div className="muted truncate">{matchup.team_a_player_ids.map(nameOf).join(", ") || "To be set"}</div></div>
+              <div className="muted truncate">{names(matchup.team_a_player_ids)}</div></div>
             <div className="min-w-0 text-right"><div className="text-stone-900">{teamName(matchup.team_b_id)}</div>
-              <div className="muted truncate">{matchup.team_b_player_ids.map(nameOf).join(", ") || "To be set"}</div></div>
+              <div className="muted truncate">{names(matchup.team_b_player_ids)}</div></div>
           </div>
           <p className="muted">Match <span className="tnum">{matchup.matchup_number}</span> · {FORMAT[matchup.match_type]} · {courseName}</p>
           {live && <p className="text-sm text-brand-accent">{live}</p>}

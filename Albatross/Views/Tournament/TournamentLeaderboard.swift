@@ -230,14 +230,17 @@ struct TournamentLeaderboard: View {
     }
 
     /// One side of a match. Names sit next to the status column, the result at the outer edge.
-    private func sideCell(names: [String], edgeText: String, fill: Color?, isLeading: Bool) -> some View {
+    private func sideCell(names: [BoardName], edgeText: String, fill: Color?, isLeading: Bool) -> some View {
         let nameFont: Font = isWide ? .body.weight(.semibold) : .subheadline.weight(.semibold)
         let nameStack = VStack(alignment: isLeading ? .trailing : .leading, spacing: 0) {
-            ForEach(names, id: \.self) { name in
-                Text(name)
-                    .font(nameFont)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+            ForEach(names, id: \.text) { name in
+                HStack(spacing: 4) {
+                    if name.isCaptain { CaptainBadge(size: 14) }
+                    Text(name.text)
+                        .font(nameFont)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                }
             }
         }
         let edge = Text(edgeText)
@@ -316,16 +319,22 @@ struct TournamentLeaderboard: View {
         matchType == .matchPlay ? "\(lead) UP" : "−\(lead)"
     }
 
-    private func names(for playerIDs: [UUID]) -> [String] {
+    private struct BoardName {
+        let text: String
+        let isCaptain: Bool
+    }
+
+    private func names(for playerIDs: [UUID]) -> [BoardName] {
         playerIDs.map { id in
             let profile = tournament.playerPool.first { $0.userID == id }?.profile
-            return Self.boardName(profile?.displayName ?? "Player")
+            return BoardName(text: Self.boardName(profile?.displayName ?? "Player"),
+                             isCaptain: tournament.isCaptain(id))
         }
     }
 
     private func accessibilityLabel(for matchup: TournamentMatchup, live: LiveMatchStatus?) -> String {
-        let sideA = names(for: matchup.teamAPlayerIDs).joined(separator: " and ")
-        let sideB = names(for: matchup.teamBPlayerIDs).joined(separator: " and ")
+        let sideA = names(for: matchup.teamAPlayerIDs).map(\.text).joined(separator: " and ")
+        let sideB = names(for: matchup.teamBPlayerIDs).map(\.text).joined(separator: " and ")
         var label = "Match \(matchup.matchupNumber), \(sideA) against \(sideB)"
         switch matchup.status {
         case .pending: label += ", not started"
