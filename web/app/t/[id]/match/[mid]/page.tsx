@@ -80,7 +80,7 @@ export default function MatchPage() {
     <span key={uid}>{i > 0 && ", "}{data.teams.some((t) => t.captain_user_id === uid) && <CaptainBadge />}{nameOf(uid)}</span>
   ));
   const course = courseForMatch(data, matchup);
-  const courseName = course.name ?? "Tournament Match";
+  const courseName = course.name ?? "Tournament match";
 
   const startCard = async () => {
     setMsg(null);
@@ -214,7 +214,7 @@ export default function MatchPage() {
             {!locked ? (
               <button className="btn w-full" disabled={filled < 18} onClick={finish}>Finish and submit scorecard</button>
             ) : (
-              <p className="inline-flex w-full items-center justify-center gap-2 text-sm text-brand-accent"><CheckIcon />Scorecard submitted. Only the admin can change it now</p>
+              <p className="inline-flex w-full items-center justify-center gap-2 text-sm text-brand-accent"><CheckIcon />Scorecard submitted. Only an admin can change it now</p>
             )}
           </>
         )}

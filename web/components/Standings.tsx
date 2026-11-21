@@ -61,7 +61,7 @@ export default function Standings({ data }: { data: TournamentData }) {
       )}
       <button className="btn-ghost w-full" onClick={async () => {
         try { await shareOrDownload(await renderStandingsImage(data), "standings.png"); } catch { /* user cancelled share */ }
-      }}>Share standings image</button>
+      }}>Share standings</button>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { callAdminFunction, useAdminSession } from "@/lib/useAdmin";
@@ -31,6 +31,8 @@ export default function AdminTournament() {
   const { data, error, reload } = useTournament(id);
   const [tab, setTab] = useState<Tab>("overview");
   const [msg, setMsg] = useState<string | null>(null);
+  const router = useRouter();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   if (!ready) return <Page wide><p className="muted">Loading</p></Page>;
   if (!user) return <Page><AdminSignIn /></Page>;
@@ -47,6 +49,15 @@ export default function AdminTournament() {
     reload();
   };
 
+  // Only the person who created the tournament can delete it; the database enforces the same rule.
+  const canDelete = data.tournament.creator_user_id === user.id;
+  const deleteTournament = async () => {
+    setMsg(null);
+    const { error } = await supabase.from("tournaments").delete().eq("id", data.tournament.id);
+    if (error) { setMsg(error.message); setConfirmingDelete(false); return; }
+    router.push("/admin");
+  };
+
   const tabs = Object.keys(TAB_LABEL) as Tab[];
   return (
     <Page wide>
@@ -58,7 +69,18 @@ export default function AdminTournament() {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <h1 className="h1">{data.tournament.name}</h1>
             <TournamentStatusLabel status={data.tournament.status} />
+            {canDelete && !confirmingDelete && <button className="btn-ghost btn-sm ml-auto text-bad" onClick={() => setConfirmingDelete(true)}>Delete tournament</button>}
           </div>
+          {confirmingDelete && (
+            <div role="alertdialog" aria-label="Delete tournament" className="card space-y-3">
+              <p className="text-stone-900">Delete tournament?</p>
+              <p className="muted">“{data.tournament.name}” and all its data will be permanently deleted. This cannot be undone</p>
+              <div className="flex gap-2">
+                <button className="btn-sm rounded-lg bg-bad px-3 py-2 text-white" onClick={deleteTournament}>Delete</button>
+                <button className="btn-ghost btn-sm" onClick={() => setConfirmingDelete(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
         </header>
         <nav className="tabs print:hidden" aria-label="Sections">
           {tabs.map((t) => (
@@ -205,9 +227,9 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
                     <div className="flex items-center gap-2 text-stone-900">{p.display_name}{p.is_admin && <span className="text-xs text-stone-500">Admin</span>}</div>
                     <div className="muted flex flex-wrap items-center gap-x-2">
                       {c ? <>
-                        <span className="inline-flex items-center gap-2"><Dot tone={c.status === "active" ? "live" : "idle"} />Code {c.status}{c.code_hint ? `, ends ${c.code_hint}` : ""}</span>
+                        <span className="inline-flex items-center gap-2"><Dot tone={c.last_used_at ? "live" : "idle"} />{c.last_used_at ? `Signed in ${shortDateTime(c.last_used_at)}` : "Not signed in yet"}</span>
                         <span aria-hidden>·</span>
-                        <span>{c.last_used_at ? `Last used ${shortDateTime(c.last_used_at)}` : "Not used yet"}</span></>
+                        <span>Code {c.status}{c.code_hint ? `, ends ${c.code_hint}` : ""}</span></>
                         : <span>Signs in with email</span>}
                     </div>
                   </div>

@@ -39,7 +39,7 @@ struct TournamentSessionsView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Lineups & Callouts")
+        .navigationTitle("Lineups and callouts")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -169,7 +169,7 @@ struct TournamentSessionsView: View {
                     }
                     .disabled(isWorking)
                 }
-                Text("Tap two players on the same team to swap them. Callouts start when a captain opens them.")
+                Text("Tap two players on the same team to swap them. Callouts start when a captain opens them")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

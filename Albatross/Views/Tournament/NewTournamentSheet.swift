@@ -74,7 +74,7 @@ struct NewTournamentSheet: View {
 
     private var step1View: some View {
         Form {
-            Section("Tournament Name") {
+            Section("Tournament name") {
                 TextField("e.g. Ryder Cup 2025", text: $name)
                     .font(.callout)
             }
@@ -321,7 +321,7 @@ struct NewTournamentSheet: View {
         switch step {
         case 1: return "New Tournament"
         case 2: return "Courses"
-        default: return "Invite Players"
+        default: return "Invite players"
         }
     }
 

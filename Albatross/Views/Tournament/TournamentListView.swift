@@ -52,7 +52,7 @@ struct TournamentListView: View {
             .sheet(isPresented: $showNewTournament) {
                 NewTournamentSheet()
             }
-            .alert("Delete Tournament?", isPresented: $showDeleteAlert, presenting: tournamentToDelete) { t in
+            .alert("Delete tournament?", isPresented: $showDeleteAlert, presenting: tournamentToDelete) { t in
                 Button("Delete", role: .destructive) {
                     Task { try? await tournamentStore.deleteTournament(t) }
                 }
@@ -161,7 +161,7 @@ struct TournamentListView: View {
 
     private func leaderboardSection(_ tournament: Tournament) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Leaderboard")
+            Text("Standings")
                 .font(.title3.weight(.medium))
                 .accessibilityAddTraits(.isHeader)
             NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
@@ -185,7 +185,7 @@ struct TournamentListView: View {
                         tournamentToDelete = tournament
                         showDeleteAlert = true
                     } label: {
-                        Label("Delete Tournament", systemImage: "trash")
+                        Label("Delete tournament", systemImage: "trash")
                     }
                 }
             }

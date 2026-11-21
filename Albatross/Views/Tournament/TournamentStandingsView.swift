@@ -43,7 +43,7 @@ struct TournamentStandingsView: View {
 
                 // ── Share button ───────────────────────────────────────────
                 Button(action: generateAndShare) {
-                    Label("Share Standings", systemImage: "square.and.arrow.up")
+                    Label("Share standings", systemImage: "square.and.arrow.up")
                         .font(.subheadline.weight(.medium))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)

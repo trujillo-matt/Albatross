@@ -107,7 +107,7 @@ struct TournamentDraftView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Draft Room")
+        .navigationTitle("Vote and draft")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await tournamentStore.subscribeToDraftRoom(tournamentID: current.id)
@@ -137,7 +137,7 @@ struct TournamentDraftView: View {
                     }
                 }
             }
-            .navigationTitle("Break the Tie")
+            .navigationTitle("Break the tie")
             .navigationBarTitleDisplayMode(.inline)
             .safeAreaInset(edge: .top) {
                 Text("These nominees are tied. Choose \(tieSlots) to become captain.")
@@ -165,7 +165,7 @@ struct TournamentDraftView: View {
             // Header
             phaseBanner(
                 phase: "Phase 1",
-                title: "Vote for Captains",
+                title: "Vote for captains",
                 subtitle: "Choose 2 nominees. Top 2 vote-getters become team captains."
             )
 
@@ -269,7 +269,7 @@ struct TournamentDraftView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(Color.accentColor)
-                    Text("Your vote has been submitted")
+                    Text("Your vote is in")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -282,7 +282,7 @@ struct TournamentDraftView: View {
                 VStack(spacing: 8) {
                     Divider().padding(.top, 20)
 
-                    Text("Commissioner Actions")
+                    Text("Admin actions")
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(.secondary)
                         .padding(.top, 8)
@@ -292,7 +292,7 @@ struct TournamentDraftView: View {
                             if isFinalizingCaptains {
                                 ProgressView().tint(.white)
                             } else {
-                                Text("Finalize Captains")
+                                Text("Finalize captains")
                                     .font(.subheadline.weight(.medium))
                             }
                         }
@@ -380,7 +380,7 @@ struct TournamentDraftView: View {
                     // Commissioner override
                     if isCommissioner {
                         Divider().padding(.horizontal, 16)
-                        Text("Commissioner Override")
+                        Text("Admin override")
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 20)
@@ -403,7 +403,7 @@ struct TournamentDraftView: View {
                         if isStartingTournament {
                             ProgressView().tint(.white)
                         } else {
-                            Label("Start Tournament", systemImage: "flag.fill")
+                            Label("Start tournament", systemImage: "flag.fill")
                                 .font(.callout.weight(.medium))
                         }
                     }

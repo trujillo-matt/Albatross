@@ -58,7 +58,7 @@ export default function PlayerHub() {
             {t.status === "setup" && (
               <div className="card space-y-1">
                 <h2 className="h2">Waiting for the draft</h2>
-                <p className="muted">The organizer will start the captain vote soon. <span className="tnum">{data.players.filter((p) => p.invite_status === "accepted").length}</span> players are in</p>
+                <p className="muted">The admin will start the captain vote soon. <span className="tnum">{data.players.filter((p) => p.invite_status === "accepted").length}</span> players are in</p>
               </div>
             )}
             {t.status === "draft" && !captainsSet && <VotePanel data={data} me={userId} reload={reload} />}

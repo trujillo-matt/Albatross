@@ -241,7 +241,7 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
           <button className="btn w-full" disabled={!complete || busy} onClick={finish}>Finish and submit the group scorecards</button>
         </div>
       )}
-      {done && <p className="inline-flex w-full items-center justify-center gap-2 text-sm text-brand-accent"><CheckIcon />Group scorecards submitted. Only an organizer can change them now</p>}
+      {done && <p className="inline-flex w-full items-center justify-center gap-2 text-sm text-brand-accent"><CheckIcon />Group scorecards submitted. Only an admin can change them now</p>}
       {err && <p role="alert" className="text-sm text-bad">{err}</p>}
     </div>
   );

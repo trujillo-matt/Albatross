@@ -199,7 +199,7 @@ struct TournamentMatchupView: View {
                     if isSavingPairings {
                         ProgressView().tint(.white)
                     } else {
-                        Text("Confirm Pairings")
+                        Text("Confirm pairings")
                             .font(.callout.weight(.medium))
                     }
                 }

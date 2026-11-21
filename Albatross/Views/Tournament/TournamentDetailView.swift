@@ -55,10 +55,10 @@ struct TournamentDetailView: View {
                         Button(role: .destructive) {
                             showDeleteAlert = true
                         } label: {
-                            Label("Delete Tournament", systemImage: "trash")
+                            Label("Delete tournament", systemImage: "trash")
                         }
                     } label: {
-                        Label("Tournament Options", systemImage: "ellipsis.circle")
+                        Label("Tournament options", systemImage: "ellipsis.circle")
                     }
                 }
             }
@@ -66,7 +66,7 @@ struct TournamentDetailView: View {
         .sheet(isPresented: $showInviteSearch) {
             InvitePlayersSheet(tournament: current)
         }
-        .alert("Delete Tournament?", isPresented: $showDeleteAlert) {
+        .alert("Delete tournament?", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
                 Task {
                     try? await tournamentStore.deleteTournament(current)
@@ -173,7 +173,7 @@ struct TournamentDetailView: View {
             if isCommissioner {
                 VStack(spacing: 12) {
                     Button(action: { showInviteSearch = true }) {
-                        Label("Invite Players", systemImage: "person.badge.plus")
+                        Label("Invite players", systemImage: "person.badge.plus")
                             .font(.subheadline.weight(.medium))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -194,7 +194,7 @@ struct TournamentDetailView: View {
                                 ProgressView()
                                     .tint(.white)
                             } else {
-                                Label("Start Draft", systemImage: "play.circle.fill")
+                                Label("Start captain vote and draft", systemImage: "play.circle.fill")
                                     .font(.callout.weight(.medium))
                             }
                         }
@@ -208,7 +208,7 @@ struct TournamentDetailView: View {
                     .disabled(acceptedCount < 2 || isStartingDraft)
 
                     if acceptedCount < 2 {
-                        Text("Need at least 2 accepted players to start the draft.")
+                        Text("You need at least 2 players to start the captain vote")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -294,10 +294,10 @@ struct TournamentDetailView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Enter Draft Room")
+                        Text("Open vote and draft")
                             .font(.callout.weight(.semibold))
                             .foregroundStyle(.primary)
-                        Text("Captain voting & snake draft in progress")
+                        Text("Captain vote and draft in progress")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -329,7 +329,7 @@ struct TournamentDetailView: View {
                         Image(systemName: "megaphone.fill")
                             .foregroundStyle(Color.accentColor)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Lineups & Callouts")
+                            Text("Lineups and callouts")
                                 .font(.callout.weight(.semibold))
                                 .foregroundStyle(.primary)
                             Text(current.currentSession.map { "\($0.title), \($0.status.displayName)" } ?? "")
@@ -358,7 +358,7 @@ struct TournamentDetailView: View {
             .padding(.top, 16)
 
             NavigationLink(destination: TournamentStandingsView(tournament: current)) {
-                Label("Full Standings", systemImage: "chart.bar.fill")
+                Label("Full standings", systemImage: "chart.bar.fill")
                     .font(.subheadline.weight(.medium))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -481,7 +481,7 @@ struct TournamentDetailView: View {
             }
 
             NavigationLink(destination: TournamentStandingsView(tournament: current)) {
-                Label("View Full Standings", systemImage: "chart.bar.fill")
+                Label("View full standings", systemImage: "chart.bar.fill")
                     .font(.subheadline.weight(.medium))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -630,7 +630,7 @@ private struct InvitePlayersSheet: View {
                 }
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Invite Players")
+            .navigationTitle("Invite players")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
