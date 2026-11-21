@@ -1,4 +1,5 @@
 "use client";
+import { courseForMatch } from "@/lib/sessions";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -8,6 +9,7 @@ import type { RoundRow } from "@/lib/types";
 import { FORMAT } from "@/lib/labels";
 import Page from "@/components/Page";
 import { CheckIcon, ChevronLeftIcon, Dot } from "@/components/ui";
+import GroupScoring from "@/components/GroupScoring";
 import { findCourse, loadCourses } from "@/lib/courses";
 import { enqueue, flush, pendingCount } from "@/lib/scoreQueue";
 import { matchPlayStatus } from "@/lib/scoring";
@@ -18,7 +20,7 @@ export default function MatchPage() {
   const { id, mid } = useParams<{ id: string; mid: string }>();
   const router = useRouter();
   const { userId, ready } = useUserId();
-  const { data } = useTournament(id);
+  const { data, reload } = useTournament(id);
   const [round, setRound] = useState<RoundRow | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [hole, setHole] = useState(0);
@@ -74,12 +76,13 @@ export default function MatchPage() {
 
   const teamName = (tid: string) => data.teams.find((t) => t.id === tid)?.name ?? "Team";
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? "Player";
-  const courseName = data.courses.find((c) => c.round_number === matchup.matchup_number)?.course_name ?? "Tournament Match";
+  const course = courseForMatch(data, matchup);
+  const courseName = course.name ?? "Tournament Match";
 
   const startCard = async () => {
     setMsg(null);
     const list = await loadCourses();
-    const courseId = data.courses.find((c) => c.round_number === matchup.matchup_number)?.course_id;
+    const courseId = course.id;
     const catalog = (courseId ? list.find((c) => c.id === courseId) : undefined) ?? findCourse(list, courseName);
     const pars = catalog ? [...catalog.holes].sort((a, b) => a.number - b.number) : null;
     const row = {
@@ -148,17 +151,21 @@ export default function MatchPage() {
           {matchup.status === "complete" && <p className="text-stone-900">Final: <span className="num text-xl">{Number(matchup.points_team_a).toFixed(1)} to {Number(matchup.points_team_b).toFixed(1)}</span></p>}
         </div>
 
-        {matchup.status === "pending" && <p className="muted">Waiting for pairings to be set</p>}
+        {matchup.status === "pending" && <p className="muted">{matchup.session_id ? "Waiting for the captains to finish their callouts" : "Waiting for pairings to be set"}</p>}
 
-        {matchup.status !== "pending" && mine && loaded && !round && (
+        {userId && ((mine && matchup.status === "active") || matchup.scorer_user_id) && (
+          <GroupScoring data={data} matchup={matchup} me={userId} courseName={courseName} courseId={course.id} onChanged={reload} />
+        )}
+
+        {matchup.status !== "pending" && mine && loaded && !round && !matchup.scorer_user_id && (
           <div className="space-y-3">
-            {matchup.match_type === "scramble" && <p className="muted">Scramble: your team plays one ball, so only one teammate needs to enter the team scorecard</p>}
+            {(matchup.match_type === "scramble" || matchup.match_type === "alternate_shot") && <p className="muted">{matchup.match_type === "scramble" ? "Scramble" : "Alternate shot"}: your team plays one ball, so only one teammate needs to enter the team scorecard</p>}
             <button className="btn w-full" onClick={startCard}>Start scorecard</button>
           </div>
         )}
         {matchup.status !== "pending" && !mine && <p className="muted">You are not playing in this match</p>}
 
-        {round && (
+        {round && !matchup.scorer_user_id && (
           <>
             <div className="card space-y-4">
               <div className="flex items-baseline justify-between">

@@ -49,6 +49,7 @@ A push to a branch without a `web/` folder will fail to build, which is expected
 | Captain vote (exactly 2, one ballot, counts hidden until you vote) | `components/VotePanel.tsx`, rpc `cast_captain_votes` |
 | Snake draft, turn enforced in the database | `components/DraftPanel.tsx`, rpc `draft_pick` |
 | Score logging, per hole autosave, offline queue, finish | `app/t/[id]/match/[mid]`, `lib/scoreQueue.ts`, rpc `set_hole_score` |
+| Group scoring: one player keeps score for everyone in the match (players volunteer or the organizer assigns), others watch live. Also in the iOS app | `components/GroupScoring.tsx`, `Albatross/Views/Tournament/GroupScorecardView.swift`, rpcs `set_scorer`, `start_group_scoring`, `finish_group_scoring`; needs migration `009_group_scoring.sql` |
 | Standings (live) and shareable PNG | `components/Standings.tsx`, `lib/shareImage.ts` |
 | Public spectator link (read only, revocable) | `/watch/[token]`, rpcs `set_spectator_link`, `get_public_standings` |
 | Admin: create tournament with course picker, add players and codes, print cards, codes CSV | `/admin`, `/admin/[id]` Roster tab, edge function `admin-players` |

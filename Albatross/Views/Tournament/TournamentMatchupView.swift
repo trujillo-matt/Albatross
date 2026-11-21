@@ -17,7 +17,14 @@ struct TournamentMatchupView: View {
     @State private var showScorecard = false
     @State private var errorMessage: String? = nil
 
-    private var current: TournamentMatchup { liveMatchup ?? matchup }
+    /// The freshest copy: the store's (it reloads after scorer changes), else the one we were opened with.
+    private var current: TournamentMatchup {
+        if let live = liveMatchup { return live }
+        let fresh = tournamentStore.myTournaments
+            .first(where: { $0.id == tournament.id })?
+            .matchups.first(where: { $0.id == matchup.id })
+        return fresh ?? matchup
+    }
 
     private var myUserID: UUID? { authStore.currentProfile?.id }
     private var isCommissioner: Bool { myUserID == tournament.creatorUserID }
@@ -42,7 +49,11 @@ struct TournamentMatchupView: View {
     }
 
     private var courseName: String {
-        tournament.courses.first(where: { $0.roundNumber == current.matchupNumber })?.courseName ?? "TBD"
+        if let id = current.sessionID, let session = tournament.sessions.first(where: { $0.id == id }) {
+            if let name = session.courseName, !name.isEmpty { return name }
+            return tournament.courses.first(where: { $0.roundNumber == session.dayNumber })?.courseName ?? "TBD"
+        }
+        return tournament.courses.first(where: { $0.roundNumber == current.matchupNumber })?.courseName ?? "TBD"
     }
 
     var body: some View {
@@ -55,16 +66,25 @@ struct TournamentMatchupView: View {
                     .padding(.bottom, 8)
 
                 // ── Pairings ─────────────────────────────────────────────
-                if current.status == .pending && canSetPairings {
+                if current.status == .pending && canSetPairings && current.sessionID == nil {
                     pairingsEditor
                 } else {
                     confirmedPairings
                 }
 
                 // ── Score entry ──────────────────────────────────────────
-                if current.status != .pending && iAmInThisMatchup {
+                if current.status != .pending && current.scorerUserID != nil {
+                    groupScoringSection
+                        .padding(.top, 8)
+                } else if current.status != .pending && iAmInThisMatchup {
                     scoreEntrySection
                         .padding(.top, 8)
+                }
+
+                if current.status == .active && isCommissioner {
+                    assignScorerMenu
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
                 }
 
                 // ── Result ───────────────────────────────────────────────
@@ -326,6 +346,8 @@ struct TournamentMatchupView: View {
                     .padding(.bottom, 12)
             }
 
+            volunteerButton
+
             let myRound = existingRound()
             if let round = myRound {
                 // Already started — resume
@@ -354,6 +376,87 @@ struct TournamentMatchupView: View {
                 .buttonStyle(.pressFeedback)
                 .padding(.horizontal, 16)
             }
+        }
+    }
+
+    // MARK: - Group scoring
+
+    private var scorerNameText: String {
+        guard let id = current.scorerUserID else { return "" }
+        return tournament.playerPool.first(where: { $0.userID == id })?.profile?.displayName ?? "A player"
+    }
+
+    private var groupScoringSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionHeader("Group scorecard")
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+            Text(current.scorerUserID == myUserID
+                 ? "You are keeping score for everyone in this match."
+                 : "\(scorerNameText) is keeping score for everyone in this match.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 20)
+            NavigationLink(destination: GroupScorecardView(tournament: tournament, matchup: current)) {
+                scoreEntryButton(label: current.scorerUserID == myUserID ? "Open the group scorecard" : "Watch the scorecards",
+                                 icon: current.scorerUserID == myUserID ? "pencil.circle.fill" : "eye.fill",
+                                 style: current.scorerUserID == myUserID ? .primary : .secondary)
+            }
+            .buttonStyle(.pressFeedback)
+            .padding(.horizontal, 16)
+        }
+    }
+
+    /// Players can volunteer to keep score for the whole group. Shown above their own scorecard until someone does.
+    @ViewBuilder
+    private var volunteerButton: some View {
+        if current.status == .active && iAmInThisMatchup && current.scorerUserID == nil, let me = myUserID {
+            Button {
+                Task { await assignScorer(me) }
+            } label: {
+                Label("I'll keep score for the group", systemImage: "person.3.fill")
+                    .font(.subheadline.weight(.medium))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .foregroundStyle(Color.accentColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .buttonStyle(.pressFeedback)
+            .padding(.horizontal, 16)
+            .padding(.top, 12)
+        }
+    }
+
+    /// The organizer can assign or change the scorer at any time while the match is live.
+    private var assignScorerMenu: some View {
+        let players = (current.teamAPlayerIDs + current.teamBPlayerIDs).compactMap { id in
+            tournament.playerPool.first(where: { $0.userID == id })
+        }
+        return Menu {
+            ForEach(players) { p in
+                Button(p.profile?.displayName ?? "Player") { Task { await assignScorer(p.userID) } }
+            }
+            if current.scorerUserID != nil {
+                Button("No group scorer (each player scores their own)", role: .destructive) {
+                    Task { await assignScorer(nil) }
+                }
+            }
+        } label: {
+            Label(current.scorerUserID == nil ? "Assign a group scorer" : "Change the group scorer",
+                  systemImage: "person.badge.key")
+                .font(.footnote.weight(.medium))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+        }
+    }
+
+    private func assignScorer(_ id: UUID?) async {
+        do {
+            try await tournamentStore.setScorer(matchupID: current.id, tournamentID: tournament.id, scorerID: id)
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 
