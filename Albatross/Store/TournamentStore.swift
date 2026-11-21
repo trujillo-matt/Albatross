@@ -598,6 +598,90 @@ final class TournamentStore: ObservableObject {
         await reload(session.tournamentID)
     }
 
+    // MARK: - Group scoring (one scorer keeps score for everyone in the match)
+
+    /// Volunteer as the scorer (pass your own id), step down (nil), or, for an organizer, assign any player in the
+    /// match. Goes through the `set_scorer` database function. Requires docs/migrations/009 to be applied.
+    func setScorer(matchupID: UUID, tournamentID: UUID, scorerID: UUID?) async throws {
+        nonisolated struct Params: Encodable { let p_matchup: String; let p_scorer: String? }
+        try await supabase.rpc("set_scorer", params: Params(
+            p_matchup: matchupID.uuidString,
+            p_scorer: scorerID?.uuidString
+        )).execute()
+        await reload(tournamentID)
+    }
+
+    /// Creates every player's card for the group (one per side in scramble and alternate shot). Safe to call twice.
+    func startGroupScoring(matchupID: UUID, courseName: String, course: Course?) async throws {
+        nonisolated struct CoursePayload: Encodable {
+            let course_name: String
+            let course_id: String?
+            let pars: [Int]?
+            let handicaps: [Int]?
+            let yardages: [Int]?
+            let rating: Double?
+            let slope: Int?
+        }
+        nonisolated struct Params: Encodable { let p_matchup: String; let p_course: CoursePayload }
+        try await supabase.rpc("start_group_scoring", params: Params(
+            p_matchup: matchupID.uuidString,
+            p_course: CoursePayload(
+                course_name: courseName,
+                course_id: course?.id,
+                pars: course?.pars,
+                handicaps: course?.handicaps,
+                yardages: course?.yardages,
+                rating: course?.courseRating,
+                slope: course?.slopeRating
+            )
+        )).execute()
+    }
+
+    /// Writes one stroke count (1-based hole). The scorer may write any card in the match they score.
+    /// `nil` clears the hole, so the null is sent explicitly (the database function has no default for it).
+    func setHoleScore(roundID: UUID, hole: Int, strokes: Int?) async throws {
+        nonisolated struct Params: Encodable {
+            let p_round: String
+            let p_hole: Int
+            let p_strokes: Int?
+            enum CodingKeys: String, CodingKey { case p_round, p_hole, p_strokes }
+            func encode(to encoder: Encoder) throws {
+                var c = encoder.container(keyedBy: CodingKeys.self)
+                try c.encode(p_round, forKey: .p_round)
+                try c.encode(p_hole, forKey: .p_hole)
+                try c.encode(p_strokes, forKey: .p_strokes)
+            }
+        }
+        try await supabase.rpc("set_hole_score", params: Params(
+            p_round: roundID.uuidString,
+            p_hole: hole,
+            p_strokes: strokes
+        )).execute()
+    }
+
+    /// Submits every card in the group together. Only the scorer (or an organizer), and only with all 18 holes entered.
+    func finishGroupScoring(matchupID: UUID, tournamentID: UUID) async throws {
+        nonisolated struct Params: Encodable { let p_matchup: String }
+        try await supabase.rpc("finish_group_scoring", params: Params(p_matchup: matchupID.uuidString)).execute()
+        await reload(tournamentID)
+    }
+
+    /// Every card for a match, with its owner. Members of the tournament can read all of them.
+    func fetchGroupCards(matchupID: UUID) async -> [GroupCard] {
+        do {
+            let rows: [GroupCard] = try await supabase
+                .from("rounds")
+                .select()
+                .eq("matchup_id", value: matchupID.uuidString)
+                .execute()
+                .value
+            return rows
+        } catch {
+            print("TournamentStore: fetchGroupCards failed — \(error)")
+            return []
+        }
+    }
+
     func recordMatchupRound(matchupID: UUID, roundID: UUID, userID: UUID) async throws {
         struct NewMatchupRound: Encodable {
             let matchup_id: String; let round_id: String; let user_id: String
