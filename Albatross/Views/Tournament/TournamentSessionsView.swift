@@ -14,6 +14,8 @@ struct TournamentSessionsView: View {
     @State private var pickedPlayer: UUID? = nil
     @State private var isWorking = false
     @State private var errorMessage: String? = nil
+    /// Which team captains are on this page right now, from the database check-in.
+    @State private var captainsHere: [UUID: Bool] = [:]
 
     /// Read from the store each time so realtime reloads update the screen.
     private var tournament: Tournament? {
@@ -41,6 +43,26 @@ struct TournamentSessionsView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Lineups and callouts")
         .navigationBarTitleDisplayMode(.inline)
+        // While callouts are open, a captain checks in every few seconds. A pick only goes live with both here.
+        .task(id: checkinSessionID) {
+            guard let sessionID = checkinSessionID else { return }
+            while !Task.isCancelled {
+                if let rows = await tournamentStore.calloutCheckin(sessionID: sessionID) {
+                    captainsHere = Dictionary(uniqueKeysWithValues: rows.map { ($0.teamID, $0.present) })
+                }
+                try? await Task.sleep(for: .seconds(5))
+            }
+        }
+    }
+
+    /// The session in callouts that I should be checking in to, if I am a captain.
+    private var checkinSessionID: UUID? {
+        guard let tournament, tournament.teams.contains(where: { $0.captainUserID == myUserID }) else { return nil }
+        return tournament.sortedSessions.first(where: { $0.status == .callouts })?.id
+    }
+
+    private func bothCaptainsHere(_ t: Tournament) -> Bool {
+        t.teams.count == 2 && t.teams.allSatisfy { captainsHere[$0.id] == true }
     }
 
     // MARK: - Days
@@ -90,16 +112,17 @@ struct TournamentSessionsView: View {
         return me == t.creatorUserID || t.playerPool.contains(where: { $0.userID == me && $0.isAdmin })
     }
 
+    // Admins change pairings and matches on the admin website, not in the app. Here it is the captains.
     private func canManage(_ t: Tournament) -> Bool {
-        isAdmin(t) || t.teams.contains(where: { isCaptain(of: $0.id, t) })
+        t.teams.contains(where: { isCaptain(of: $0.id, t) })
     }
 
     private func canEdit(team teamID: UUID, _ t: Tournament) -> Bool {
-        isAdmin(t) || isCaptain(of: teamID, t)
+        isCaptain(of: teamID, t)
     }
 
     private func canCall(_ session: TournamentSession, _ t: Tournament) -> Bool {
-        session.status == .callouts && (isCaptain(of: session.turnTeamID, t) || isAdmin(t))
+        session.status == .callouts && isCaptain(of: session.turnTeamID, t)
     }
 
     /// Team A is the first team, matching how the database orders sides.
@@ -186,7 +209,13 @@ struct TournamentSessionsView: View {
     private func calloutHint(_ session: TournamentSession, _ t: Tournament, open: Int, locked: Int) -> String {
         var text = isCaptain(of: session.turnTeamID, t)
             ? "Pick one of your units, then the opponent you want."
-            : (canCall(session, t) ? "You are acting as admin." : "Waiting for their captain.")
+            : "Waiting for their captain."
+        if canManage(t) {
+            let absent = t.teams.filter { captainsHere[$0.id] != true }.map(\.name)
+            text += absent.isEmpty
+                ? " Both captains are here."
+                : " Waiting for the \(absent.joined(separator: " and ")) captain to join this page."
+        }
         text += " \(open) open, \(locked) locked."
         if session.consecutivePasses >= 1 { text += " A pass now locks the rest as they stand." }
         return text
@@ -340,21 +369,24 @@ struct TournamentSessionsView: View {
                 Text("Call out \(unitName(myUnit, t)) against \(unitName(theirUnit, t))")
                     .font(.subheadline)
             }
+            if !bothCaptainsHere(t) {
+                Text("Picks go live once both captains are on this page")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
             HStack {
                 Button("Call it out") {
                     guard let mine = myUnit, let theirs = theirUnit else { return }
-                    let asAdmin = !isCaptain(of: session.turnTeamID, t)
-                    run { try await tournamentStore.makeCallout(session, myUnit: mine, theirUnit: theirs, asAdmin: asAdmin) }
+                    run { try await tournamentStore.makeCallout(session, myUnit: mine, theirUnit: theirs, asAdmin: false) }
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(myUnit == nil || theirUnit == nil || isWorking)
+                .disabled(myUnit == nil || theirUnit == nil || isWorking || !bothCaptainsHere(t))
 
                 Button("Pass") {
-                    let asAdmin = !isCaptain(of: session.turnTeamID, t)
-                    run { try await tournamentStore.passCallout(session, asAdmin: asAdmin) }
+                    run { try await tournamentStore.passCallout(session, asAdmin: false) }
                 }
                 .buttonStyle(.bordered)
-                .disabled(isWorking)
+                .disabled(isWorking || !bothCaptainsHere(t))
             }
         }
     }

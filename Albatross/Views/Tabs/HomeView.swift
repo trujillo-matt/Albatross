@@ -37,6 +37,7 @@ struct HomeView: View {
 
                     if !tournamentStore.myTournaments.isEmpty {
                         tournamentsSection
+                        TournamentNewsFeed()
                     }
 
                     friendsSection

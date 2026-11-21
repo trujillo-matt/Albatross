@@ -528,3 +528,29 @@ struct LiveMatchStatus: Equatable {
         }
     }
 }
+
+/// One line of tournament news: a birdie, a changed score, a finished match. Written by the database.
+struct TournamentNewsItem: Identifiable, Codable, Equatable {
+    var id: UUID
+    var tournamentID: UUID
+    var kind: String
+    var headline: String
+    var createdAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id, kind, headline
+        case tournamentID = "tournament_id"
+        case createdAt    = "created_at"
+    }
+}
+
+/// Whether a team's captain is on the callouts page right now.
+struct CaptainPresence: Codable {
+    var teamID: UUID
+    var present: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case teamID  = "team_id"
+        case present
+    }
+}

@@ -8,6 +8,7 @@ import { type MatchType, type Tournament } from "@/lib/types";
 import { FORMAT } from "@/lib/labels";
 import { PRESETS, planToSessionRows, planTotals, sessionMatchCount, type PlanDay } from "@/lib/sessions";
 import AdminSignIn from "@/components/AdminSignIn";
+import NewsFeed from "@/components/NewsFeed";
 import Page from "@/components/Page";
 import { TournamentStatusLabel } from "@/components/ui";
 import { findCourse, loadCourses, type CatalogCourse } from "@/lib/courses";
@@ -76,6 +77,8 @@ export default function AdminHome() {
           <h1 className="h1">Your tournaments</h1>
           <button className="btn-ghost btn-sm" onClick={() => supabase.auth.signOut()}>Sign out</button>
         </header>
+
+        {list.length > 0 && <NewsFeed tournamentIds={list.map((t) => t.id)} names={Object.fromEntries(list.map((t) => [t.id, t.name]))} />}
 
         {list.length > 0 && (
           <div className="card overflow-hidden p-0">

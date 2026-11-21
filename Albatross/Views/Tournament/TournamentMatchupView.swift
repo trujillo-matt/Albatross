@@ -34,7 +34,8 @@ struct TournamentMatchupView: View {
 
     private var iAmCaptainOfTeamA: Bool { myUserID == teamA?.captainUserID }
     private var iAmCaptainOfTeamB: Bool { myUserID == teamB?.captainUserID }
-    private var canSetPairings: Bool { isCommissioner || iAmCaptainOfTeamA || iAmCaptainOfTeamB }
+    // Admins edit pairings on the admin website, so only the captains see the editor here.
+    private var canSetPairings: Bool { iAmCaptainOfTeamA || iAmCaptainOfTeamB }
 
     private var teamAPlayers: [TournamentPlayer] {
         tournament.playerPool.filter { $0.teamID == current.teamAID }

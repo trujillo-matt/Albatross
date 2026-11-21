@@ -10,6 +10,8 @@ final class TournamentStore: ObservableObject {
 
     @Published private(set) var myTournaments: [Tournament] = []
     @Published private(set) var pendingInvites: [Tournament] = []
+    /// The latest tournament news across my tournaments, newest first.
+    @Published private(set) var news: [TournamentNewsItem] = []
     /// Where each match being played stands, by match id. Filled by `refreshLive`.
     @Published private(set) var liveStatus: [UUID: LiveMatchStatus] = [:]
     @Published var isLoading: Bool = false
@@ -613,6 +615,37 @@ final class TournamentStore: ObservableObject {
         nonisolated struct Params: Encodable { let p_session: String; let p_override: Bool }
         try await supabase.rpc("pass_callout", params: Params(p_session: session.id.uuidString, p_override: asAdmin)).execute()
         await reload(session.tournamentID)
+    }
+
+    // MARK: - News
+
+    func loadNews() async {
+        let ids = myTournaments.map { $0.id.uuidString }
+        guard !ids.isEmpty else { news = []; return }
+        do {
+            news = try await supabase
+                .from("tournament_news")
+                .select()
+                .in("tournament_id", values: ids)
+                .order("created_at", ascending: false)
+                .limit(20)
+                .execute()
+                .value
+        } catch {
+            print("TournamentStore: news failed — \(error)")
+        }
+    }
+
+    // MARK: - Callout presence
+
+    /// A captain checks in on the callouts page. Returns which team captains are there now.
+    /// A pick only goes live while both are (docs/migrations/011).
+    func calloutCheckin(sessionID: UUID) async -> [CaptainPresence]? {
+        nonisolated struct Params: Encodable { let p_session: String }
+        return try? await supabase
+            .rpc("callout_checkin", params: Params(p_session: sessionID.uuidString))
+            .execute()
+            .value
     }
 
     // MARK: - Group scoring (one scorer keeps score for everyone in the match)

@@ -348,7 +348,21 @@ function VoteDraft({ data, act, setMsg, reload }: { data: TournamentData; act: A
 
 function Matches({ data, act, userId, reload }: { data: TournamentData; act: Act; userId: string | null; reload: () => void }) {
   if (data.sessions.length > 0 && data.matchups.some((m) => m.session_id)) {
-    return <DayBoard data={data} userId={userId} isAdmin reload={reload} />;
+    const editable = data.matchups.filter((m) => m.status !== "complete");
+    return (
+      <div className="space-y-6">
+        <DayBoard data={data} userId={userId} isAdmin reload={reload} />
+        {editable.length > 0 && (
+          <details className="card">
+            <summary className="h2 cursor-pointer">Edit matches</summary>
+            <p className="muted mt-2">Change who plays in a match at any point before it finishes, including after the callouts. Only admins can do this, and only on this site</p>
+            <div className="mt-4 grid gap-4 lg:grid-cols-2 lg:items-start">
+              {editable.map((m) => <MatchEditor key={`${m.id}:${m.team_a_player_ids.join()}:${m.team_b_player_ids.join()}`} m={m} data={data} act={act} />)}
+            </div>
+          </details>
+        )}
+      </div>
+    );
   }
   // Tournaments started before sessions existed keep the old match-by-match editor.
   return (

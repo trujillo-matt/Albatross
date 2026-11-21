@@ -26,6 +26,10 @@ struct TournamentListView: View {
                         leaderboardSection(featured)
                     }
 
+                    if !tournamentStore.myTournaments.isEmpty {
+                        TournamentNewsFeed()
+                    }
+
                     if tournamentStore.myTournaments.isEmpty && tournamentStore.pendingInvites.isEmpty {
                         emptyTournamentState
                     } else if !tournamentStore.myTournaments.isEmpty {
@@ -274,6 +278,59 @@ struct TournamentListView: View {
         case .draft:    return "Draft"
         case .active:   return "Active"
         case .complete: return "Complete"
+        }
+    }
+}
+
+
+/// "Tournament news": birdies, changed scores and finished matches from my tournaments.
+/// Refreshes while it is on screen.
+struct TournamentNewsFeed: View {
+    @EnvironmentObject private var tournamentStore: TournamentStore
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Tournament news")
+                .font(.title3.weight(.medium))
+                .accessibilityAddTraits(.isHeader)
+
+            if tournamentStore.news.isEmpty {
+                Text("Birdies, changed scores and finished matches show up here")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(tournamentStore.news) { item in
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            Circle()
+                                .fill(item.kind == "score_change" ? Color.orange : (item.kind == "match_result" ? Color.secondary : Color.brandGreen))
+                                .frame(width: 8, height: 8)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(item.headline)
+                                    .font(.subheadline)
+                                Text(item.createdAt.formatted(.relative(presentation: .named)))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 16)
+                        .accessibilityElement(children: .combine)
+                        if item.id != tournamentStore.news.last?.id { Divider().padding(.leading, 34) }
+                    }
+                }
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+        }
+        .task {
+            while !Task.isCancelled {
+                await tournamentStore.loadNews()
+                try? await Task.sleep(for: .seconds(15))
+            }
         }
     }
 }

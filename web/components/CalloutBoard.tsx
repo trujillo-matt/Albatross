@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { orderedTeams } from "@/lib/draft";
 import { FORMAT, SESSION_STATUS } from "@/lib/labels";
@@ -35,9 +35,31 @@ export default function CalloutBoard({ data, session, matchups, userId, isAdmin,
   const unitName = (u: string[]) => u.map(name).join(" & ");
   const captainOf = (id: string | null) => !!userId && data.teams.find((t) => t.id === id)?.captain_user_id === userId;
 
+  // Both captains have to be on this page for a pick to go live. Each screen checks in every few seconds and the
+  // database refuses a pick unless both checked in recently (migration 011).
+  const [here, setHere] = useState<Record<string, boolean>>({});
+  const watching = session.status === "callouts" && (isAdmin || captainOf(ta?.id ?? null) || captainOf(tb?.id ?? null));
+  useEffect(() => {
+    if (!watching) return;
+    let stopped = false;
+    const beat = async () => {
+      const { data: rows } = await supabase.rpc("callout_checkin", { p_session: session.id });
+      if (!stopped && rows) setHere(Object.fromEntries((rows as { team_id: string; present: boolean }[]).map((r) => [r.team_id, r.present])));
+    };
+    beat();
+    const timer = setInterval(beat, 5000);
+    const onVisible = () => { if (document.visibilityState === "visible") beat(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { stopped = true; clearInterval(timer); document.removeEventListener("visibilitychange", onVisible); };
+  }, [watching, session.id]);
+  const absent = [ta, tb].filter((t): t is NonNullable<typeof t> => !!t && !here[t.id]);
+  const bothHere = !!ta && !!tb && absent.length === 0;
+
   const state = calloutState(session, matchups);
   const turnIsMine = captainOf(state.turnTeamId);
   const canCall = session.status === "callouts" && (turnIsMine || isAdmin);
+  // A captain's own pick needs both captains here. An admin acting for them is not held up.
+  const heldUp = turnIsMine && !bothHere;
   const turnSide = sideOf(data.teams, state.turnTeamId);
   const canEdit = (teamId: string) => isAdmin || captainOf(teamId);
   const canManage = isAdmin || captainOf(ta?.id ?? null) || captainOf(tb?.id ?? null);
@@ -124,6 +146,9 @@ export default function CalloutBoard({ data, session, matchups, userId, isAdmin,
             : canCall ? ". You are acting as admin"
             : ". Waiting for their captain"}
           <span className="muted block">
+            {bothHere ? "Both captains are here" : `Waiting for the ${absent.map((t) => t.name).join(" and ")} captain to join this page`}
+          </span>
+          <span className="muted block">
             <span className="tnum">{state.openMatches}</span> open, <span className="tnum">{state.lockedMatches}</span> locked
             {state.nextPassLocks && ". A pass now locks the rest as they stand"}
           </span>
@@ -157,13 +182,14 @@ export default function CalloutBoard({ data, session, matchups, userId, isAdmin,
 
       {canCall && (
         <div className="space-y-2">
+          {heldUp && <p className="muted text-sm">Picks go live once both captains are on this page</p>}
           {ready && <p className="text-sm">Call out <strong>{unitName(mine!)}</strong> against <strong>{unitName(theirs!)}</strong></p>}
           <div className="flex gap-2">
-            <button className="btn flex-1" disabled={!ready || busy}
+            <button className="btn flex-1" disabled={!ready || busy || heldUp}
               onClick={() => run(() => supabase.rpc("make_callout", { p_session: session.id, p_my_unit: mine, p_their_unit: theirs, p_override: !turnIsMine }))}>
               Call it out
             </button>
-            <button className="btn-ghost" disabled={busy} onClick={() => run(() => supabase.rpc("pass_callout", { p_session: session.id, p_override: !turnIsMine }))}>Pass</button>
+            <button className="btn-ghost" disabled={busy || heldUp} onClick={() => run(() => supabase.rpc("pass_callout", { p_session: session.id, p_override: !turnIsMine }))}>Pass</button>
           </div>
         </div>
       )}
