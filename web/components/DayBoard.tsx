@@ -17,7 +17,7 @@ export default function DayBoard({ data, userId, isAdmin, reload }: { data: Tour
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <nav className="flex gap-1" aria-label="Days">
+        <nav className="flex gap-6" aria-label="Days">
           {days.map((d) => (
             <button key={d.day} className="tab" aria-current={d.day === day.day ? "page" : undefined} onClick={() => setPicked(d.day)}>Day {d.day}</button>
           ))}

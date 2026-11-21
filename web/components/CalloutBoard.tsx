@@ -85,7 +85,7 @@ export default function CalloutBoard({ data, session, matchups, userId, isAdmin,
       const interactive = canCall && !locked;
       return (
         <button className="pick py-2 text-sm" aria-pressed={selected(side, u)} disabled={!interactive || busy} onClick={() => tapUnit(m, side)}>
-          <span className="truncate">{unitName(u) || "TBD"}</span>
+          <span className="min-w-0 break-words">{unitName(u) || "TBD"}</span>
         </button>
       );
     };
@@ -95,11 +95,11 @@ export default function CalloutBoard({ data, session, matchups, userId, isAdmin,
           <span className="muted">Match <span className="tnum">{m.matchup_number}</span></span>
           <span className="muted">
             {m.status === "complete" ? <span className="tnum">{m.points_team_a} to {m.points_team_b}</span>
-              : locked ? (m.called_by_team_id ? `Called by ${teamName(m.called_by_team_id)}` : "Locked") : session.status === "callouts" ? "Open" : ""}
+              : locked ? (m.called_by_team_id ? `Locked, called by ${teamName(m.called_by_team_id)}` : "Locked") : session.status === "callouts" ? "Open" : ""}
           </span>
         </div>
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-          {cell("A", m.team_a_id)}<span className="muted text-xs">vs</span>{cell("B", m.team_b_id)}
+        <div className="grid grid-cols-[minmax(0,1fr)_2rem_minmax(0,1fr)] items-center">
+          {cell("A", m.team_a_id)}<span className="muted text-center text-xs">vs</span>{cell("B", m.team_b_id)}
         </div>
       </li>
     );
