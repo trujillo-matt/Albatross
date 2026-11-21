@@ -19,7 +19,8 @@ export interface TPlayer {
   invite_status: "pending" | "accepted" | "declined"; is_admin: boolean;
   display_name: string;
 }
-export interface TTeam { id: string; tournament_id: string; name: string; captain_user_id: string | null; side: "A" | "B" | null }
+export interface TTeam { id: string; tournament_id: string; name: string; captain_user_id: string | null; side: "A" | "B" | null; color?: string | null }
+export interface TTeeTime { session_id: string; tournament_id: string; user_id: string; tee_time: string }
 export interface TVote { id: string; tournament_id: string; voter_user_id: string; nominee_user_id: string }
 export interface TMatchup {
   id: string; tournament_id: string; matchup_number: number; team_a_id: string; team_b_id: string;
@@ -40,5 +41,5 @@ export interface RoundRow {
   course_pars: number[] | null; course_yardages: number[] | null; matchup_id: string | null;
 }
 export interface TournamentData {
-  tournament: Tournament; courses: TCourse[]; players: TPlayer[]; teams: TTeam[]; matchups: TMatchup[]; votes: TVote[]; sessions: TSession[];
+  tournament: Tournament; courses: TCourse[]; players: TPlayer[]; teams: TTeam[]; matchups: TMatchup[]; votes: TVote[]; sessions: TSession[]; teeTimes: TTeeTime[];
 }

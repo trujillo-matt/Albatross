@@ -322,6 +322,12 @@ struct TournamentDetailView: View {
 
     private var activeBody: some View {
         VStack(alignment: .leading, spacing: 0) {
+            if !current.teeTimes.isEmpty {
+                TeeTimeCard(tournament: current, me: authStore.currentProfile?.id)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
+            }
+
             // Lineups and captain callouts for each session
             if current.usesSessions {
                 NavigationLink(destination: TournamentSessionsView(tournamentID: current.id)) {
@@ -672,6 +678,82 @@ private struct InvitePlayersSheet: View {
                     sendErrorMessage = "Could not invite: \(failedNames.joined(separator: ", ")). Check your connection and try again."
                 }
             }
+        }
+    }
+}
+
+/// Tee times, as a player reads them: their own first, then everyone's grouped by time.
+/// An admin sets them on the website.
+struct TeeTimeCard: View {
+    let tournament: Tournament
+    let me: UUID?
+
+    @State private var showAll = false
+
+    /// The session the player should look at: the one in play, else the first with tee times.
+    private var session: TournamentSession? {
+        let withTimes = tournament.sortedSessions.filter { s in tournament.teeTimes.contains { $0.sessionID == s.id } }
+        if let current = tournament.currentSession, withTimes.contains(where: { $0.id == current.id }) { return current }
+        return withTimes.first
+    }
+
+    private func teeTime(in session: TournamentSession, for user: UUID) -> Date? {
+        tournament.teeTimes.first { $0.sessionID == session.id && $0.userID == user }?.teeTime
+    }
+
+    private func groups(in session: TournamentSession) -> [(time: Date, names: [String])] {
+        let rows = tournament.teeTimes.filter { $0.sessionID == session.id }
+        return Dictionary(grouping: rows, by: \.teeTime).sorted { $0.key < $1.key }.map { time, rows in
+            let names = rows.map { row in
+                tournament.playerPool.first(where: { $0.userID == row.userID })?.profile?.displayName ?? "Player"
+            }
+            return (time, names.sorted())
+        }
+    }
+
+    private func label(_ date: Date) -> String {
+        date.formatted(.dateTime.weekday(.abbreviated).hour().minute())
+    }
+
+    var body: some View {
+        if let session {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Tee times")
+                    .font(.title3.weight(.medium))
+                    .accessibilityAddTraits(.isHeader)
+                if let me, let mine = teeTime(in: session, for: me) {
+                    Text("Your tee time, Day \(session.dayNumber) \(session.title): \(label(mine))")
+                        .font(.subheadline.weight(.semibold))
+                } else {
+                    Text("No tee time for you yet in Day \(session.dayNumber) \(session.title)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                DisclosureGroup("Everyone's tee times", isExpanded: $showAll) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(tournament.sortedSessions.filter { s in tournament.teeTimes.contains { $0.sessionID == s.id } }) { s in
+                            Text("Day \(s.dayNumber), \(s.title)")
+                                .font(.footnote.weight(.semibold))
+                                .padding(.top, 4)
+                            ForEach(groups(in: s), id: \.time) { group in
+                                HStack(alignment: .firstTextBaseline) {
+                                    Text(label(group.time))
+                                        .font(.subheadline.monospacedDigit())
+                                        .frame(width: 96, alignment: .leading)
+                                    Text(group.names.joined(separator: ", "))
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 6)
+                }
+                .font(.subheadline)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 }

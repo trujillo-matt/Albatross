@@ -50,6 +50,9 @@ export function matchPoints(type: MatchType, a: Scores[], b: Scores[]): Points {
   return bestBallPoints(a, b);
 }
 
+/** Dormie: one side is up by as many holes as are left, so it cannot lose the match. */
+export const isDormie = (up: number, thru: number): boolean => up !== 0 && thru < 18 && Math.abs(up) === 18 - thru;
+
 /** Holes up/down for match play status, from side A's view, over holes both sides have scored. */
 export function matchPlayStatus(a: Scores[], b: Scores[]): { up: number; thru: number } {
   let up = 0, thru = 0;

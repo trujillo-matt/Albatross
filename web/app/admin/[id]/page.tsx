@@ -11,16 +11,19 @@ import { FORMAT, shortDateTime } from "@/lib/labels";
 import { downloadText, toCsv } from "@/lib/csv";
 import { formatCode } from "@/lib/code";
 import Standings from "@/components/Standings";
+import TeamStyle from "@/components/TeamStyle";
+import TeeTimesPanel from "@/components/TeeTimesPanel";
 import DayBoard from "@/components/DayBoard";
 import { courseForMatch } from "@/lib/sessions";
 import AdminSignIn from "@/components/AdminSignIn";
 import CodeCard from "@/components/CodeCard";
 import Page from "@/components/Page";
-import { CaptainBadge, CheckIcon, ChevronLeftIcon, Dot, MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
+import { teamColor } from "@/lib/teams";
+import { CaptainBadge, TeamDot, CheckIcon, ChevronLeftIcon, Dot, MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
 
-type Tab = "overview" | "roster" | "vote" | "matches" | "scores" | "standings" | "audit";
+type Tab = "overview" | "roster" | "teams" | "teetimes" | "vote" | "matches" | "scores" | "standings" | "audit";
 const TAB_LABEL: Record<Tab, string> = {
-  overview: "Overview", roster: "Roster", vote: "Vote and draft", matches: "Matches", scores: "Scores", standings: "Standings", audit: "Audit log",
+  overview: "Overview", roster: "Roster", teams: "Teams", teetimes: "Tee times", vote: "Vote and draft", matches: "Matches", scores: "Scores", standings: "Standings", audit: "Audit log",
 };
 interface CodeStatus { user_id: string; status: string; code_hint: string | null; last_used_at: string | null }
 type Act = (fn: () => PromiseLike<{ error: { message: string } | null }>) => Promise<void>;
@@ -90,6 +93,8 @@ export default function AdminTournament() {
         {msg && <p role="alert" className="text-sm text-bad print:hidden">{msg}</p>}
         {tab === "overview" && <Overview data={data} act={act} />}
         {tab === "roster" && <Roster data={data} reload={reload} setMsg={setMsg} />}
+        {tab === "teams" && <TeamStyle data={data} reload={reload} />}
+        {tab === "teetimes" && <TeeTimesPanel data={data} reload={reload} />}
         {tab === "vote" && <VoteDraft data={data} act={act} setMsg={setMsg} reload={reload} />}
         {tab === "matches" && <Matches data={data} act={act} userId={user?.id ?? null} reload={reload} />}
         {tab === "scores" && <Scores data={data} setMsg={setMsg} reload={reload} />}
@@ -314,7 +319,7 @@ function VoteDraft({ data, act, setMsg, reload }: { data: TournamentData; act: A
           <div className="grid grid-cols-2 gap-4 md:col-span-2">
             {[a, b].map((tm) => (
               <div key={tm.id} className="card">
-                <h2 className="h2">{tm.name}</h2>
+                <h2 className="h2"><TeamDot color={teamColor(tm)} />{tm.name}</h2>
                 <ul className="mt-2 space-y-1 text-sm text-stone-700">
                   {accepted.filter((p) => p.team_id === tm.id).map((p) => (
                     <li key={p.id}>{p.user_id === tm.captain_user_id && <CaptainBadge />}{p.display_name}</li>

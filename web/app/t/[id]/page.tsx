@@ -13,6 +13,7 @@ import DraftPanel from "@/components/DraftPanel";
 import Standings from "@/components/Standings";
 import Page from "@/components/Page";
 import NewsFeed from "@/components/NewsFeed";
+import TeeTimeCard from "@/components/TeeTimeCard";
 import { CaptainBadge, MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
 
 export default function PlayerHub() {
@@ -57,6 +58,7 @@ export default function PlayerHub() {
         {tab === "play" && (
           <>
             <NewsFeed tournamentIds={[t.id]} />
+            <TeeTimeCard data={data} me={userId} />
             {t.status === "setup" && (
               <div className="card space-y-1">
                 <h2 className="h2">Waiting for the draft</h2>

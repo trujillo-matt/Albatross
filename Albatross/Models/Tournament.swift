@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 // MARK: - Enums
 
@@ -114,12 +115,32 @@ struct TournamentTeam: Identifiable, Codable {
     var tournamentID: UUID
     var name: String
     var captainUserID: UUID?
+    /// "#RRGGBB", set by an admin or the captain. Nil uses the default for the team's side.
+    var color: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case id
         case tournamentID  = "tournament_id"
         case name
         case captainUserID = "captain_user_id"
+        case color
+    }
+}
+
+/// When a player tees off in one session. Players with the same time play together. Set by an admin on the website.
+struct TournamentTeeTime: Identifiable, Codable, Equatable {
+    var sessionID: UUID
+    var tournamentID: UUID
+    var userID: UUID
+    var teeTime: Date
+
+    var id: String { "\(sessionID.uuidString)-\(userID.uuidString)" }
+
+    enum CodingKeys: String, CodingKey {
+        case sessionID    = "session_id"
+        case tournamentID = "tournament_id"
+        case userID       = "user_id"
+        case teeTime      = "tee_time"
     }
 }
 
@@ -260,6 +281,11 @@ struct Tournament: Identifiable, Codable {
     }
     var matchups: [TournamentMatchup] = []
     var sessions: [TournamentSession] = []
+    var teeTimes: [TournamentTeeTime] = []
+
+    /// Colour of the first (team A) or second (team B) team, with the same defaults as the website.
+    var teamAColor: Color { Color(hex: teams.first?.color) ?? .teamDefaultA }
+    var teamBColor: Color { Color(hex: teams.dropFirst().first?.color) ?? .teamDefaultB }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -503,6 +529,11 @@ struct LiveMatchStatus: Equatable {
     var lead: Int
 
     var isAllSquare: Bool { lead == 0 }
+
+    /// Match play only: one side leads by as many holes as are left, so it cannot lose the match.
+    func isDormie(matchType: TournamentMatchType) -> Bool {
+        matchType == .matchPlay && lead != 0 && holesPlayed < 18 && abs(lead) == 18 - holesPlayed
+    }
 
     /// The status of a match from the rounds each side has so far.
     static func from(teamARounds: [Round], teamBRounds: [Round], matchType: TournamentMatchType) -> LiveMatchStatus {

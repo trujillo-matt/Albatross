@@ -13,7 +13,7 @@ import GroupScoring from "@/components/GroupScoring";
 import { foursomeOf } from "@/lib/groupScoring";
 import { findCourse, loadCourses } from "@/lib/courses";
 import { enqueue, flush, pendingCount } from "@/lib/scoreQueue";
-import { matchPlayStatus } from "@/lib/scoring";
+import { isDormie, matchPlayStatus } from "@/lib/scoring";
 
 const DEFAULT_PARS = [4, 4, 3, 4, 5, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 5, 4];
 
@@ -70,7 +70,7 @@ export default function MatchPage() {
       const a = rs.filter((r) => side(r.user_id) === "a").map((r) => r.scores);
       const b = rs.filter((r) => side(r.user_id) === "b").map((r) => r.scores);
       const s = matchPlayStatus(a, b);
-      setLive(s.thru === 0 ? null : s.up === 0 ? `All square thru ${s.thru}` : `Team ${s.up > 0 ? "A" : "B"} ${Math.abs(s.up)} up thru ${s.thru}`);
+      setLive(s.thru === 0 ? null : s.up === 0 ? `All square thru ${s.thru}` : `Team ${s.up > 0 ? "A" : "B"} ${Math.abs(s.up)} up thru ${s.thru}${isDormie(s.up, s.thru) ? ", dormie" : ""}`);
     }, 15000);
     return () => clearInterval(t);
   }, [matchup, round, mid]);

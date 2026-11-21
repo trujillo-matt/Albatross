@@ -3,6 +3,8 @@ import { useState } from "react";
 import CalloutBoard from "@/components/CalloutBoard";
 import { currentSession, groupByDay, sessionPoints } from "@/lib/sessions";
 import type { TournamentData } from "@/lib/types";
+import { teamColor } from "@/lib/teams";
+import { TeamDot } from "@/components/ui";
 
 /** The tournament by day: tabs for days, then every session of the day with its lineup, callouts and results. */
 export default function DayBoard({ data, userId, isAdmin, reload }: { data: TournamentData; userId: string | null; isAdmin: boolean; reload: () => void }) {
@@ -22,7 +24,7 @@ export default function DayBoard({ data, userId, isAdmin, reload }: { data: Tour
             <button key={d.day} className="tab" aria-current={d.day === day.day ? "page" : undefined} onClick={() => setPicked(d.day)}>Day {d.day}</button>
           ))}
         </nav>
-        <p className="muted">{ta?.name} <span className="tnum">{dayPts.a}</span>, {tb?.name} <span className="tnum">{dayPts.b}</span> today</p>
+        <p className="muted">{ta && <TeamDot color={teamColor(ta, "A")} />}{ta?.name} <span className="tnum">{dayPts.a}</span>, {tb && <TeamDot color={teamColor(tb, "B")} />}{tb?.name} <span className="tnum">{dayPts.b}</span> today</p>
       </div>
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
         {day.sessions.map(({ session, matchups }) => (

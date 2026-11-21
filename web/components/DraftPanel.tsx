@@ -3,7 +3,8 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { draftPickCount, orderedTeams, snakeIsTeamATurn } from "@/lib/draft";
 import type { TournamentData } from "@/lib/types";
-import { CaptainBadge, Dot } from "./ui";
+import { CaptainBadge, Dot, TeamDot } from "./ui";
+import { teamColor } from "@/lib/teams";
 
 export default function DraftPanel({ data, me, reload }: { data: TournamentData; me: string; reload: () => void }) {
   const [a, b] = orderedTeams(data.teams);
@@ -25,7 +26,7 @@ export default function DraftPanel({ data, me, reload }: { data: TournamentData;
   const col = (t: typeof a, isClock: boolean) => (
     <div className="card flex-1">
       <div className="flex items-center justify-between gap-2">
-        <span className="h2">{t?.name}</span>
+        <span className="h2">{t && <TeamDot color={teamColor(t)} />}{t?.name}</span>
         {isClock && <span className="inline-flex items-center gap-2 text-xs text-stone-600"><Dot tone="live" />On the clock</span>}
       </div>
       <ul className="mt-3 space-y-1 text-sm text-stone-700">

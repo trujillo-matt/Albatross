@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { matchPlayPoints, bestBallPoints, strokePlayPoints, matchPlayStatus } from "./scoring.ts";
+import { matchPlayPoints, bestBallPoints, strokePlayPoints, matchPlayStatus, isDormie } from "./scoring.ts";
 import { snakeIsTeamATurn, defaultPointsToWin } from "./draft.ts";
 
 const full = (n: number) => Array<number | null>(18).fill(n);
@@ -36,4 +36,13 @@ test("snake order is A B B A A B B A", () => {
 test("points to win is a majority of available points", () => {
   assert.equal(defaultPointsToWin(3), 2);
   assert.equal(defaultPointsToWin(4), 2.5);
+});
+
+test("dormie: up by as many holes as are left", () => {
+  assert.equal(isDormie(2, 16), true);
+  assert.equal(isDormie(-3, 15), true);
+  assert.equal(isDormie(1, 17), true);
+  assert.equal(isDormie(2, 15), false);   // three left, two up: not yet
+  assert.equal(isDormie(0, 17), false);   // all square is never dormie
+  assert.equal(isDormie(1, 18), false);   // the match is over
 });

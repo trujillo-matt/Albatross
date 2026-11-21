@@ -33,3 +33,8 @@ export function MatchupStatusLabel({ status }: { status: MatchupStatus }) {
 const base = { width: 16, height: 16, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
 export const CheckIcon = () => <svg {...base}><path d="M3 8.5 6.5 12 13 4.5" /></svg>;
 export const ChevronLeftIcon = () => <svg {...base}><path d="M10 3 5 8l5 5" /></svg>;
+
+/** A small dot in a team's colour, before the team's name. */
+export function TeamDot({ color }: { color: string }) {
+  return <span aria-hidden className="mr-2 inline-block h-2.5 w-2.5 shrink-0 rounded-full align-[0px] ring-1 ring-black/10" style={{ backgroundColor: color }} />;
+}

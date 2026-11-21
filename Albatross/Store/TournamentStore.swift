@@ -34,6 +34,17 @@ final class TournamentStore: ObservableObject {
         liveStatus = statuses
     }
 
+    /// Group scorecards for the demo, by match. The demo has no cloud rounds to read them from.
+    private var demoGroupCards: [UUID: [GroupCard]] = [:]
+
+    func seedGroupCardsForDemo(_ cards: [UUID: [GroupCard]]) {
+        demoGroupCards = cards
+    }
+
+    func seedNewsForDemo(_ items: [TournamentNewsItem]) {
+        news = items
+    }
+
     /// True while the tournament demo data is showing. Loads that would replace it with cloud results are skipped.
     private(set) var isShowingDemo = false
 
@@ -138,7 +149,19 @@ final class TournamentStore: ObservableObject {
         t.matchups = try await loadMatchups(tournamentID: t.id)
         // Sessions need migration 008. Without it the tournament still loads, just with no sessions.
         t.sessions = (try? await loadSessions(tournamentID: t.id)) ?? []
+        // Tee times need migration 013. Without it the tournament still loads, with none.
+        t.teeTimes = (try? await loadTeeTimes(tournamentID: t.id)) ?? []
         return t
+    }
+
+    private func loadTeeTimes(tournamentID: UUID) async throws -> [TournamentTeeTime] {
+        try await supabase
+            .from("tournament_tee_times")
+            .select()
+            .eq("tournament_id", value: tournamentID.uuidString)
+            .order("tee_time")
+            .execute()
+            .value
     }
 
     private func loadSessions(tournamentID: UUID) async throws -> [TournamentSession] {
@@ -620,6 +643,9 @@ final class TournamentStore: ObservableObject {
     // MARK: - News
 
     func loadNews() async {
+        #if DEBUG
+        if isShowingDemo { return }
+        #endif
         let ids = myTournaments.map { $0.id.uuidString }
         guard !ids.isEmpty else { news = []; return }
         do {
@@ -718,6 +744,9 @@ final class TournamentStore: ObservableObject {
 
     /// Every card for the matches of a foursome, with its owner. Members of the tournament can read all of them.
     func fetchGroupCards(matchupIDs: [UUID]) async -> [GroupCard] {
+        #if DEBUG
+        if isShowingDemo { return matchupIDs.flatMap { demoGroupCards[$0] ?? [] } }
+        #endif
         do {
             let rows: [GroupCard] = try await supabase
                 .from("rounds")

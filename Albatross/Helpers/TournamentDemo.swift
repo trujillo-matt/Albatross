@@ -17,7 +17,8 @@ enum TournamentDemo {
     static let jordan = UserProfile(id: UUID(uuidString: "00000000-0000-0000-0000-0000000000D4")!, displayName: "Jordan Park")
 
     /// 24 made-up players over three days: best ball pairs, scramble pairs, then twelve singles.
-    /// Day one and two are finished, day three has five finished, four live and three still to play.
+    /// Day one and two are finished. On day three six singles matches are finished, four are live (two foursomes, each
+    /// with one person keeping score for all four players) and two are still to play.
     /// Matches come from the players: 12 a side makes six pairs matches or twelve singles matches.
     static func makeLargeTournament() -> Tournament {
         let tournamentID = UUID(uuidString: "00000000-0000-0000-0000-000000000012")!
@@ -48,12 +49,13 @@ enum TournamentDemo {
             Day(type: .scramble, course: "Reynolds Plantation: Oconee",
                 outcomes: [teamBWins, teamAWins, teamBWins, teamBWins, teamAWins, halved], live: []),
             Day(type: .matchPlay, course: "Great Waters at Reynolds",
-                outcomes: [teamAWins, teamBWins, teamAWins, teamAWins, teamBWins, nil, nil, nil, nil, nil, nil, nil],
-                live: [5, 6, 7, 8])
+                outcomes: [teamAWins, teamBWins, teamAWins, teamAWins, teamBWins, teamAWins, nil, nil, nil, nil, nil, nil],
+                live: [6, 7, 8, 9])
         ]
 
         var matchups: [TournamentMatchup] = []
         var courses: [TournamentCourse] = []
+        let sessionIDs = (1...3).map { UUID(uuidString: "00000000-0000-0000-0000-0000000000D\($0)")! }
         for (dayIndex, day) in plan.enumerated() {
             courses.append(TournamentCourse(id: UUID(), tournamentID: tournamentID, courseName: day.course,
                                             roundNumber: dayIndex + 1, matchType: day.type))
@@ -72,11 +74,16 @@ enum TournamentDemo {
                 } else if day.live.contains(index) {
                     status = .active
                 }
-                matchups.append(TournamentMatchup(
+                var matchup = TournamentMatchup(
                     id: UUID(uuidString: String(format: "00000000-0000-0000-0000-%012X", 0xF100 + number))!,
                     tournamentID: tournamentID, matchupNumber: number, teamAID: teamAID, teamBID: teamBID,
                     teamAPlayerIDs: sideA, teamBPlayerIDs: sideB,
-                    matchType: day.type, status: status, result: result, pointsTeamA: pointsA, pointsTeamB: pointsB))
+                    matchType: day.type, status: status, result: result, pointsTeamA: pointsA, pointsTeamB: pointsB)
+                // Each day is one session. Day three's singles are played two at a time, and Ivy Tan keeps score
+                // for the live foursomes.
+                matchup.sessionID = sessionIDs[dayIndex]
+                if day.type == .matchPlay && status == .active { matchup.scorerUserID = teamA[6].id }
+                matchups.append(matchup)
             }
         }
 
@@ -93,19 +100,96 @@ enum TournamentDemo {
             createdAt: now, updatedAt: now)
         tournament.courses = courses
         tournament.teams = [
-            TournamentTeam(id: teamAID, tournamentID: tournamentID, name: "Team Matt", captainUserID: me.id),
-            TournamentTeam(id: teamBID, tournamentID: tournamentID, name: "Team Alex", captainUserID: teamB[0].id)
+            TournamentTeam(id: teamAID, tournamentID: tournamentID, name: "Team Matt", captainUserID: me.id, color: "#1D4E89"),
+            TournamentTeam(id: teamBID, tournamentID: tournamentID, name: "Team Alex", captainUserID: teamB[0].id, color: "#B8860B")
         ]
         tournament.playerPool = teamA.map { player($0, team: teamAID, admin: $0.id == me.id) } + teamB.map { player($0, team: teamBID) }
         tournament.matchups = matchups
+
+        // Day three tee times: singles go out in pairs, so each foursome shares a tee time.
+        let daySession = sessionIDs[2]
+        tournament.sessions = plan.enumerated().map { index, day in
+            TournamentSession(
+                id: sessionIDs[index], tournamentID: tournamentID, dayNumber: index + 1, sessionNumber: 1, label: nil,
+                matchType: day.type, courseName: day.course, matchCount: day.outcomes.count,
+                status: index == 2 ? .locked : .complete, firstCallerTeamID: nil, turnTeamID: nil, consecutivePasses: 0)
+        }
+        let firstTee = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: now) ?? now
+        for matchup in matchups where matchup.sessionID == daySession {
+            let slot = Calendar.current.date(byAdding: .minute, value: 10 * ((matchup.matchupNumber - 13) / 2), to: firstTee) ?? firstTee
+            for id in matchup.teamAPlayerIDs + matchup.teamBPlayerIDs {
+                tournament.teeTimes.append(TournamentTeeTime(sessionID: daySession, tournamentID: tournamentID, userID: id, teeTime: slot))
+            }
+        }
         return tournament
+    }
+
+    /// Hole by hole in the live matches, by match number: +1 team A won the hole, -1 team B won it, 0 halved.
+    /// Matches 19 and 20 are one foursome (seven holes in), 21 and 22 the next (fifteen holes in, one of them dormie).
+    static let liveHoleResults: [Int: [Int]] = [
+        19: [1, 0, -1, 1, 0, 1, 0],        // team A ahead by 2 after trailing at the turn of the third
+        20: [0, -1, 1, -1, 1, 0, 0],       // all square after four lead changes
+        21: [-1, 0, 1, -1, 0, -1, 0, 0, 1, -1, 0, 0, -1, 0, 0],   // team B three up with three to play: dormie
+        22: [1, 1, -1, 0, 0, 1, -1, 0, 0, -1, 1, 0, 0, 0, 0]      // team A ahead by 1
+    ]
+
+    private static let demoPars = [4, 4, 3, 4, 5, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 5, 4]
+
+    /// The scorecards of the live matches, so the group scorecard screen has real strokes to show.
+    /// A hole someone wins on a birdie is every third hole, so the news has something to say.
+    static func makeGroupCards(for tournament: Tournament) -> [UUID: [GroupCard]] {
+        var byMatchup: [UUID: [GroupCard]] = [:]
+        for matchup in tournament.matchups {
+            guard let results = liveHoleResults[matchup.matchupNumber],
+                  let ownerA = matchup.teamAPlayerIDs.first, let ownerB = matchup.teamBPlayerIDs.first else { continue }
+            var scoresA = [Int?](repeating: nil, count: 18)
+            var scoresB = [Int?](repeating: nil, count: 18)
+            for (hole, result) in results.enumerated() {
+                let par = demoPars[hole]
+                let birdie = hole % 3 == 0
+                switch result {
+                case 1:  scoresA[hole] = birdie ? par - 1 : par;     scoresB[hole] = par
+                case -1: scoresA[hole] = par;                         scoresB[hole] = birdie ? par - 1 : par
+                default: scoresA[hole] = par;                         scoresB[hole] = par
+                }
+                if result == 1 && !birdie { scoresB[hole] = par + 1 }
+                if result == -1 && !birdie { scoresA[hole] = par + 1 }
+            }
+            func card(_ owner: UUID, _ scores: [Int?]) -> GroupCard {
+                GroupCard(id: UUID(), ownerID: owner, scores: scores, status: "in_progress", coursePars: demoPars, courseYardages: nil)
+            }
+            byMatchup[matchup.id] = [card(ownerA, scoresA), card(ownerB, scoresB)]
+        }
+        return byMatchup
+    }
+
+    /// The feed: birdies from those cards, a corrected score, and the finished matches, newest first.
+    static func makeNews(for tournament: Tournament, cards: [UUID: [GroupCard]]) -> [TournamentNewsItem] {
+        func name(_ id: UUID) -> String { tournament.playerPool.first(where: { $0.userID == id })?.profile?.displayName ?? "A player" }
+        var items: [TournamentNewsItem] = []
+        func add(_ kind: String, _ headline: String, minutesAgo: Int) {
+            items.append(TournamentNewsItem(id: UUID(), tournamentID: tournament.id, kind: kind, headline: headline,
+                                            createdAt: Date().addingTimeInterval(TimeInterval(-60 * minutesAgo))))
+        }
+        // The most recent hole of each live foursome comes first.
+        add("birdie", "Alex Kim made a birdie on hole 4", minutesAgo: 2)
+        add("score_change", "Score changed: Ivy Tan, hole 6, 4 to 3", minutesAgo: 5)
+        add("birdie", "Ivy Tan made a birdie on hole 7", minutesAgo: 6)
+        add("eagle", "Jordan Park made an eagle on hole 5", minutesAgo: 9)
+        add("match_result", "Team Matt won match 18", minutesAgo: 14)
+        add("birdie", "Matt Trujillo made a birdie on hole 4", minutesAgo: 17)
+        add("match_result", "Team Alex won match 14", minutesAgo: 31)
+        add("birdie", "Maya Lopez made a birdie on hole 1", minutesAgo: 44)
+        add("ace", "Uma Reid made a hole in one on hole 3", minutesAgo: 58)
+        _ = cards
+        return items
     }
 
     /// Where the live matches stand, by match number.
     static func liveStatuses(for tournament: Tournament) -> [UUID: LiveMatchStatus] {
         let byNumber: [Int: LiveMatchStatus] = tournament.matchups.count > 4
-            ? [18: LiveMatchStatus(holesPlayed: 9, lead: 2), 19: LiveMatchStatus(holesPlayed: 6, lead: 0),
-               20: LiveMatchStatus(holesPlayed: 7, lead: -1), 21: LiveMatchStatus(holesPlayed: 4, lead: 1)]
+            ? Dictionary(uniqueKeysWithValues: liveHoleResults.map { ($0.key, LiveMatchStatus(
+                holesPlayed: $0.value.count, lead: $0.value.reduce(0, +))) })
             : [3: LiveMatchStatus(holesPlayed: 5, lead: 1)]
         return Dictionary(uniqueKeysWithValues: tournament.matchups.compactMap { matchup in
             byNumber[matchup.matchupNumber].map { (matchup.id, $0) }
@@ -187,6 +271,11 @@ extension TournamentStore {
         let tournament = large ? TournamentDemo.makeLargeTournament() : TournamentDemo.makeTournament()
         seedForDemo([tournament])
         seedLiveForDemo(TournamentDemo.liveStatuses(for: tournament))
+        if large {
+            let cards = TournamentDemo.makeGroupCards(for: tournament)
+            seedGroupCardsForDemo(cards)
+            seedNewsForDemo(TournamentDemo.makeNews(for: tournament, cards: cards))
+        }
     }
 }
 

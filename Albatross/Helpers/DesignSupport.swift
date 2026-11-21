@@ -104,3 +104,26 @@ struct CaptainBadge: View {
             .accessibilityLabel("Captain")
     }
 }
+
+// MARK: - Team colours
+
+extension Color {
+    /// "#RRGGBB" to a colour, or nil when the text is missing or not a colour.
+    init?(hex: String?) {
+        guard let hex, hex.count == 7, hex.hasPrefix("#"), let value = UInt32(hex.dropFirst(), radix: 16) else { return nil }
+        self.init(red: Double((value >> 16) & 255) / 255, green: Double((value >> 8) & 255) / 255, blue: Double(value & 255) / 255)
+    }
+
+    /// The same defaults the web app uses for a team with no colour set.
+    static let teamDefaultA = Color.brandGreen
+    static let teamDefaultB = Color(red: 0x73 / 255, green: 0x1F / 255, blue: 0x24 / 255)
+
+    /// White or near-black, whichever reads better on this colour.
+    var contrastingText: Color {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        UIColor(self).resolvedColor(with: UITraitCollection(userInterfaceStyle: .light)).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        func linear(_ c: CGFloat) -> CGFloat { c <= 0.03928 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4) }
+        let luminance = 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue)
+        return luminance > 0.4 ? Color(white: 0.07) : .white
+    }
+}

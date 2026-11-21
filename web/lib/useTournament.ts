@@ -22,7 +22,7 @@ export function useTournament(id: string) {
 
   const load = useCallback(async () => {
     const q = (table: string) => supabase.from(table).select("*").eq("tournament_id", id);
-    const [t, courses, players, teams, matchups, votes, sessions] = await Promise.all([
+    const [t, courses, players, teams, matchups, votes, sessions, teeTimes] = await Promise.all([
       supabase.from("tournaments").select("*").eq("id", id).single(),
       q("tournament_courses").order("round_number"),
       q("tournament_players"),
@@ -30,6 +30,7 @@ export function useTournament(id: string) {
       q("tournament_matchups").order("matchup_number"),
       q("tournament_captain_votes"),
       q("tournament_sessions").order("day_number").order("session_number"),
+      q("tournament_tee_times"),   // migration 013; an older database simply has none
     ]);
     if (t.error) { setError(t.error.message); return; }
     const rawPlayers = (players.data ?? []) as Omit<TPlayer, "display_name">[];
@@ -47,6 +48,7 @@ export function useTournament(id: string) {
       matchups: matchups.data ?? [],
       votes: votes.data ?? [],
       sessions: sessions.data ?? [],
+      teeTimes: teeTimes.data ?? [],
     });
   }, [id]);
 
@@ -57,7 +59,7 @@ export function useTournament(id: string) {
       timer.current = setTimeout(load, 250);
     };
     const ch = supabase.channel(`tournament-${id}`);
-    for (const table of ["tournament_players", "tournament_teams", "tournament_matchups", "tournament_captain_votes", "tournament_sessions"]) {
+    for (const table of ["tournament_players", "tournament_teams", "tournament_matchups", "tournament_captain_votes", "tournament_sessions", "tournament_tee_times"]) {
       ch.on("postgres_changes", { event: "*", schema: "public", table, filter: `tournament_id=eq.${id}` }, refresh);
     }
     ch.on("postgres_changes", { event: "*", schema: "public", table: "tournaments", filter: `id=eq.${id}` }, refresh);

@@ -2,6 +2,7 @@
 import { type TMatchup, type TournamentData } from "@/lib/types";
 import { FORMAT } from "@/lib/labels";
 import { orderedTeams } from "@/lib/draft";
+import { teamColor } from "@/lib/teams";
 import { groupByDay, sessionPoints } from "@/lib/sessions";
 import { renderStandingsImage, shareOrDownload } from "@/lib/shareImage";
 import Scoreboard from "./Scoreboard";
@@ -31,7 +32,7 @@ export default function Standings({ data }: { data: TournamentData }) {
   return (
     <div className="space-y-4">
       <Scoreboard
-        teams={[a && { name: a.name, points: pa }, b && { name: b.name, points: pb }]}
+        teams={[a && { name: a.name, points: pa, color: teamColor(a, "A") }, b && { name: b.name, points: pb, color: teamColor(b, "B") }]}
         toWin={Number(data.tournament.points_to_win)}
         complete={data.tournament.status === "complete"}
       />

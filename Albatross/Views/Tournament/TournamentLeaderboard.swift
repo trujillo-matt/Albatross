@@ -16,9 +16,9 @@ struct TournamentLeaderboard: View {
     /// When set, each match row opens this destination. The Tournaments tab leaves it nil and opens the whole tournament.
     var rowDestination: ((TournamentMatchup) -> AnyView)? = nil
 
-    /// Team A takes the app's green; team B takes the oxblood ink from the scorecards.
-    private let teamAColor = Color.brandGreen
-    private let teamBColor = Color(red: 0.45, green: 0.12, blue: 0.14)
+    /// Each team's own colour; a team with none set keeps the default for its side (green and oxblood).
+    private var teamAColor: Color { tournament.teamAColor }
+    private var teamBColor: Color { tournament.teamBColor }
 
     /// The paper the bands, score tiles and status column are printed on.
     private let paper = CardAppearance.cream
@@ -142,7 +142,7 @@ struct TournamentLeaderboard: View {
     private func teamBlock(_ name: String, color: Color, alignment: Alignment) -> some View {
         Text(name)
             .font(isWide ? .title3.weight(.semibold) : .headline)
-            .foregroundStyle(.white)
+            .foregroundStyle(color.contrastingText)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             .padding(.horizontal, 12)
@@ -224,7 +224,9 @@ struct TournamentLeaderboard: View {
     private func edgeText(won: Bool, tie: Bool, points: Double, leads: Bool, square: Bool,
                           live: LiveMatchStatus?, matchType: TournamentMatchType) -> String {
         if won || tie { return Self.pointsText(points) }
-        if leads, let live { return Self.leadText(abs(live.lead), matchType: matchType) }
+        if leads, let live {
+            return live.isDormie(matchType: matchType) ? "DORMIE" : Self.leadText(abs(live.lead), matchType: matchType)
+        }
         if square { return "A/S" }
         return ""
     }
@@ -258,7 +260,7 @@ struct TournamentLeaderboard: View {
                 edge
             }
         }
-        .foregroundStyle(fill == nil ? Color.primary : Color.white)
+        .foregroundStyle(fill?.contrastingText ?? Color.primary)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -347,6 +349,7 @@ struct TournamentLeaderboard: View {
                 } else {
                     let leader = live.lead > 0 ? sideA : sideB
                     label += ", \(leader) \(Self.leadText(abs(live.lead), matchType: matchup.matchType).lowercased())"
+                if live.isDormie(matchType: matchup.matchType) { label += ", dormie" }
                 }
             }
         case .complete:
