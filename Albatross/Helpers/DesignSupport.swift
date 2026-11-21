@@ -88,3 +88,19 @@ struct IconView: View {
             .accessibilityHidden(true)
     }
 }
+
+// MARK: - Captain badge
+
+/// A yellow C that goes before a captain's name.
+struct CaptainBadge: View {
+    var size: CGFloat = 16
+
+    var body: some View {
+        Text("C")
+            .font(.system(size: size * 0.62, weight: .bold, design: .rounded))
+            .foregroundStyle(Color.black.opacity(0.85))
+            .frame(width: size, height: size)
+            .background(Color(red: 0.98, green: 0.80, blue: 0.18), in: Circle())
+            .accessibilityLabel("Captain")
+    }
+}

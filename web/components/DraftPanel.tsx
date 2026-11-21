@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { draftPickCount, orderedTeams, snakeIsTeamATurn } from "@/lib/draft";
 import type { TournamentData } from "@/lib/types";
-import { Dot } from "./ui";
+import { CaptainBadge, Dot } from "./ui";
 
 export default function DraftPanel({ data, me, reload }: { data: TournamentData; me: string; reload: () => void }) {
   const [a, b] = orderedTeams(data.teams);
@@ -30,7 +30,7 @@ export default function DraftPanel({ data, me, reload }: { data: TournamentData;
       </div>
       <ul className="mt-3 space-y-1 text-sm text-stone-700">
         {accepted.filter((p) => p.team_id === t?.id).map((p) => (
-          <li key={p.id}>{p.display_name}{p.user_id === t?.captain_user_id && <span className="ml-2 text-xs text-stone-500">Captain</span>}</li>
+          <li key={p.id}>{p.user_id === t?.captain_user_id && <CaptainBadge />}{p.display_name}</li>
         ))}
       </ul>
     </div>

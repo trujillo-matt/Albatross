@@ -439,13 +439,6 @@ struct TournamentDraftView: View {
                 }
             }
 
-            if let captain = team?.captainUserID,
-               let captainPlayer = tournamentStore.draftPlayers.first(where: { $0.userID == captain }) {
-                Text("Captain: \(captainPlayer.profile?.displayName ?? "?")")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
             Divider()
 
             ForEach(players) { player in
@@ -458,6 +451,7 @@ struct TournamentDraftView: View {
                                 .font(.caption2.weight(.semibold))
                                 .foregroundStyle(Color.accentColor)
                         )
+                    if player.userID == team?.captainUserID { CaptainBadge() }
                     Text(player.profile?.displayName ?? "Player")
                         .font(.footnote)
                         .foregroundStyle(.primary)

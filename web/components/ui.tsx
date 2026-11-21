@@ -9,6 +9,13 @@ export function Dot({ tone = "idle", className = "" }: { tone?: Tone; className?
   return <span aria-hidden className={`inline-block h-2 w-2 shrink-0 rounded-full ${DOT[tone]} ${className}`} />;
 }
 
+/** A yellow C before a captain's name. Read aloud as "Captain". */
+export function CaptainBadge() {
+  return (
+    <span role="img" aria-label="Captain" className="mr-2 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-amber-400 align-[-1px] text-[10px] font-semibold leading-none text-stone-900">C</span>
+  );
+}
+
 export function Status({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   return <span className="inline-flex items-center gap-2 text-sm text-stone-600"><Dot tone={tone} />{children}</span>;
 }

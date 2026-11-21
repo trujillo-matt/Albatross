@@ -16,7 +16,7 @@ import { courseForMatch } from "@/lib/sessions";
 import AdminSignIn from "@/components/AdminSignIn";
 import CodeCard from "@/components/CodeCard";
 import Page from "@/components/Page";
-import { CheckIcon, ChevronLeftIcon, Dot, MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
+import { CaptainBadge, CheckIcon, ChevronLeftIcon, Dot, MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
 
 type Tab = "overview" | "roster" | "vote" | "matches" | "scores" | "standings" | "audit";
 const TAB_LABEL: Record<Tab, string> = {
@@ -295,7 +295,7 @@ function VoteDraft({ data, act, setMsg, reload }: { data: TournamentData; act: A
                 <h2 className="h2">{tm.name}</h2>
                 <ul className="mt-2 space-y-1 text-sm text-stone-700">
                   {accepted.filter((p) => p.team_id === tm.id).map((p) => (
-                    <li key={p.id}>{p.display_name}{p.user_id === tm.captain_user_id && <span className="ml-2 text-xs text-stone-500">Captain</span>}</li>
+                    <li key={p.id}>{p.user_id === tm.captain_user_id && <CaptainBadge />}{p.display_name}</li>
                   ))}
                 </ul>
               </div>

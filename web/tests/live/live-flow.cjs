@@ -104,7 +104,7 @@ const step = (n) => { out.steps.push(n); console.log("STEP", n); };
     step("finalize captains");
     await admin.page.goto(`${BASE}/admin/${tid}`); await tab(admin, "Vote and draft");
     await admin.page.getByRole("button", { name: "Finalize captains" }).click();
-    await admin.page.getByText("Captain").first().waitFor();
+    await admin.page.getByRole("img", { name: "Captain" }).first().waitFor();
     await shot(admin, "04-captains-final");
 
     // ---- captain One drafts the admin (pick 0 belongs to team A)
