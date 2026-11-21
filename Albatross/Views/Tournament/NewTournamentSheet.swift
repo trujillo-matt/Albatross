@@ -22,6 +22,8 @@ struct NewTournamentSheet: View {
     @State private var invitedProfiles: [UserProfile] = []
 
     @State private var isCreating = false
+    /// Set once the tournament exists but some invites failed, so a second tap closes instead of creating again.
+    @State private var tournamentWasCreated = false
     @State private var errorMessage: String? = nil
 
     var body: some View {
@@ -53,7 +55,7 @@ struct NewTournamentSheet: View {
                             if isCreating {
                                 ProgressView()
                             } else {
-                                Label("Create", systemImage: "checkmark")
+                                Label(tournamentWasCreated ? "Done" : "Create", systemImage: "checkmark")
                             }
                         }
                         .disabled(isCreating)
@@ -351,6 +353,7 @@ struct NewTournamentSheet: View {
     }
 
     private func createTournament() {
+        if tournamentWasCreated { dismiss(); return }
         isCreating = true
         errorMessage = nil
         Task {
@@ -363,16 +366,23 @@ struct NewTournamentSheet: View {
                     courseNames: names,
                     matchTypes: matchTypes
                 )
-                // Send invites
+                // Send invites, remembering which ones fail so they are not lost silently
+                var failedNames: [String] = []
                 for profile in invitedProfiles {
-                    try? await tournamentStore.invitePlayer(
-                        tournamentID: tournament.id,
-                        userID: profile.id
-                    )
+                    do {
+                        try await tournamentStore.invitePlayer(tournamentID: tournament.id, userID: profile.id)
+                    } catch {
+                        failedNames.append(profile.displayName)
+                    }
                 }
                 await MainActor.run {
                     isCreating = false
-                    dismiss()
+                    if failedNames.isEmpty {
+                        dismiss()
+                    } else {
+                        tournamentWasCreated = true
+                        errorMessage = "The tournament was created, but these invites did not go through: \(failedNames.joined(separator: ", ")). Invite them again from the tournament's player list."
+                    }
                 }
             } catch {
                 await MainActor.run {

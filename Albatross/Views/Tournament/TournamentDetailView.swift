@@ -519,10 +519,19 @@ private struct InvitePlayersSheet: View {
     @State private var searchQuery = ""
     @State private var invitedProfiles: [UserProfile] = []
     @State private var isSending = false
+    @State private var sendErrorMessage: String? = nil
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                if let sendErrorMessage {
+                    Text(sendErrorMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                }
                 // Search bar
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
@@ -614,13 +623,23 @@ private struct InvitePlayersSheet: View {
 
     private func sendInvites() {
         isSending = true
+        sendErrorMessage = nil
         Task {
+            var failedNames: [String] = []
             for profile in invitedProfiles {
-                try? await tournamentStore.invitePlayer(tournamentID: tournament.id, userID: profile.id)
+                do {
+                    try await tournamentStore.invitePlayer(tournamentID: tournament.id, userID: profile.id)
+                } catch {
+                    failedNames.append(profile.displayName)
+                }
             }
             await MainActor.run {
                 isSending = false
-                dismiss()
+                if failedNames.isEmpty {
+                    dismiss()
+                } else {
+                    sendErrorMessage = "Could not invite: \(failedNames.joined(separator: ", ")). Check your connection and try again."
+                }
             }
         }
     }

@@ -4,9 +4,15 @@ struct TournamentListView: View {
     @EnvironmentObject private var tournamentStore: TournamentStore
     @EnvironmentObject private var authStore: AuthStore
 
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showNewTournament = false
     @State private var tournamentToDelete: Tournament? = nil
     @State private var showDeleteAlert = false
+
+    private func reloadTournaments() async {
+        await tournamentStore.loadMyTournaments()
+        await tournamentStore.loadPendingInvites()
+    }
 
     var body: some View {
         NavigationStack {
@@ -55,8 +61,12 @@ struct TournamentListView: View {
                 Text("\u{201C}\(t.name)\u{201D} and all its data will be permanently deleted. This cannot be undone.")
             }
             .task {
-                await tournamentStore.loadMyTournaments()
-                await tournamentStore.loadPendingInvites()
+                await reloadTournaments()
+            }
+            // Tournaments made or changed elsewhere (the web app, another phone) show up on return and on pull down.
+            .refreshable { await reloadTournaments() }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { Task { await reloadTournaments() } }
             }
             // The board stays current while it is on screen: results and scores are refreshed every few seconds.
             .task(id: featuredTournament?.id) {
