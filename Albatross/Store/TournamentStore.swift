@@ -160,13 +160,30 @@ final class TournamentStore: ObservableObject {
             .value
     }
 
+    /// The players of a tournament, each with the profile (name, username) the screens show.
+    /// Profiles come in a second query: a player's row holds only their user id.
     private func loadPlayers(tournamentID: UUID) async throws -> [TournamentPlayer] {
-        try await supabase
+        var players: [TournamentPlayer] = try await supabase
             .from("tournament_players")
             .select()
             .eq("tournament_id", value: tournamentID.uuidString)
             .execute()
             .value
+
+        let ids = players.map { $0.userID.uuidString }
+        guard !ids.isEmpty else { return players }
+        // A failure here leaves the names blank rather than hiding the whole tournament.
+        let profiles: [UserProfile] = (try? await supabase
+            .from("profiles")
+            .select()
+            .in("id", values: ids)
+            .execute()
+            .value) ?? []
+        let profilesByID = Dictionary(profiles.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        for index in players.indices {
+            players[index].profile = profilesByID[players[index].userID]
+        }
+        return players
     }
 
     /// Teams in a stable order: Team A first, Team B second.
