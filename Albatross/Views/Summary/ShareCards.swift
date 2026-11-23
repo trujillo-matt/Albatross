@@ -42,7 +42,7 @@ private struct ShareFooter: View {
                 .scaledToFit()
                 .frame(width: 14, height: 14)
             Text("Albatross")
-                .scaledFont(size: 12, weight: .regular)
+                .appFont(.small)
                 .foregroundStyle(color)
         }
     }
@@ -101,7 +101,7 @@ struct ScorecardShareCard: View {
     private var banner: some View {
         VStack(spacing: 4) {
             Text(round.courseName)
-                .scaledFont(size: 15, weight: .semibold)
+                .appFont(.body, weight: .semibold)
                 .tracking(1.5)
                 .textCase(.uppercase)
                 .foregroundStyle(style.ink)
@@ -109,7 +109,7 @@ struct ScorecardShareCard: View {
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
             Text(round.date.formatted(date: .long, time: .omitted))
-                .scaledFont(size: 11, weight: .regular)
+                .appFont(.small)
                 .foregroundStyle(Color(.secondaryLabel))
             VStack(spacing: 2) {
                 Rectangle().fill(style.ink).frame(height: 1.5)
@@ -122,14 +122,14 @@ struct ScorecardShareCard: View {
     private func nine(_ holes: ClosedRange<Int>, totalLabel: String) -> some View {
         VStack(spacing: 0) {
             line("Hole", holes: holes, background: style.ink, height: 28) { hole in
-                Text("\(hole)").scaledFont(size: 11, weight: .semibold).foregroundStyle(.white)
+                Text("\(hole)").appFont(.small, weight: .semibold).foregroundStyle(.white)
             } total: {
-                Text(totalLabel).scaledFont(size: 10, weight: .semibold).textCase(.uppercase).foregroundStyle(.white)
+                Text(totalLabel).appFont(.small, weight: .semibold).textCase(.uppercase).foregroundStyle(.white)
             }
             line("Par", holes: holes, height: 28) { hole in
-                Text("\(pars[hole - 1])").scaledFont(size: 11).foregroundStyle(.primary)
+                Text("\(pars[hole - 1])").appFont(.small).foregroundStyle(.primary)
             } total: {
-                Text("\(holes.reduce(0) { $0 + pars[$1 - 1] })").scaledFont(size: 11).foregroundStyle(.primary)
+                Text("\(holes.reduce(0) { $0 + pars[$1 - 1] })").appFont(.small).foregroundStyle(.primary)
             }
             line("Score", holes: holes, height: 46) { hole in
                 ScoreMark(score: round.scores[hole - 1], par: pars[hole - 1], side: 26, isActive: false, accent: style.ink)
@@ -182,7 +182,7 @@ struct ScorecardShareCard: View {
     ) -> some View {
         HStack(spacing: 0) {
             Text(label)
-                .scaledFont(size: 9, weight: .semibold)
+                .appFont(.small, weight: .semibold)
                 .textCase(.uppercase)
                 .tracking(0.6)
                 .foregroundStyle(background == .clear ? style.ink : Color.white)
@@ -212,7 +212,7 @@ struct ScorecardShareCard: View {
                     .font(.custom(BookletStyle.pencilFontName, fixedSize: 22))
                     .foregroundStyle(BookletStyle.pencilGraphite)
                 Text(detail)
-                    .scaledFont(size: 11)
+                    .appFont(.small)
                     .foregroundStyle(Color(.secondaryLabel))
             }
             Spacer()
@@ -263,13 +263,13 @@ struct ScoreShareCard: View {
                     }
                     VStack(spacing: 6) {
                         Text(round.courseName)
-                            .scaledFont(size: 20, weight: .semibold)
+                            .appFont(.large, weight: .semibold)
                             .tracking(1)
                             .textCase(.uppercase)
                             .foregroundStyle(style.ink)
                             .multilineTextAlignment(.center)
                         Text(round.date.formatted(date: .long, time: .omitted))
-                            .scaledFont(size: 13)
+                            .appFont(.small)
                             .foregroundStyle(Color(.secondaryLabel))
                     }
                     .padding(.horizontal, 32)
@@ -294,11 +294,11 @@ struct ScoreShareCard: View {
     private func stat(_ label: String, _ value: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .scaledFont(size: 20, weight: .semibold)
+                .appFont(.large, weight: .semibold)
                 .monospacedDigit()
                 .foregroundStyle(.primary)
             Text(label)
-                .scaledFont(size: 11)
+                .appFont(.small)
                 .foregroundStyle(Color(.secondaryLabel))
         }
         .frame(maxWidth: .infinity)

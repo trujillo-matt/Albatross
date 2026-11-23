@@ -35,7 +35,7 @@ export default function Join() {
 
   return (
     <Page>
-      <form onSubmit={submit} className="space-y-6 pt-12">
+      <form onSubmit={submit} className="space-y-7 pt-12">
         <div className="space-y-2">
           <h1 className="h1">Enter your player code</h1>
           <p className="muted">Your admin gave you an 8 character code, like K7M2-9QXH</p>

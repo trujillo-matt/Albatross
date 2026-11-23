@@ -78,10 +78,10 @@ struct CourseDetailView: View {
                 if let loc = location {
                     HStack(spacing: 4) {
                         Image(systemName: "mappin.circle.fill")
-                            .scaledFont(size: 12)
+                            .appFont(.small)
                             .foregroundStyle(.white.opacity(0.6))
                         Text(loc)
-                            .font(.subheadline)
+                            .appFont(.small)
                             .foregroundStyle(.white.opacity(0.75))
                     }
                 }
@@ -139,18 +139,17 @@ struct CourseDetailView: View {
             }) {
                 HStack {
                     Image(systemName: "globe")
-                        .scaledFont(size: 14)
+                        .appFont(.small)
                         .foregroundStyle(Color.accentColor)
                     Text(site)
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(Color.accentColor)
                     Spacer()
                     Image(systemName: "arrow.up.right")
-                        .scaledFont(size: 11, weight: .semibold)
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(Color.accentColor.opacity(0.7))
                 }
-                .padding(.vertical, 12)
-                .padding(.horizontal, 16)
+                .appListRowPadding()
             }
             .buttonStyle(.pressFeedback)
         }
@@ -164,20 +163,20 @@ struct CourseDetailView: View {
                 HStack(spacing: 0) {
                     // Tee name badge
                     Text(tee.name)
-                        .font(.subheadline.weight(.medium))
+                        .appFont(.small, weight: .medium)
                         .foregroundStyle(.primary)
                         .frame(width: 56, alignment: .leading)
                         .padding(.leading, 16)
 
                     Text("\(tee.totalYards.formatted()) yds")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
 
                     Spacer()
 
                     if let rating = tee.rating, let slope = tee.slope {
                         Text(String(format: "%.1f / %d", rating, slope))
-                            .font(.footnote)
+                            .appFont(.small)
                             .foregroundStyle(.tertiary)
                             .padding(.trailing, 16)
                     }
@@ -198,7 +197,7 @@ struct CourseDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             if let title {
                 Text(title)
-                    .font(.footnote.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
                     .padding(.bottom, 6)
@@ -217,15 +216,14 @@ struct CourseDetailView: View {
         VStack(spacing: 0) {
             HStack {
                 Text(label)
-                    .font(.subheadline)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text(value)
-                    .font(.subheadline.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.primary)
             }
-            .padding(.vertical, 11)
-            .padding(.horizontal, 16)
+            .appListRowPadding()
 
             if !isLast {
                 Divider().padding(.leading, 16)

@@ -64,7 +64,7 @@ struct UserProfileView: View {
                                 .padding(.top, 20)
                         } else if completedRounds.isEmpty {
                             Text("No completed rounds yet")
-                                .font(.subheadline)
+                                .appFont(.small)
                                 .foregroundStyle(.secondary)
                                 .padding(.top, 20)
                         } else {
@@ -135,17 +135,17 @@ struct UserProfileView: View {
 
                     if let username = profile.username, !username.isEmpty {
                         Text("@\(username)")
-                            .font(.footnote)
+                            .appFont(.small)
                             .foregroundStyle(.white.opacity(0.6))
                     }
 
                     if let location = profile.location, !location.isEmpty {
                         HStack(spacing: 3) {
                             Image(systemName: "mappin.circle.fill")
-                                .scaledFont(size: 11)
+                                .appFont(.small)
                                 .foregroundStyle(.white.opacity(0.5))
                             Text(location)
-                                .font(.caption)
+                                .appFont(.small)
                                 .foregroundStyle(.white.opacity(0.55))
                         }
                         .padding(.top, 2)
@@ -185,10 +185,10 @@ struct UserProfileView: View {
     private func statItem(label: String, value: String) -> some View {
         VStack(spacing: 3) {
             Text(value)
-                .font(.body.weight(.semibold))
+                .appFont(.body, weight: .semibold)
                 .foregroundStyle(.primary)
             Text(label)
-                .font(.caption2)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -198,15 +198,11 @@ struct UserProfileView: View {
         Button(action: { showHeadToHead = true }) {
             HStack {
                 Image(systemName: "arrow.left.arrow.right")
-                    .scaledFont(size: 14, weight: .semibold)
+                    .appFont(.small, weight: .semibold)
                 Text("Head to Head")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(Color.accentColor.opacity(0.12))
-            .foregroundStyle(Color.accentColor)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .appButton(fill: Color.accentColor.opacity(0.12), foreground: Color.accentColor)
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.accentColor.opacity(0.25), lineWidth: 0.5))
         }
         .buttonStyle(.pressFeedback)
@@ -215,7 +211,7 @@ struct UserProfileView: View {
     private var roundsList: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Rounds")
-                .font(.callout.weight(.semibold))
+                .appFont(.body, weight: .semibold)
                 .padding(.horizontal, 4)
 
             VStack(spacing: 0) {
@@ -223,10 +219,10 @@ struct UserProfileView: View {
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(round.courseName)
-                                .font(.subheadline.weight(.medium))
+                                .appFont(.small, weight: .medium)
                                 .foregroundStyle(.primary)
                             Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                                .font(.caption)
+                                .appFont(.small)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -235,15 +231,14 @@ struct UserProfileView: View {
                         let diff = round.totalScore - par
                         VStack(alignment: .trailing, spacing: 1) {
                             Text("\(round.totalScore)")
-                                .font(.body.weight(.semibold))
+                                .appFont(.body, weight: .semibold)
                                 .foregroundStyle(.primary)
                             Text(diff == 0 ? "E" : diff > 0 ? "+\(diff)" : "\(diff)")
-                                .font(.caption2)
+                                .appFont(.small)
                                 .foregroundStyle(scoreColor(diff))
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .appListRowPadding()
 
                     if round.id != completedRounds.prefix(20).last?.id {
                         Divider().padding(.leading, 16)

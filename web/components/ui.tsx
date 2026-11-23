@@ -29,10 +29,10 @@ export function MatchupStatusLabel({ status }: { status: MatchupStatus }) {
   return <Status tone={status === "active" ? "live" : "idle"}>{MATCHUP_STATUS[status]}</Status>;
 }
 
-/** Line icons, 16px, 1.5 stroke, current text color. */
-const base = { width: 16, height: 16, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
-export const CheckIcon = () => <svg {...base}><path d="M3 8.5 6.5 12 13 4.5" /></svg>;
-export const ChevronLeftIcon = () => <svg {...base}><path d="M10 3 5 8l5 5" /></svg>;
+/** Line icons, 1.5 stroke, current text color. 24px in navigation and buttons, 28px in lists. */
+const base = (size: number) => ({ width: size, height: size, viewBox: "0 0 16 16", fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true });
+export const CheckIcon = ({ size = 24 }: { size?: number }) => <svg {...base(size)}><path d="M3 8.5 6.5 12 13 4.5" /></svg>;
+export const ChevronLeftIcon = ({ size = 24 }: { size?: number }) => <svg {...base(size)}><path d="M10 3 5 8l5 5" /></svg>;
 
 /** A small dot in a team's colour, before the team's name. */
 export function TeamDot({ color }: { color: string }) {

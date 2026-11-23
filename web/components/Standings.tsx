@@ -16,7 +16,7 @@ export default function Standings({ data }: { data: TournamentData }) {
   const days = groupByDay(data.sessions, data.matchups);
   const grouped = data.sessions.length > 0 && data.matchups.some((m) => m.session_id);
   const row = (m: TMatchup) => (
-    <li key={m.id} className="row px-4">
+    <li key={m.id} className="row">
       <div>
         <div className="text-stone-900">Match <span className="tnum">{m.matchup_number}</span></div>
         <div className="muted">{FORMAT[m.match_type]}</div>
@@ -43,7 +43,7 @@ export default function Standings({ data }: { data: TournamentData }) {
             const p = sessionPoints(matchups);
             return (
               <div key={session.id} className="card overflow-hidden p-0">
-                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                <div className="flex items-center justify-between gap-3 px-5 py-3">
                   <span className="text-stone-900">{session.label || `Session ${session.session_number}`}, {FORMAT[session.match_type]}</span>
                   <span className="num text-stone-900">{p.a.toFixed(1)} to {p.b.toFixed(1)}</span>
                 </div>
@@ -56,7 +56,7 @@ export default function Standings({ data }: { data: TournamentData }) {
         <div className="card overflow-hidden p-0">
           <ul className="rows">
             {data.matchups.map(row)}
-            {data.matchups.length === 0 && <li className="row px-4"><span className="muted">Matches appear when the tournament starts</span></li>}
+            {data.matchups.length === 0 && <li className="row"><span className="muted">Matches appear when the tournament starts</span></li>}
           </ul>
         </div>
       )}

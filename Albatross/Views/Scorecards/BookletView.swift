@@ -205,7 +205,7 @@ struct BookletView: View {
                 .padding(.bottom, insets.bottom + 56)
                 .overlay(alignment: .bottom) {
                     Label("Swipe to open", systemImage: "chevron.left.2")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                         .padding(.bottom, insets.bottom + 18)
                 }
@@ -449,15 +449,15 @@ private struct PencilStrip: View {
         VStack(spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("Hole \(hole)")
-                    .font(.title3.weight(.semibold))
+                    .appFont(.large, weight: .semibold)
                 Text("Par \(par)")
-                    .font(.callout)
+                    .appFont(.body)
                     .foregroundStyle(.secondary)
                 Spacer(minLength: 8)
                 if canUndo {
                     Button(action: onUndo) {
                         Label("Undo", systemImage: "arrow.uturn.backward")
-                            .font(.subheadline.weight(.medium))
+                            .appFont(.small, weight: .medium)
                             .padding(.horizontal, 12)
                             .frame(minHeight: 44)
                             .contentShape(Rectangle())
@@ -468,7 +468,7 @@ private struct PencilStrip: View {
                 if holesPlayed > 0 {
                     Button(action: onFinish) {
                         Label("Finish \(holesPlayed)/18", systemImage: "flag.checkered")
-                            .font(.subheadline.weight(.medium))
+                            .appFont(.small, weight: .medium)
                             .padding(.horizontal, 12)
                             .frame(minHeight: 44)
                             .background(Color.accentColor.opacity(0.14), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -510,13 +510,13 @@ private struct PencilStrip: View {
     private var puttsRow: some View {
         HStack(spacing: 4) {
             Text("Putts")
-                .font(.footnote)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
                 .fixedSize()
             ForEach(0...4, id: \.self) { count in
                 Button { onPutts(putts == count ? nil : count) } label: {
                     Text(count == 4 ? "4+" : "\(count)")
-                        .font(.subheadline.monospacedDigit().weight(.medium))
+                        .appFont(.small, weight: .medium, monospacedDigit: true)
                         .foregroundStyle(putts == count ? (colorScheme == .dark ? Color.black : Color.white) : Color.primary)
                         .frame(width: chipSize - 6, height: chipSize - 12)
                         .background(
@@ -535,7 +535,7 @@ private struct PencilStrip: View {
     private var greenButton: some View {
         Button { onGreen(!(greenInRegulation ?? false)) } label: {
             Label("GIR", systemImage: greenInRegulation == true ? "checkmark.circle.fill" : "circle")
-                .font(.subheadline.weight(.medium))
+                .appFont(.small, weight: .medium)
                 .foregroundStyle(greenInRegulation == true ? Color.accentColor : Color.secondary)
                 .lineLimit(1)
                 .fixedSize()
@@ -556,7 +556,7 @@ private struct PencilStrip: View {
         return Button { onScore(value) } label: {
             VStack(spacing: 0) {
                 Text(title)
-                    .font(.footnote)
+                    .appFont(.small)
                 Text("\(value)")
                     .font(.custom(BookletStyle.pencilFontName, size: 28))
             }
@@ -595,13 +595,13 @@ private struct PencilStrip: View {
         } label: {
             VStack(spacing: 0) {
                 Text("More")
-                    .font(.footnote)
+                    .appFont(.small)
                 if beyondTiles, let score {
                     Text("\(score)")
                         .font(.custom(BookletStyle.pencilFontName, size: 28))
                 } else {
                     Image(systemName: "ellipsis")
-                        .font(.title3)
+                        .appFont(.large)
                         .frame(height: 34)
                 }
             }
@@ -672,7 +672,7 @@ private struct PaperPage: View {
     private var banner: some View {
         let content = VStack(spacing: 4) {
             Text(title)
-                .font(.subheadline.weight(.semibold))
+                .appFont(.small, weight: .semibold)
                 .tracking(1.5)
                 .textCase(.uppercase)
                 .foregroundStyle(ink)
@@ -680,7 +680,7 @@ private struct PaperPage: View {
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
             Text(subtitle)
-                .font(.caption)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
             VStack(spacing: 2) {
                 Rectangle().fill(ink).frame(height: 1.5)
@@ -812,7 +812,7 @@ private struct DownTable: View {
                 HStack(spacing: 0) {
                     ForEach(layout.columns, id: \.self) { column in
                         Text(column.heading)
-                            .font(.caption2.weight(.semibold))
+                            .appFont(.small, weight: .semibold)
                             .tracking(1)
                             .textCase(.uppercase)
                             .foregroundStyle(.white)
@@ -845,7 +845,7 @@ private struct DownTable: View {
 
     private func cell(_ text: String, width: CGFloat, emphasis: Bool = false) -> some View {
         Text(text)
-            .font(emphasis ? .headline : .callout)
+            .appFont(emphasis ? .large : .body, weight: emphasis ? .semibold : .regular)
             .monospacedDigit()
             .foregroundStyle(emphasis ? ink : .primary)
             .frame(width: width)
@@ -933,7 +933,7 @@ private struct DownTable: View {
                     .frame(width: layout.width(of: column, in: total))
             }
         }
-        .font(.callout)
+        .appFont(.body)
         .monospacedDigit()
         .frame(height: totalRowHeight)
     }
@@ -943,7 +943,7 @@ private struct DownTable: View {
         switch column {
         case .hole:
             Text(label)
-                .font(.caption.weight(.semibold))
+                .appFont(.small, weight: .semibold)
                 .textCase(.uppercase)
                 .tracking(0.8)
                 .foregroundStyle(ink)
@@ -1003,9 +1003,9 @@ private struct AcrossTable: View {
         VStack(spacing: 0) {
             // Header band: hole numbers
             line(label: "Hole", background: ink, textColor: .white) { hole in
-                Text("\(hole)").font(.callout.weight(.semibold)).foregroundStyle(.white)
+                Text("\(hole)").appFont(.body, weight: .semibold).foregroundStyle(.white)
             } total: {
-                Text(totalLabel).font(.caption2.weight(.semibold)).textCase(.uppercase).foregroundStyle(.white)
+                Text(totalLabel).appFont(.small, weight: .semibold).textCase(.uppercase).foregroundStyle(.white)
             }
 
             if round.hasYards {
@@ -1045,7 +1045,7 @@ private struct AcrossTable: View {
     }
 
     private func cellText(_ text: String) -> some View {
-        Text(text).font(.callout).monospacedDigit().foregroundStyle(.primary)
+        Text(text).appFont(.body).monospacedDigit().foregroundStyle(.primary)
     }
 
     /// One printed line: a label cell, then a cell per hole, then the nine's total.
@@ -1058,7 +1058,7 @@ private struct AcrossTable: View {
     ) -> some View {
         HStack(spacing: 0) {
             Text(label)
-                .font(.caption2.weight(.semibold))
+                .appFont(.small, weight: .semibold)
                 .textCase(.uppercase)
                 .tracking(0.8)
                 .foregroundStyle(background == .clear ? ink : textColor)
@@ -1082,7 +1082,7 @@ private struct AcrossTable: View {
     private var scoreLine: some View {
         HStack(spacing: 0) {
             Text("Score")
-                .font(.caption2.weight(.semibold))
+                .appFont(.small, weight: .semibold)
                 .textCase(.uppercase)
                 .tracking(0.8)
                 .foregroundStyle(ink)

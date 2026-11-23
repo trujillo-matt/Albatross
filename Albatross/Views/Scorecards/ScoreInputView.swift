@@ -38,7 +38,7 @@ struct ScoreInputView: View {
                 VStack(spacing: 6) {
                     HStack(spacing: 12) {
                         Text("Hole \(holeNumber)")
-                            .font(.body)
+                            .appFont(.body)
                             .foregroundStyle(.secondary)
 
                         Circle()
@@ -46,7 +46,7 @@ struct ScoreInputView: View {
                             .frame(width: 4, height: 4)
 
                         Text("Par \(par)")
-                            .font(.body.weight(.semibold))
+                            .appFont(.body, weight: .semibold)
                             .foregroundStyle(.secondary)
                     }
 
@@ -186,7 +186,7 @@ private struct NumberPadView: View {
     private func keyLabel(_ key: String) -> some View {
         if key == "⌫" {
             Image(systemName: "delete.backward")
-                .scaledFont(size: 20)
+                .appFont(.large)
                 .foregroundStyle(.primary)
         } else {
             Text(key)

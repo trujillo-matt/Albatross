@@ -35,9 +35,9 @@ struct StatsView: View {
                 .font(.largeTitle)
                 .foregroundStyle(Color.accentColor)
             Text("No finished rounds yet")
-                .font(.title3.weight(.semibold))
+                .appFont(.large, weight: .semibold)
             Text("Finish an 18-hole round and your scoring, putting and course records appear here.")
-                .font(.callout)
+                .appFont(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -91,7 +91,7 @@ struct StatsView: View {
     private func figure(_ label: String, _ value: String, note: String? = nil, noteColor: Color = .secondary, large: Bool = true) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)
-                .font(.footnote)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
             Text(value)
                 .font((large ? Font.largeTitle : Font.title2).weight(.semibold))
@@ -100,7 +100,7 @@ struct StatsView: View {
                 .minimumScaleFactor(0.6)
             // Every figure keeps a note line, so a row of figures lines up whether or not they have notes.
             Text(note ?? " ")
-                .font(.caption)
+                .appFont(.small)
                 .foregroundStyle(noteColor)
                 .lineLimit(2)
         }
@@ -131,7 +131,7 @@ struct StatsView: View {
                         .foregroundStyle(.secondary)
                         .annotation(position: .top, alignment: .trailing) {
                             Text("Average \(String(format: "%.1f", average))")
-                                .font(.caption2)
+                                .appFont(.small)
                                 .foregroundStyle(.secondary)
                         }
                 }
@@ -141,13 +141,13 @@ struct StatsView: View {
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 5)) { _ in
                     AxisGridLine().foregroundStyle(Color.primary.opacity(0.08))
-                    AxisValueLabel().font(.caption2).foregroundStyle(Color(.secondaryLabel))
+                    AxisValueLabel().font(.system(size: 14)).foregroundStyle(Color(.secondaryLabel))
                 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading) { _ in
                     AxisGridLine().foregroundStyle(Color.primary.opacity(0.08))
-                    AxisValueLabel().font(.caption2).foregroundStyle(Color(.secondaryLabel))
+                    AxisValueLabel().font(.system(size: 14)).foregroundStyle(Color(.secondaryLabel))
                 }
             }
             .frame(height: 200)
@@ -182,12 +182,12 @@ struct StatsView: View {
                         HStack(spacing: 8) {
                             Circle().fill(ink(entry.result)).frame(width: 8, height: 8)
                             Text(entry.result.label)
-                                .font(.subheadline)
+                                .appFont(.small)
                             Spacer()
                             Text("\(entry.count)")
-                                .font(.subheadline.monospacedDigit())
+                                .appFont(.small, monospacedDigit: true)
                             Text(percent(entry.count, of: total))
-                                .font(.subheadline.monospacedDigit())
+                                .appFont(.small, monospacedDigit: true)
                                 .foregroundStyle(.secondary)
                                 .frame(width: 48, alignment: .trailing)
                         }
@@ -218,10 +218,10 @@ struct StatsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Text("Par \(row.par)")
-                                .font(.subheadline)
+                                .appFont(.small)
                             Spacer()
                             Text(String(format: "%+.2f", row.average))
-                                .font(.subheadline.monospacedDigit().weight(.medium))
+                                .appFont(.small, weight: .medium, monospacedDigit: true)
                         }
                         GeometryReader { proxy in
                             Capsule()
@@ -255,7 +255,7 @@ struct StatsView: View {
                 Text(appearance.tracksPuttsAndGreens
                      ? "Add putts and greens as you play and the averages appear here."
                      : "Putts and greens are switched off. Turn them on in Settings, under Scorecard.")
-                    .font(.callout)
+                    .appFont(.body)
                     .foregroundStyle(.secondary)
             }
         }
@@ -285,15 +285,15 @@ struct StatsView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(alignment: .firstTextBaseline) {
                             Text(course.name)
-                                .font(.subheadline)
+                                .appFont(.small)
                                 .lineLimit(1)
                             Spacer(minLength: 8)
                             Text("Best \(course.best)")
-                                .font(.subheadline.monospacedDigit().weight(.medium))
+                                .appFont(.small, weight: .medium, monospacedDigit: true)
                         }
                         HStack {
                             Text("\(course.rounds) \(course.rounds == 1 ? "round" : "rounds") · average \(String(format: "%.1f", course.average))")
-                                .font(.caption)
+                                .appFont(.small)
                                 .foregroundStyle(.secondary)
                             Spacer()
                         }
@@ -326,11 +326,11 @@ struct DashboardCard<Content: View>: View {
             if let title {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.headline)
+                        .appFont(.large, weight: .semibold)
                         .accessibilityAddTraits(.isHeader)
                     if let subtitle {
                         Text(subtitle)
-                            .font(.caption)
+                            .appFont(.small)
                             .foregroundStyle(.secondary)
                     }
                 }

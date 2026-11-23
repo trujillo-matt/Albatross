@@ -60,7 +60,7 @@ struct TournamentLeaderboard: View {
                     withAnimation(reduceMotion ? nil : .snappy) { selectedDay = day.number }
                 } label: {
                     Text("Day \(day.number)")
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(isShown ? paper : ink)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background(isShown ? ink : paper)
@@ -119,7 +119,7 @@ struct TournamentLeaderboard: View {
             Spacer(minLength: 8)
             if let day = tournament.currentDay, tournament.dayCount > 1 {
                 Text("Day \(day.number) of \(tournament.dayCount)")
-                    .font(.subheadline)
+                    .appFont(.small)
                     .opacity(0.7)
             }
         }
@@ -141,7 +141,7 @@ struct TournamentLeaderboard: View {
 
     private func teamBlock(_ name: String, color: Color, alignment: Alignment) -> some View {
         Text(name)
-            .font(isWide ? .title3.weight(.semibold) : .headline)
+            .appFont(isWide ? .large : .large, weight: .semibold)
             .foregroundStyle(color.contrastingText)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
@@ -152,7 +152,7 @@ struct TournamentLeaderboard: View {
 
     private func pointsTile(_ points: Double) -> some View {
         Text(Self.pointsText(points))
-            .font(.title3.weight(.semibold).monospacedDigit())
+            .appFont(.large, weight: .semibold, monospacedDigit: true)
             .foregroundStyle(ink)
             .frame(width: isWide ? 88 : 52)
             .frame(maxHeight: .infinity)
@@ -163,15 +163,15 @@ struct TournamentLeaderboard: View {
     private func dayBand(_ day: TournamentDay) -> some View {
         HStack(spacing: 8) {
             Text("Day \(day.number)")
-                .font(.subheadline.weight(.semibold))
+                .appFont(.small, weight: .semibold)
             Text(dayDetail(day))
-                .font(.subheadline)
+                .appFont(.small)
                 .opacity(0.7)
                 .lineLimit(1)
             Spacer(minLength: 8)
             if day.matchups.contains(where: { $0.status == .complete }) {
                 Text("\(Self.pointsText(day.pointsTeamA)) – \(Self.pointsText(day.pointsTeamB))")
-                    .font(.subheadline.weight(.semibold).monospacedDigit())
+                    .appFont(.small, weight: .semibold, monospacedDigit: true)
             }
         }
         .foregroundStyle(ink)
@@ -233,20 +233,20 @@ struct TournamentLeaderboard: View {
 
     /// One side of a match. Names sit next to the status column, the result at the outer edge.
     private func sideCell(names: [BoardName], edgeText: String, fill: Color?, isLeading: Bool) -> some View {
-        let nameFont: Font = isWide ? .body.weight(.semibold) : .subheadline.weight(.semibold)
+        let nameSize: AppTextSize = isWide ? .body : .small
         let nameStack = VStack(alignment: isLeading ? .trailing : .leading, spacing: 0) {
             ForEach(names, id: \.text) { name in
                 HStack(spacing: 4) {
                     if name.isCaptain { CaptainBadge(size: 14) }
                     Text(name.text)
-                        .font(nameFont)
+                        .appFont(nameSize, weight: .semibold)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                 }
             }
         }
         let edge = Text(edgeText)
-            .font(.subheadline.weight(.semibold).monospacedDigit())
+            .appFont(.small, weight: .semibold, monospacedDigit: true)
             .frame(minWidth: 16)
 
         return HStack(spacing: 8) {
@@ -272,22 +272,22 @@ struct TournamentLeaderboard: View {
             switch matchup.status {
             case .complete:
                 Text("F")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
             case .active:
                 VStack(spacing: 1) {
                     HStack(spacing: 4) {
                         Circle().fill(teamAColor).frame(width: 6, height: 6)
-                        Text("Live").font(.caption.weight(.semibold))
+                        Text("Live").appFont(.small, weight: .semibold)
                     }
                     if let live, live.holesPlayed > 0 {
                         Text("Thru \(live.holesPlayed)")
-                            .font(.caption2.monospacedDigit())
+                            .appFont(.small, monospacedDigit: true)
                             .opacity(0.7)
                     }
                 }
             case .pending:
                 Text("–")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
             }
         }
         .foregroundStyle(ink)

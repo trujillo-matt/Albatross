@@ -45,12 +45,9 @@ struct NewRoundSheet: View {
                         // Scan option — shown above the course search list
                         Button(action: { showScanner = true }) {
                             Label("Scan Paper Scorecard", systemImage: "camera.viewfinder")
-                                .font(.subheadline)
+                                .appFont(.small)
                                 .foregroundStyle(Color.accentColor)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
-                                .background(Color.accentColor.opacity(0.08))
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .appButton(fill: Color.accentColor.opacity(0.08))
                         }
                         .buttonStyle(.pressFeedback)
                         .padding(.horizontal, 20)
@@ -84,7 +81,7 @@ struct NewRoundSheet: View {
                         ProgressView()
                             .tint(.white)
                         Text("Reading scorecard with AI…")
-                            .font(.subheadline)
+                            .appFont(.small)
                             .foregroundStyle(.white)
                     }
                     .padding(28)
@@ -205,7 +202,7 @@ struct NewRoundSheet: View {
                     .frame(width: 26, height: 26)
                     .overlay(
                         Image(systemName: "camera.fill")
-                            .scaledFont(size: 11, weight: .medium)
+                            .appFont(.small, weight: .medium)
                             .foregroundStyle(Color.accentColor)
                     )
                     .offset(x: 4, y: 4)
@@ -222,12 +219,12 @@ struct NewRoundSheet: View {
                 // Course name
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Course Name")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 4)
 
                     TextField("e.g. Pebble Beach", text: $manualCourseName)
-                        .font(.body)
+                        .appFont(.body)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
                         .background(Color(.secondarySystemGroupedBackground))
@@ -241,7 +238,7 @@ struct NewRoundSheet: View {
                 // Hole pars grid
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Hole Pars")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 4)
                         .padding(.horizontal, 20)
@@ -259,7 +256,7 @@ struct NewRoundSheet: View {
                 // Start button
                 Button(action: startManualRound) {
                     Text("Start Round")
-                        .font(.body.weight(.semibold))
+                        .appFont(.body, weight: .semibold)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(
@@ -284,11 +281,11 @@ struct NewRoundSheet: View {
         VStack(spacing: 8) {
             HStack {
                 Text(title)
-                    .font(.footnote.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text("Par \(manualPars[range].reduce(0, +))")
-                    .font(.caption)
+                    .appFont(.small)
                     .foregroundStyle(Color.accentColor)
             }
             .padding(.horizontal, 14)
@@ -298,7 +295,7 @@ struct NewRoundSheet: View {
             HStack(spacing: 0) {
                 ForEach(range, id: \.self) { i in
                     Text("\(i + 1)")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(Color(.tertiaryLabel))
                         .frame(maxWidth: .infinity)
                 }
@@ -324,7 +321,7 @@ struct NewRoundSheet: View {
             }
         } label: {
             Text("\(manualPars[index])")
-                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .appFont(.small, weight: .semibold, monospacedDigit: true)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .background(parCellBackground(manualPars[index]))
                 .foregroundStyle(parCellForeground(manualPars[index]))

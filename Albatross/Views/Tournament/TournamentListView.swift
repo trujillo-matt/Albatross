@@ -17,7 +17,7 @@ struct TournamentListView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
+                VStack(alignment: .leading, spacing: 28) {
                     if !tournamentStore.pendingInvites.isEmpty {
                         pendingInvitesSection
                     }
@@ -35,7 +35,7 @@ struct TournamentListView: View {
                     } else if !tournamentStore.myTournaments.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("All tournaments")
-                                .font(.title3.weight(.medium))
+                                .appFont(.large, weight: .medium)
                                 .accessibilityAddTraits(.isHeader)
                             tournamentList
                         }
@@ -89,10 +89,10 @@ struct TournamentListView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "envelope.badge.fill")
-                    .scaledFont(size: 13)
+                    .appFont(.small)
                     .foregroundStyle(Color.accentColor)
                 Text("\(tournamentStore.pendingInvites.count) pending invite\(tournamentStore.pendingInvites.count == 1 ? "" : "s")")
-                    .font(.footnote)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 20)
@@ -108,10 +108,10 @@ struct TournamentListView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(tournament.name)
-                    .font(.subheadline.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.primary)
                 Text(tournament.matchType.displayName)
-                    .font(.caption)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
 
@@ -122,7 +122,7 @@ struct TournamentListView: View {
                     Task { try? await tournamentStore.declineInvite(tournamentID: tournament.id) }
                 }) {
                     Text("Decline")
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
@@ -135,7 +135,7 @@ struct TournamentListView: View {
                     Task { try? await tournamentStore.acceptInvite(tournamentID: tournament.id) }
                 }) {
                     Text("Accept")
-                        .font(.footnote.weight(.medium))
+                        .appFont(.small, weight: .medium)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
@@ -145,8 +145,7 @@ struct TournamentListView: View {
                 .buttonStyle(.pressFeedback)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .appListRowPadding()
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
@@ -166,7 +165,7 @@ struct TournamentListView: View {
     private func leaderboardSection(_ tournament: Tournament) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Standings")
-                .font(.title3.weight(.medium))
+                .appFont(.large, weight: .medium)
                 .accessibilityAddTraits(.isHeader)
             NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
                 TournamentLeaderboard(tournament: tournament)
@@ -205,20 +204,20 @@ struct TournamentListView: View {
                         .frame(width: 8, height: 8)
                         .accessibilityHidden(true)
                     Text(statusLabel(tournament.status))
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(statusColor(tournament.status))
                 }
                 Text(tournament.name)
-                    .font(.headline)
+                    .appFont(.large, weight: .semibold)
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
                 Text(tournamentSummary(tournament))
-                    .font(.subheadline)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
             Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
+                .appFont(.small, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }
         .padding(16)
@@ -231,16 +230,16 @@ struct TournamentListView: View {
 
     private var emptyTournamentState: some View {
         VStack(alignment: .leading, spacing: 12) {
-            IconView("trophy", size: 32)
+            IconView("trophy", size: AppSpacing.listIcon)
                 .foregroundStyle(Color.accentColor)
             Text("No tournaments yet")
-                .font(.headline)
+                .appFont(.large, weight: .semibold)
             Text("Create one, invite friends, and score each match on a booklet.")
-                .font(.subheadline)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
             Button(action: { showNewTournament = true }) {
                 Text("Create a tournament")
-                    .font(.subheadline.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .frame(minHeight: 44)
@@ -291,12 +290,12 @@ struct TournamentNewsFeed: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Tournament news")
-                .font(.title3.weight(.medium))
+                .appFont(.large, weight: .medium)
                 .accessibilityAddTraits(.isHeader)
 
             if tournamentStore.news.isEmpty {
                 Text("Birdies, changed scores and finished matches show up here")
-                    .font(.footnote)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
@@ -310,15 +309,14 @@ struct TournamentNewsFeed: View {
                                 .frame(width: 8, height: 8)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(item.headline)
-                                    .font(.subheadline)
+                                    .appFont(.small)
                                 Text(item.createdAt.formatted(.relative(presentation: .named)))
-                                    .font(.caption)
+                                    .appFont(.small)
                                     .foregroundStyle(.secondary)
                             }
                             Spacer(minLength: 0)
                         }
-                        .padding(.vertical, 10)
-                        .padding(.horizontal, 16)
+                        .appListRowPadding()
                         .accessibilityElement(children: .combine)
                         if item.id != tournamentStore.news.last?.id { Divider().padding(.leading, 34) }
                     }

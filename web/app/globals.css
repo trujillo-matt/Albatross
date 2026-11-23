@@ -6,7 +6,7 @@
 
 @layer base {
   html { -webkit-text-size-adjust: 100%; }
-  body { @apply bg-stone-50 font-sans text-[15px] leading-6 text-stone-900 antialiased; }
+  body { @apply bg-stone-50 font-sans text-base text-stone-900 antialiased; }
   :focus-visible { outline: 2px solid #3f6b48; outline-offset: 2px; }
   /* Native controls keep the same focus treatment, without the browser's default blue. */
   input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: 0; }
@@ -16,17 +16,21 @@
   /* Surfaces */
   .card { @apply rounded-2xl bg-white p-4 ring-1 ring-hair; }
   .rows { @apply divide-y divide-hair; }                   /* rows inside one card, not a card per row */
-  .row { @apply flex items-center justify-between gap-3 py-3; }
+  .row { @apply flex items-center justify-between gap-3 px-5 py-3; }   /* list rows: 12 above and below, 20 either side */
 
   /* Buttons: 44px tall for touch, 8px radius, quiet states from one easing curve */
+  /* 44 tall, 16 in from the edge plus 4 of padding around the text, and no gap between an icon and its text */
   .btn, .btn-ghost {
-    @apply inline-flex h-11 select-none items-center justify-center gap-2 rounded-lg px-4 text-sm font-medium
+    @apply inline-flex h-11 select-none items-center justify-center gap-0 rounded-lg px-5 text-base font-medium
            transition-[background-color,color,transform] duration-150 ease-out active:scale-[0.98];
   }
   .btn { @apply bg-brand text-white hover:bg-brand-hover disabled:bg-stone-200 disabled:text-stone-500 disabled:hover:bg-stone-200; }
   .btn-ghost { @apply bg-white text-brand ring-1 ring-hair hover:bg-stone-100 disabled:bg-stone-100 disabled:text-stone-400; }
   .btn:disabled, .btn-ghost:disabled { @apply cursor-not-allowed active:scale-100; }
-  .btn-sm { @apply h-9 px-3; }
+  .btn-sm { @apply h-11 px-5; }                                 /* same 44 as every button; the name stays for the places that use it */
+  .btn svg:first-child:not(:last-child) { @apply mr-1; }
+  .btn svg:last-child:not(:first-child), .btn-ghost svg:last-child:not(:first-child) { @apply ml-1; }
+  .btn-ghost svg:first-child:not(:last-child) { @apply mr-1; }
 
   /* Fields */
   .input { @apply w-full rounded-lg bg-white px-3 py-3 text-base text-stone-900 ring-1 ring-hair placeholder:text-stone-400; }
@@ -34,7 +38,7 @@
 
   /* Type */
   .h1 { @apply font-serif text-3xl font-normal leading-tight tracking-tight text-brand; }   /* display serif, large only */
-  .h2 { @apply text-base font-medium text-stone-900; }
+  .h2 { @apply text-lg font-medium text-stone-900; }
   .muted { @apply text-sm text-stone-500; }
   .label { @apply text-sm text-stone-600; }
   .num { @apply font-serif tabular-nums lining-nums; }                                      /* every score and point total */
@@ -46,6 +50,6 @@
   .tab[aria-current="page"] { @apply border-brand font-medium text-brand; }
 
   /* Selectable list row (vote, draft) */
-  .pick { @apply flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 ease-out hover:bg-stone-50 disabled:cursor-default disabled:hover:bg-transparent; }
+  .pick { @apply flex w-full items-center justify-between gap-3 px-5 py-3 text-left transition-colors duration-150 ease-out hover:bg-stone-50 disabled:cursor-default disabled:hover:bg-transparent; }
   .pick[aria-pressed="true"] { @apply bg-brand-light; }
 }

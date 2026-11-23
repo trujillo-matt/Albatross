@@ -51,7 +51,7 @@ struct HeadToHeadView: View {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: 28) {
                     // Versus header
                     versusHeader
                         .padding(.horizontal, 16)
@@ -98,7 +98,7 @@ struct HeadToHeadView: View {
                     .frame(width: 44, height: 44)
                     .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
                 Text("VS")
-                    .font(.footnote.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
                     .foregroundStyle(.secondary)
             }
             .zIndex(1)
@@ -128,7 +128,7 @@ struct HeadToHeadView: View {
                     .fill(Color.white.opacity(0.12))
                     .frame(width: 56, height: 64)
                 Text(initials.isEmpty ? "?" : initials)
-                    .font(.title3.weight(.semibold))
+                    .appFont(.large, weight: .semibold)
                     .foregroundStyle(.white.opacity(0.85))
             }
 
@@ -137,26 +137,26 @@ struct HeadToHeadView: View {
             VStack(spacing: 0) {
                 if parts.count == 2 {
                     Text(String(parts[0]))
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(.white)
                     Text(String(parts[1]))
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(.white)
                 } else {
                     Text(name)
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(.white)
                 }
                 if let username, !username.isEmpty {
                     Text("@\(username)")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.white.opacity(0.55))
                 }
             }
             .multilineTextAlignment(.center)
 
             Text("\(rounds) round\(rounds == 1 ? "" : "s")")
-                .font(.caption2)
+                .appFont(.small)
                 .foregroundStyle(.white.opacity(0.5))
         }
         .frame(maxWidth: .infinity)
@@ -206,11 +206,11 @@ struct HeadToHeadView: View {
             HStack {
                 Spacer()
                 Text(myValue)
-                    .font(.title3.weight(.semibold))
+                    .appFont(.large, weight: .semibold)
                     .foregroundStyle(myWins ? Color.accentColor : .primary)
                 if myWins {
                     Image(systemName: "trophy.fill")
-                        .scaledFont(size: 11)
+                        .appFont(.small)
                         .foregroundStyle(Color.accentColor)
                 }
             }
@@ -219,7 +219,7 @@ struct HeadToHeadView: View {
             // Centre label
             VStack(spacing: 2) {
                 Text(label)
-                    .font(.caption2)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -229,11 +229,11 @@ struct HeadToHeadView: View {
             HStack {
                 if theirWins {
                     Image(systemName: "trophy.fill")
-                        .scaledFont(size: 11)
+                        .appFont(.small)
                         .foregroundStyle(Color.accentColor)
                 }
                 Text(theirValue)
-                    .font(.title3.weight(.semibold))
+                    .appFont(.large, weight: .semibold)
                     .foregroundStyle(theirWins ? Color.accentColor : .primary)
                 Spacer()
             }
@@ -248,22 +248,22 @@ struct HeadToHeadView: View {
     private var sharedCoursesList: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Shared Courses")
-                .font(.callout.weight(.semibold))
+                .appFont(.body, weight: .semibold)
                 .padding(.horizontal, 4)
 
             VStack(spacing: 0) {
                 // Header row
                 HStack(spacing: 0) {
                     Text("Course")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("You")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                         .frame(width: 52, alignment: .center)
                     Text("Them")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                         .frame(width: 52, alignment: .center)
                 }
@@ -292,11 +292,11 @@ struct HeadToHeadView: View {
             // Course name
             VStack(alignment: .leading, spacing: 1) {
                 Text(course.courseName)
-                    .font(.footnote.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 Text("Par \(course.par)")
-                    .font(.caption2)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -304,10 +304,10 @@ struct HeadToHeadView: View {
             // My best
             VStack(spacing: 1) {
                 Text("\(course.myBest)")
-                    .font(.callout.weight(.semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(myWins ? Color.accentColor : .primary)
                 Text(myDiff == 0 ? "E" : myDiff > 0 ? "+\(myDiff)" : "\(myDiff)")
-                    .font(.caption2)
+                    .appFont(.small)
                     .foregroundStyle(scoreColor(myDiff))
             }
             .frame(width: 52, alignment: .center)
@@ -315,16 +315,15 @@ struct HeadToHeadView: View {
             // Their best
             VStack(spacing: 1) {
                 Text("\(course.theirBest)")
-                    .font(.callout.weight(.semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(theirWins ? Color.accentColor : .primary)
                 Text(theirDiff == 0 ? "E" : theirDiff > 0 ? "+\(theirDiff)" : "\(theirDiff)")
-                    .font(.caption2)
+                    .appFont(.small)
                     .foregroundStyle(scoreColor(theirDiff))
             }
             .frame(width: 52, alignment: .center)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .appListRowPadding()
     }
 
     private var noSharedCoursesView: some View {
@@ -333,9 +332,9 @@ struct HeadToHeadView: View {
                 .scaledFont(size: 36)
                 .foregroundStyle(.tertiary)
             Text("No Shared Courses")
-                .font(.callout.weight(.semibold))
+                .appFont(.body, weight: .semibold)
             Text("Play some of the same courses to see a comparison here.")
-                .font(.footnote)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }

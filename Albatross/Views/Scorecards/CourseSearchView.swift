@@ -14,10 +14,10 @@ struct CourseSearchView: View {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                    .scaledFont(size: 15)
+                    .appFont(.body)
 
                 TextField("Search courses…", text: $courseStore.searchText)
-                    .font(.callout)
+                    .appFont(.body)
                     .autocorrectionDisabled()
                     .submitLabel(.search)
 
@@ -30,8 +30,7 @@ struct CourseSearchView: View {
                     .buttonStyle(.pressFeedback)
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 11)
+            .appListRowPadding()
             .background(Color(.secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 20)
@@ -69,22 +68,21 @@ struct CourseSearchView: View {
                                 .fill(Color(.tertiarySystemGroupedBackground))
                                 .frame(width: 36, height: 36)
                             Image(systemName: "pencil")
-                                .scaledFont(size: 14)
+                                .appFont(.small)
                                 .foregroundStyle(.secondary)
                         }
 
                         Text("Enter course name manually")
-                            .font(.subheadline)
+                            .appFont(.small)
                             .foregroundStyle(.secondary)
 
                         Spacer()
 
                         Image(systemName: "chevron.right")
-                            .scaledFont(size: 12, weight: .semibold)
+                            .appFont(.small, weight: .semibold)
                             .foregroundStyle(Color(.tertiaryLabel))
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .appListRowPadding()
                     .background(Color(.secondarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
@@ -113,12 +111,12 @@ struct CourseSearchView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(course.name)
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
                     Text(course.locationDisplay)
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
 
@@ -126,19 +124,18 @@ struct CourseSearchView: View {
 
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("Par \(course.totalPar)")
-                        .font(.footnote.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(Color.accentColor)
                     Text("18 holes")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.tertiary)
                 }
 
                 Image(systemName: "chevron.right")
-                    .scaledFont(size: 11, weight: .semibold)
+                    .appFont(.small, weight: .semibold)
                     .foregroundStyle(Color(.tertiaryLabel))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .appListRowPadding()
             .contentShape(Rectangle())
         }
         .buttonStyle(.pressFeedback)
@@ -153,10 +150,10 @@ struct CourseSearchView: View {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     Image(systemName: "mappin.circle.fill")
-                        .scaledFont(size: 12)
+                        .appFont(.small)
                         .foregroundStyle(Color.accentColor)
                     Text("Suggested")
-                        .font(.footnote.weight(.medium))
+                        .appFont(.small, weight: .medium)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 4)
@@ -181,10 +178,10 @@ struct CourseSearchView: View {
 
     private var noResults: some View {
         VStack(spacing: 10) {
-            IconView("map", size: 32)
+            IconView("map", size: AppSpacing.listIcon)
                 .foregroundStyle(Color(.tertiaryLabel))
             Text("No courses found for \"\(courseStore.searchText)\"")
-                .font(.subheadline)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }

@@ -97,7 +97,7 @@ struct TournamentDraftView: View {
 
                 if let error = errorMessage {
                     Text(error)
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.red)
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
@@ -172,10 +172,10 @@ struct TournamentDraftView: View {
             // Vote tally
             HStack(spacing: 6) {
                 Image(systemName: "person.2.fill")
-                    .scaledFont(size: 13)
+                    .appFont(.small)
                     .foregroundStyle(Color.accentColor)
                 Text("\(uniqueVoterCount) of \(acceptedPlayers.count) players voted")
-                    .font(.footnote)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 20)
@@ -203,17 +203,17 @@ struct TournamentDraftView: View {
                             .frame(width: 36, height: 36)
                             .overlay(
                                 Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                    .font(.subheadline.weight(.semibold))
+                                    .appFont(.small, weight: .semibold)
                                     .foregroundStyle(isSelected ? .white : Color.accentColor)
                             )
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text(player.profile?.displayName ?? "Player")
-                                .font(.subheadline.weight(.medium))
+                                .appFont(.small, weight: .medium)
                                 .foregroundStyle(.primary)
                             if let username = player.profile?.username {
                                 Text("@\(username)")
-                                    .font(.caption)
+                                    .appFont(.small)
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -225,7 +225,7 @@ struct TournamentDraftView: View {
                         let voteCount = tournamentStore.captainVotes.filter { $0.nomineeUserID == player.userID }.count
                         if voteCount > 0 && (isCommissioner || alreadyVoted) {
                             Text("\(voteCount)")
-                                .font(.subheadline.weight(.semibold))
+                                .appFont(.small, weight: .semibold)
                                 .foregroundStyle(Color.accentColor)
                         }
 
@@ -234,8 +234,7 @@ struct TournamentDraftView: View {
                                 .foregroundStyle(Color.accentColor)
                         }
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
+                    .appListRowPadding()
                     .background(Color(.secondarySystemGroupedBackground))
                 }
                 .buttonStyle(.pressFeedback)
@@ -252,14 +251,10 @@ struct TournamentDraftView: View {
                             ProgressView().tint(.white)
                         } else {
                             Text("Submit Votes (\(selectedNominees.count)/2)")
-                                .font(.callout.weight(.medium))
+                                .appFont(.body, weight: .medium)
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(selectedNominees.count == 2 ? Color.brandGreen : Color(.systemFill))
-                    .foregroundStyle(selectedNominees.count == 2 ? .white : .secondary)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .appButton(fill: selectedNominees.count == 2 ? Color.brandGreen : Color(.systemFill), foreground: selectedNominees.count == 2 ? .white : .secondary)
                 }
                 .buttonStyle(.pressFeedback)
                 .disabled(selectedNominees.count < 2 || isSubmittingVote)
@@ -270,7 +265,7 @@ struct TournamentDraftView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(Color.accentColor)
                     Text("Your vote is in")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 20)
@@ -283,7 +278,7 @@ struct TournamentDraftView: View {
                     Divider().padding(.top, 20)
 
                     Text("Admin actions")
-                        .font(.footnote.weight(.medium))
+                        .appFont(.small, weight: .medium)
                         .foregroundStyle(.secondary)
                         .padding(.top, 8)
 
@@ -293,14 +288,10 @@ struct TournamentDraftView: View {
                                 ProgressView().tint(.white)
                             } else {
                                 Text("Finalize captains")
-                                    .font(.subheadline.weight(.medium))
+                                    .appFont(.small, weight: .medium)
                             }
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.accentColor.opacity(0.15))
-                        .foregroundStyle(Color.accentColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .appButton(fill: Color.accentColor.opacity(0.15), foreground: Color.accentColor)
                     }
                     .buttonStyle(.pressFeedback)
                     .disabled(isFinalizingCaptains)
@@ -344,22 +335,21 @@ struct TournamentDraftView: View {
                                     .frame(width: 36, height: 36)
                                     .overlay(
                                         Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                            .font(.subheadline.weight(.semibold))
+                                            .appFont(.small, weight: .semibold)
                                             .foregroundStyle(Color.accentColor)
                                     )
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(player.profile?.displayName ?? "Player")
-                                        .font(.subheadline.weight(.medium))
+                                        .appFont(.small, weight: .medium)
                                     if let u = player.profile?.username {
-                                        Text("@\(u)").font(.caption).foregroundStyle(.secondary)
+                                        Text("@\(u)").appFont(.small).foregroundStyle(.secondary)
                                     }
                                 }
                                 Spacer()
                                 Image(systemName: "plus.circle.fill")
                                     .foregroundStyle(Color.accentColor)
                             }
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
+                            .appListRowPadding()
                             .background(Color(.secondarySystemGroupedBackground))
                         }
                         .buttonStyle(.pressFeedback)
@@ -371,7 +361,7 @@ struct TournamentDraftView: View {
                     HStack(spacing: 10) {
                         ProgressView()
                         Text("\(onClockTeam?.name ?? "Captain") is on the clock…")
-                            .font(.subheadline)
+                            .appFont(.small)
                             .foregroundStyle(.secondary)
                     }
                     .padding(.horizontal, 20)
@@ -381,7 +371,7 @@ struct TournamentDraftView: View {
                     if isCommissioner {
                         Divider().padding(.horizontal, 16)
                         Text("Admin override")
-                            .font(.footnote.weight(.medium))
+                            .appFont(.small, weight: .medium)
                             .foregroundStyle(.secondary)
                             .padding(.horizontal, 20)
                             .padding(.top, 12)
@@ -404,14 +394,10 @@ struct TournamentDraftView: View {
                             ProgressView().tint(.white)
                         } else {
                             Label("Start tournament", systemImage: "flag.fill")
-                                .font(.callout.weight(.medium))
+                                .appFont(.body, weight: .medium)
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.brandGreen)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .appButton(fill: Color.brandGreen, foreground: .white)
                 }
                 .buttonStyle(.pressFeedback)
                 .disabled(isStartingTournament)
@@ -425,7 +411,7 @@ struct TournamentDraftView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text(team?.name ?? "Team")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
                     .foregroundStyle(.primary)
                 if isOnClock {
                     // Pulsing green dot
@@ -448,12 +434,12 @@ struct TournamentDraftView: View {
                         .frame(width: 28, height: 28)
                         .overlay(
                             Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                .font(.caption2.weight(.semibold))
+                                .appFont(.small, weight: .semibold)
                                 .foregroundStyle(Color.accentColor)
                         )
                     if player.userID == team?.captainUserID { CaptainBadge() }
                     Text(player.profile?.displayName ?? "Player")
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.primary)
                         .lineLimit(1)
                 }
@@ -461,7 +447,7 @@ struct TournamentDraftView: View {
 
             if players.isEmpty {
                 Text("No players yet")
-                    .font(.caption)
+                    .appFont(.small)
                     .foregroundStyle(.tertiary)
                     .italic()
             }
@@ -483,13 +469,13 @@ struct TournamentDraftView: View {
     private func overridePickRow(_ player: TournamentPlayer) -> some View {
         HStack(spacing: 10) {
             Text(player.profile?.displayName ?? "Player")
-                .font(.subheadline)
+                .appFont(.small)
                 .foregroundStyle(.primary)
             Spacer()
             if let tA = teamA {
                 Button(action: { overridePick(player, to: tA) }) {
                     Text(tA.name)
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
@@ -501,7 +487,7 @@ struct TournamentDraftView: View {
             if let tB = teamB {
                 Button(action: { overridePick(player, to: tB) }) {
                     Text(tB.name)
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
@@ -522,17 +508,17 @@ struct TournamentDraftView: View {
     private func phaseBanner(phase: String, title: String, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(phase)
-                .font(.caption)
+                .appFont(.small)
                 .foregroundStyle(Color.accentColor)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(Color.accentColor.opacity(0.12))
                 .clipShape(Capsule())
             Text(title)
-                .font(.title3.weight(.semibold))
+                .appFont(.large, weight: .semibold)
                 .foregroundStyle(.primary)
             Text(subtitle)
-                .font(.subheadline)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
         }
         .padding(.horizontal, 20)
@@ -542,7 +528,7 @@ struct TournamentDraftView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.callout.weight(.semibold))
+            .appFont(.body, weight: .semibold)
             .foregroundStyle(.primary)
     }
 

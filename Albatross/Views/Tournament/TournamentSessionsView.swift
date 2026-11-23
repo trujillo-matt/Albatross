@@ -33,7 +33,7 @@ struct TournamentSessionsView: View {
                     }
                     if let errorMessage {
                         Text(errorMessage)
-                            .font(.footnote)
+                            .appFont(.small)
                             .foregroundStyle(.red)
                     }
                 }
@@ -143,14 +143,14 @@ struct TournamentSessionsView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(session.title), \(session.matchType.displayName)")
-                        .font(.callout.weight(.semibold))
+                        .appFont(.body, weight: .semibold)
                     Text("\(session.courseName ?? "Course to be set") · \(session.matchCount) matches")
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Text(session.status.displayName)
-                    .font(.caption.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
                     .background(Color.accentColor.opacity(0.12))
@@ -160,9 +160,9 @@ struct TournamentSessionsView: View {
             if session.status == .callouts {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("\(teamName(session.turnTeamID, t)) to call")
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                     Text(calloutHint(session, t, open: open, locked: matches.count - open))
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -173,7 +173,7 @@ struct TournamentSessionsView: View {
 
             if session.status == .pending {
                 Text("The lineup is made when the previous session finishes.")
-                    .font(.footnote)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(matches) { match in
@@ -193,7 +193,7 @@ struct TournamentSessionsView: View {
                     .disabled(isWorking)
                 }
                 Text("Tap two players on the same team to swap them. Callouts start when a captain opens them")
-                    .font(.caption)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
 
@@ -227,16 +227,16 @@ struct TournamentSessionsView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
                 Text("Match \(match.matchupNumber)")
-                    .font(.footnote.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.secondary)
                 Spacer()
                 Text(matchCaption(match, session: session, t))
-                    .font(.footnote)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
             HStack(spacing: 8) {
                 side(match, teamA: true, session: session, tournament: t)
-                Text("vs").font(.caption).foregroundStyle(.secondary)
+                Text("vs").appFont(.small).foregroundStyle(.secondary)
                 side(match, teamA: false, session: session, tournament: t)
             }
         }
@@ -265,7 +265,7 @@ struct TournamentSessionsView: View {
                         tapPlayer(id, team: teamID, session: session, tournament: t)
                     } label: {
                         Text(name(id, t))
-                            .font(.callout)
+                            .appFont(.body)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
                             .background(pickedPlayer == id ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemGroupedBackground))
@@ -282,7 +282,7 @@ struct TournamentSessionsView: View {
                 tapUnit(units, isMine: isMine, locked: match.isLockedIn, session: session, tournament: t)
             } label: {
                 Text(unitName(units, t).isEmpty ? "TBD" : unitName(units, t))
-                    .font(.callout)
+                    .appFont(.body)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .background(selected ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemGroupedBackground))
@@ -308,10 +308,10 @@ struct TournamentSessionsView: View {
             let out = t.playerPool.filter { $0.teamID == team.id && $0.inviteStatus == .accepted && !playing.contains($0.userID) }
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(team.name) sitting out")
-                    .font(.footnote.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.secondary)
                 if out.isEmpty {
-                    Text("Everyone plays").font(.footnote).foregroundStyle(.secondary)
+                    Text("Everyone plays").appFont(.small).foregroundStyle(.secondary)
                 } else {
                     ForEach(out) { player in
                         Button {
@@ -321,7 +321,7 @@ struct TournamentSessionsView: View {
                                 if t.isCaptain(player.userID) { CaptainBadge() }
                                 Text(player.profile?.displayName ?? "Player")
                             }
-                                .font(.callout)
+                                .appFont(.body)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 8)
                                 .background(pickedPlayer == player.userID ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemGroupedBackground))
@@ -367,11 +367,11 @@ struct TournamentSessionsView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let myUnit, let theirUnit {
                 Text("Call out \(unitName(myUnit, t)) against \(unitName(theirUnit, t))")
-                    .font(.subheadline)
+                    .appFont(.small)
             }
             if !bothCaptainsHere(t) {
                 Text("Picks go live once both captains are on this page")
-                    .font(.footnote)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
             HStack {

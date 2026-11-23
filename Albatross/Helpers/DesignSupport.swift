@@ -72,9 +72,9 @@ extension Color {
 /// They take the colour of the surrounding text unless given another.
 struct IconView: View {
     let name: String
-    var size: CGFloat = 20
+    var size: CGFloat = AppSpacing.listIcon
 
-    init(_ name: String, size: CGFloat = 20) {
+    init(_ name: String, size: CGFloat = AppSpacing.listIcon) {
         self.name = name
         self.size = size
     }
@@ -125,5 +125,104 @@ extension Color {
         func linear(_ c: CGFloat) -> CGFloat { c <= 0.03928 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4) }
         let luminance = 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue)
         return luminance > 0.4 ? Color(white: 0.07) : .white
+    }
+}
+
+// MARK: - Design standards
+//
+// The numbers every screen is built from. Sizes are points at the default text size; text still grows with Dynamic Type.
+
+enum AppSpacing {
+    /// Between a section's label and its list.
+    static let labelToList: CGFloat = 12
+    /// Between one section and the next.
+    static let section: CGFloat = 28
+    /// Inside a list row.
+    static let rowVertical: CGFloat = 12
+    static let rowHorizontal: CGFloat = 20
+    /// Buttons and calls to action.
+    static let buttonHeight: CGFloat = 44
+    static let buttonHorizontal: CGFloat = 16
+    /// Padding around a button's text, either side. The text and its icon touch: this is the only space between them.
+    static let buttonTextInset: CGFloat = 4
+    /// Icons.
+    static let navIcon: CGFloat = 24
+    static let listIcon: CGFloat = 28
+}
+
+/// The three text sizes: size / line height.
+enum AppTextSize {
+    case small   // 14 / 18
+    case body    // 16 / 20
+    case large   // 18 / 22
+
+    var points: CGFloat {
+        switch self { case .small: 14; case .body: 16; case .large: 18 }
+    }
+    var lineHeight: CGFloat {
+        switch self { case .small: 18; case .body: 20; case .large: 22 }
+    }
+    fileprivate var relativeTo: Font.TextStyle {
+        switch self { case .small: .subheadline; case .body: .callout; case .large: .headline }
+    }
+}
+
+private struct AppTextStyle: ViewModifier {
+    @ScaledMetric private var size: CGFloat
+    private let base: CGFloat
+    private let lineHeight: CGFloat
+    private let weight: Font.Weight
+    private let monospacedDigits: Bool
+
+    init(_ textSize: AppTextSize, weight: Font.Weight, monospacedDigits: Bool) {
+        _size = ScaledMetric(wrappedValue: textSize.points, relativeTo: textSize.relativeTo)
+        base = textSize.points
+        lineHeight = textSize.lineHeight
+        self.weight = weight
+        self.monospacedDigits = monospacedDigits
+    }
+
+    func body(content: Content) -> some View {
+        let font = Font.system(size: size, weight: weight)
+        // The system face is about 1.19 times its size tall on its own; the line spacing makes up the rest of the line height.
+        content
+            .font(monospacedDigits ? font.monospacedDigit() : font)
+            .lineSpacing(max(0, lineHeight * (size / base) - size * 1.19))
+    }
+}
+
+extension View {
+    /// Text at one of the three sizes, 14/18, 16/20 or 18/22.
+    func appFont(_ size: AppTextSize, weight: Font.Weight = .regular, monospacedDigit: Bool = false) -> some View {
+        modifier(AppTextStyle(size, weight: weight, monospacedDigits: monospacedDigit))
+    }
+
+    /// A list row's padding: 12 above and below, 20 either side.
+    func appListRowPadding() -> some View {
+        padding(.vertical, AppSpacing.rowVertical).padding(.horizontal, AppSpacing.rowHorizontal)
+    }
+}
+
+/// A label whose icon touches its text. The text has 4 points of padding either side; that is the only space between them.
+struct TouchingLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 0) {
+            configuration.icon
+            configuration.title.padding(.horizontal, AppSpacing.buttonTextInset)
+        }
+    }
+}
+
+extension View {
+    /// A button's face: 44 high, 16 in from the edge, the text wrapped in 4 of its own padding, and no gap between an icon and its text.
+    func appButton<Fill: ShapeStyle>(fill: Fill, foreground: Color? = nil, fullWidth: Bool = true, cornerRadius: CGFloat = 12) -> some View {
+        self
+            .labelStyle(TouchingLabelStyle())
+            .padding(.horizontal, AppSpacing.buttonTextInset)
+            .padding(.horizontal, AppSpacing.buttonHorizontal)
+            .frame(maxWidth: fullWidth ? .infinity : nil, minHeight: AppSpacing.buttonHeight)
+            .background(fill, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .foregroundStyle(foreground ?? Color.primary)
+            .contentShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }

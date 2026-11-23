@@ -14,7 +14,7 @@ export default function AdminSignIn() {
     setBusy(false);
   };
   return (
-    <form onSubmit={go} className="space-y-6 pt-12">
+    <form onSubmit={go} className="space-y-7 pt-12">
       <div className="space-y-2">
         <h1 className="h1">Admin sign in</h1>
         <p className="muted">Use the email and password from the Albatross app</p>

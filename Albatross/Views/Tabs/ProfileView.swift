@@ -27,7 +27,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 32) {
+                VStack(spacing: 28) {
                     membershipCard
 
                     friendsSection
@@ -37,7 +37,7 @@ struct ProfileView: View {
                     if authStore.isSignedIn {
                         Button(role: .destructive) { showSignOutConfirm = true } label: {
                             Text("Sign out")
-                                .font(.body)
+                                .appFont(.body)
                                 .foregroundStyle(Color(.systemRed))
                                 .frame(maxWidth: .infinity, minHeight: 44)
                                 .contentShape(Rectangle())
@@ -46,7 +46,7 @@ struct ProfileView: View {
                     } else if continuesWithoutAccount {
                         Button { continuesWithoutAccount = false } label: {
                             Text("Sign in to sync")
-                                .font(.body)
+                                .appFont(.body)
                                 .foregroundStyle(Color.accentColor)
                                 .frame(maxWidth: .infinity, minHeight: 44)
                                 .contentShape(Rectangle())
@@ -116,12 +116,12 @@ struct ProfileView: View {
                         .minimumScaleFactor(0.7)
                     if !username.isEmpty {
                         Text("@\(username)")
-                            .font(.subheadline)
+                            .appFont(.small)
                             .foregroundStyle(ink.opacity(0.75))
                     }
                     if !location.isEmpty {
                         Text(location)
-                            .font(.footnote)
+                            .appFont(.small)
                             .foregroundStyle(ink.opacity(0.65))
                     }
                 }
@@ -136,10 +136,10 @@ struct ProfileView: View {
             HStack(alignment: .bottom, spacing: 16) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Home course")
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(ink.opacity(0.65))
                     Text(homeCourse.isEmpty ? "Not set" : homeCourse)
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(ink)
                         .lineLimit(2)
                 }
@@ -149,7 +149,7 @@ struct ProfileView: View {
                         .font(.custom(BookletStyle.pencilFontName, size: 44))
                         .foregroundStyle(BookletStyle.pencilGraphite)
                     Text(handicapIndex == nil ? "Needs 3 rounds" : "Handicap index")
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(ink.opacity(0.65))
                 }
             }
@@ -177,7 +177,7 @@ struct ProfileView: View {
                 ZStack {
                     ink.opacity(0.12)
                     Text(initialsFromName(name))
-                        .font(.title3.weight(.medium))
+                        .appFont(.large, weight: .medium)
                         .foregroundStyle(ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
@@ -199,11 +199,11 @@ struct ProfileView: View {
                 ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
                 : AnyLayout(HStackLayout(alignment: .firstTextBaseline))) {
                 Text("Friends")
-                    .font(.title3.weight(.medium))
+                    .appFont(.large, weight: .medium)
                     .accessibilityAddTraits(.isHeader)
                 if !dynamicTypeSize.isAccessibilitySize { Spacer() }
                 Text("\(socialStore.following.count) following · \(socialStore.followers.count) followers")
-                    .font(.footnote.monospacedDigit())
+                    .appFont(.small, monospacedDigit: true)
                     .foregroundStyle(.secondary)
             }
 
@@ -221,11 +221,11 @@ struct ProfileView: View {
                             .frame(width: 40)
                             .foregroundStyle(Color.accentColor)
                         Text("Find friends")
-                            .font(.body)
+                            .appFont(.body)
                             .foregroundStyle(.primary)
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .font(.footnote.weight(.semibold))
+                            .appFont(.small, weight: .semibold)
                             .foregroundStyle(.tertiary)
                     }
                     .padding(.horizontal, 16)
@@ -241,7 +241,7 @@ struct ProfileView: View {
     private func friendRow(profile: UserProfile) -> some View {
         HStack(spacing: 12) {
             Text(initialsFromName(profile.displayName))
-                .font(.subheadline.weight(.medium))
+                .appFont(.small, weight: .medium)
                 .foregroundStyle(Color.accentColor)
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
@@ -252,11 +252,11 @@ struct ProfileView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(profile.displayName)
-                    .font(.body)
+                    .appFont(.body)
                     .foregroundStyle(.primary)
                 if let username = profile.username, !username.isEmpty {
                     Text("@\(username)")
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -267,16 +267,16 @@ struct ProfileView: View {
                 let difference = latest.round.totalScore - latest.round.effectivePars.reduce(0, +)
                 VStack(alignment: .trailing, spacing: 1) {
                     Text("\(latest.round.totalScore)")
-                        .font(.callout.weight(.medium).monospacedDigit())
+                        .appFont(.body, weight: .medium, monospacedDigit: true)
                         .foregroundStyle(.primary)
                     Text(difference == 0 ? "E" : difference > 0 ? "+\(difference)" : "\(difference)")
-                        .font(.caption2.monospacedDigit())
+                        .appFont(.small, monospacedDigit: true)
                         .foregroundStyle(BookletStyle.adaptiveInk(forDifference: difference == 0 ? 0 : (difference < 0 ? -1 : 2)))
                 }
             }
 
             Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
+                .appFont(.small, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 16)
@@ -302,16 +302,16 @@ struct ProfileView: View {
                 .frame(width: 40)
                 .foregroundStyle(Color.accentColor)
             Text(title)
-                .font(.body)
+                .appFont(.body)
                 .foregroundStyle(.primary)
             Spacer()
             if let detail {
                 Text(detail)
-                    .font(.body.monospacedDigit())
+                    .appFont(.body, monospacedDigit: true)
                     .foregroundStyle(.secondary)
             }
             Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
+                .appFont(.small, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 16)
@@ -349,7 +349,7 @@ struct SettingsSheet: View {
                 Section {
                     HStack {
                         Label("Dark Mode", systemImage: "moon.fill")
-                            .font(.callout)
+                            .appFont(.body)
                         Spacer()
                         Picker("", selection: $colorSchemePreference) {
                             Text("Off").tag("light")
@@ -361,7 +361,7 @@ struct SettingsSheet: View {
                     }
                 } header: {
                     Text("Appearance")
-                        .font(.caption)
+                        .appFont(.small)
                 }
 
                 Section {
@@ -371,11 +371,11 @@ struct SettingsSheet: View {
                             .navigationBarTitleDisplayMode(.inline)
                     } label: {
                         Label("Paper, ink and putts", systemImage: "paintpalette")
-                            .font(.callout)
+                            .appFont(.body)
                     }
                 } header: {
                     Text("Scorecard")
-                        .font(.caption)
+                        .appFont(.small)
                 }
             }
             .listStyle(.insetGrouped)

@@ -147,7 +147,7 @@ private struct DetailsPanel: View {
 
             Button(action: onOpen) {
                 Text(round.status == .completed ? "Open scorecard" : "Open scorecard")
-                    .font(.body.weight(.medium))
+                    .appFont(.body, weight: .medium)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, minHeight: 50)
                     .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -157,7 +157,7 @@ private struct DetailsPanel: View {
             HStack(spacing: 8) {
                 Button(action: onEdit) {
                     Label("Edit", systemImage: "pencil")
-                        .font(.subheadline.weight(.medium))
+                        .appFont(.small, weight: .medium)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background(Color.primary.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .contentShape(Rectangle())
@@ -165,7 +165,7 @@ private struct DetailsPanel: View {
                 .buttonStyle(.pressFeedback)
                 Button(role: .destructive, action: onDelete) {
                     Label("Delete", systemImage: "trash")
-                        .font(.subheadline.weight(.medium))
+                        .appFont(.small, weight: .medium)
                         .foregroundStyle(Color(.systemRed))
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .background(Color(.systemRed).opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -182,11 +182,11 @@ private struct DetailsPanel: View {
     private func row(_ title: String, value: String) -> some View {
         HStack {
             Text(title)
-                .font(.subheadline)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
             Spacer(minLength: 12)
             Text(value)
-                .font(.body.monospacedDigit())
+                .appFont(.body, monospacedDigit: true)
                 .multilineTextAlignment(.trailing)
         }
         .frame(minHeight: 44)
@@ -230,12 +230,12 @@ private struct WalletCard: View {
             HStack(alignment: .center, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(round.courseName)
-                        .font(.headline)
+                        .appFont(.large, weight: .semibold)
                         .foregroundStyle(ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(ink.opacity(0.7))
                 }
                 Spacer(minLength: 8)

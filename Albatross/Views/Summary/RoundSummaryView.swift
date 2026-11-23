@@ -144,16 +144,16 @@ struct RoundSummaryView: View {
     private var templatePicker: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Style")
-                .font(.subheadline)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
             HStack(spacing: 8) {
                 ForEach(ShareTemplate.allCases) { template in
                     Button { selectedTemplate = template } label: {
                         VStack(spacing: 6) {
                             Image(systemName: template.iconName)
-                                .font(.title3)
+                                .appFont(.large)
                             Text(template.label)
-                                .font(.footnote.weight(.medium))
+                                .appFont(.small, weight: .medium)
                         }
                         .foregroundStyle(selectedTemplate == template ? Color.accentColor : Color.secondary)
                         .frame(maxWidth: .infinity, minHeight: 64)
@@ -189,10 +189,10 @@ struct RoundSummaryView: View {
             ForEach(items, id: \.0) { item in
                 VStack(spacing: 2) {
                     Text(item.1)
-                        .font(.title3.weight(.semibold))
+                        .appFont(.large, weight: .semibold)
                         .monospacedDigit()
                     Text(item.0)
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
@@ -220,7 +220,7 @@ struct RoundSummaryView: View {
                         Image(systemName: "square.and.arrow.up")
                     }
                     Text(isRendering ? "Preparing" : "Share")
-                        .font(.body.weight(.semibold))
+                        .appFont(.body, weight: .semibold)
                 }
                 .frame(maxWidth: .infinity, minHeight: 52)
                 .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -230,7 +230,7 @@ struct RoundSummaryView: View {
 
             Button { Task { await handleSaveToPhotos() } } label: {
                 Label("Save to Photos", systemImage: "photo.badge.arrow.down")
-                    .font(.body)
+                    .appFont(.body)
                     .frame(maxWidth: .infinity, minHeight: 52)
                     .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .foregroundStyle(.primary)
@@ -247,7 +247,7 @@ struct RoundSummaryView: View {
             VStack {
                 Spacer()
                 Label("Saved to Photos", systemImage: "checkmark.circle.fill")
-                    .font(.subheadline.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 12)
                     .background(.regularMaterial, in: Capsule())

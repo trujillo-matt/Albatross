@@ -203,7 +203,7 @@ struct ScorecardsView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.body.weight(.semibold))
+            .appFont(.body, weight: .semibold)
             .foregroundStyle(.primary)
             .accessibilityAddTraits(.isHeader)
             .padding(.horizontal, 20)
@@ -266,17 +266,17 @@ struct ScorecardsView: View {
 
             VStack(spacing: 8) {
                 Text("No Rounds Yet")
-                    .font(.title3.weight(.semibold))
+                    .appFont(.large, weight: .semibold)
 
                 Text("Tap + to start tracking your first round")
-                    .font(.subheadline)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
 
             Button(action: { showNewRound = true }) {
                 Label("Start New Round", systemImage: "plus.circle.fill")
-                    .font(.callout)
+                    .appFont(.body)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 14)
                     .background(Color.brandGreen)

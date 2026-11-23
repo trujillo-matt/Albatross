@@ -36,7 +36,7 @@ struct TournamentDetailView: View {
                 // ── Error ────────────────────────────────────────────────
                 if let error = errorMessage {
                     Text(error)
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.red)
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
@@ -97,7 +97,7 @@ struct TournamentDetailView: View {
                 statusBadge(current.status)
                 Spacer()
                 Text(current.matchType.displayName)
-                    .font(.footnote)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
 
@@ -113,7 +113,7 @@ struct TournamentDetailView: View {
                     HStack(spacing: 8) {
                         ForEach(current.courses) { course in
                             Text("R\(course.roundNumber): \(course.courseName)")
-                                .font(.caption)
+                                .appFont(.small)
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
@@ -136,10 +136,10 @@ struct TournamentDetailView: View {
     private func statItem(label: String, value: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.body.weight(.semibold))
+                .appFont(.body, weight: .semibold)
                 .foregroundStyle(.primary)
             Text(label)
-                .font(.caption2)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
         }
     }
@@ -150,7 +150,7 @@ struct TournamentDetailView: View {
                 .fill(statusColor(status))
                 .frame(width: 8, height: 8)
             Text(status.rawValue.capitalized)
-                .font(.caption.weight(.medium))
+                .appFont(.small, weight: .medium)
                 .foregroundStyle(statusColor(status))
         }
         .padding(.horizontal, 10)
@@ -174,12 +174,8 @@ struct TournamentDetailView: View {
                 VStack(spacing: 12) {
                     Button(action: { showInviteSearch = true }) {
                         Label("Invite players", systemImage: "person.badge.plus")
-                            .font(.subheadline.weight(.medium))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color(.secondarySystemGroupedBackground))
-                            .foregroundStyle(Color.accentColor)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .appFont(.small, weight: .medium)
+                            .appButton(fill: Color(.secondarySystemGroupedBackground), foreground: Color.accentColor)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .strokeBorder(Color.accentColor.opacity(0.4), lineWidth: 1)
@@ -195,21 +191,17 @@ struct TournamentDetailView: View {
                                     .tint(.white)
                             } else {
                                 Label("Start captain vote and draft", systemImage: "play.circle.fill")
-                                    .font(.callout.weight(.medium))
+                                    .appFont(.body, weight: .medium)
                             }
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(acceptedCount >= 2 ? Color.brandGreen : Color(.systemFill))
-                        .foregroundStyle(acceptedCount >= 2 ? .white : .secondary)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .appButton(fill: acceptedCount >= 2 ? Color.brandGreen : Color(.systemFill), foreground: acceptedCount >= 2 ? .white : .secondary)
                     }
                     .buttonStyle(.pressFeedback)
                     .disabled(acceptedCount < 2 || isStartingDraft)
 
                     if acceptedCount < 2 {
                         Text("You need at least 2 players to start the captain vote")
-                            .font(.caption)
+                            .appFont(.small)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -237,7 +229,7 @@ struct TournamentDetailView: View {
                 .frame(width: 36, height: 36)
                 .overlay(
                     Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(Color.accentColor)
                 )
 
@@ -245,12 +237,12 @@ struct TournamentDetailView: View {
                 HStack(spacing: 6) {
                     if current.isCaptain(player.userID) { CaptainBadge() }
                     Text(player.profile?.displayName ?? "Player")
-                        .font(.subheadline.weight(.medium))
+                        .appFont(.small, weight: .medium)
                         .foregroundStyle(.primary)
                 }
                 if let username = player.profile?.username {
                     Text("@\(username)")
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -261,18 +253,17 @@ struct TournamentDetailView: View {
 
             if player.isAdmin {
                 Image(systemName: "star.fill")
-                    .scaledFont(size: 11)
+                    .appFont(.small)
                     .foregroundStyle(.yellow)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .appListRowPadding()
         .background(Color(.secondarySystemGroupedBackground))
     }
 
     private func inviteStatusBadge(_ status: InviteStatus) -> some View {
         Text(status.rawValue.capitalized)
-            .font(.caption2)
+            .appFont(.small)
             .foregroundStyle(inviteStatusColor(status))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -295,17 +286,17 @@ struct TournamentDetailView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Open vote and draft")
-                            .font(.callout.weight(.semibold))
+                            .appFont(.body, weight: .semibold)
                             .foregroundStyle(.primary)
                         Text("Captain vote and draft in progress")
-                            .font(.footnote)
+                            .appFont(.small)
                             .foregroundStyle(.secondary)
                     }
 
                     Spacer()
 
                     Image(systemName: "chevron.right")
-                        .scaledFont(size: 13, weight: .semibold)
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(Color(.tertiaryLabel))
                 }
                 .padding(16)
@@ -336,15 +327,15 @@ struct TournamentDetailView: View {
                             .foregroundStyle(Color.accentColor)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Lineups and callouts")
-                                .font(.callout.weight(.semibold))
+                                .appFont(.body, weight: .semibold)
                                 .foregroundStyle(.primary)
                             Text(current.currentSession.map { "\($0.title), \($0.status.displayName)" } ?? "")
-                                .font(.footnote)
+                                .appFont(.small)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
                         Image(systemName: "chevron.right")
-                            .scaledFont(size: 13, weight: .semibold)
+                            .appFont(.small, weight: .semibold)
                             .foregroundStyle(Color(.tertiaryLabel))
                     }
                     .padding(16)
@@ -365,12 +356,8 @@ struct TournamentDetailView: View {
 
             NavigationLink(destination: TournamentStandingsView(tournament: current)) {
                 Label("Full standings", systemImage: "chart.bar.fill")
-                    .font(.subheadline.weight(.medium))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color(.secondarySystemGroupedBackground))
-                    .foregroundStyle(Color.accentColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .appFont(.small, weight: .medium)
+                    .appButton(fill: Color(.secondarySystemGroupedBackground), foreground: Color.accentColor)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
             }
@@ -382,7 +369,7 @@ struct TournamentDetailView: View {
         HStack {
             VStack(spacing: 4) {
                 Text(standings.teamA.name)
-                    .font(.footnote.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.primary)
                 Text(String(format: "%.1f", standings.pointsTeamA))
                     .font(.largeTitle.weight(.semibold))
@@ -392,16 +379,16 @@ struct TournamentDetailView: View {
 
             VStack(spacing: 2) {
                 Text("vs")
-                    .font(.subheadline)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
                 Text("to \(String(format: "%.1f", standings.pointsToWin))")
-                    .font(.caption2)
+                    .appFont(.small)
                     .foregroundStyle(.tertiary)
             }
 
             VStack(spacing: 4) {
                 Text(standings.teamB.name)
-                    .font(.footnote.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.primary)
                 Text(String(format: "%.1f", standings.pointsTeamB))
                     .font(.largeTitle.weight(.semibold))
@@ -418,10 +405,10 @@ struct TournamentDetailView: View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Match \(matchup.matchupNumber)")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
                     .foregroundStyle(.primary)
                 Text(matchup.matchType.displayName)
-                    .font(.caption)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
 
@@ -430,10 +417,10 @@ struct TournamentDetailView: View {
             if matchup.status == .complete {
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("\(String(format: "%.1f", matchup.pointsTeamA)) – \(String(format: "%.1f", matchup.pointsTeamB))")
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                         .foregroundStyle(.primary)
                     Text("Complete")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
             } else {
@@ -441,18 +428,17 @@ struct TournamentDetailView: View {
             }
 
             Image(systemName: "chevron.right")
-                .scaledFont(size: 12, weight: .semibold)
+                .appFont(.small, weight: .semibold)
                 .foregroundStyle(Color(.tertiaryLabel))
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .appListRowPadding()
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func matchupStatusBadge(_ status: MatchupStatus) -> some View {
         Text(status == .active ? "In Progress" : "Pending")
-            .font(.caption2)
+            .appFont(.small)
             .foregroundStyle(status == .active ? Color.accentColor : .orange)
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
@@ -477,7 +463,7 @@ struct TournamentDetailView: View {
                                 .scaledFont(size: 28)
                                 .foregroundStyle(.yellow)
                             Text("\(winner.name) wins!")
-                                .font(.body.weight(.semibold))
+                                .appFont(.body, weight: .semibold)
                                 .foregroundStyle(.primary)
                         }
                         Spacer()
@@ -488,12 +474,8 @@ struct TournamentDetailView: View {
 
             NavigationLink(destination: TournamentStandingsView(tournament: current)) {
                 Label("View full standings", systemImage: "chart.bar.fill")
-                    .font(.subheadline.weight(.medium))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.brandGreen)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .appFont(.small, weight: .medium)
+                    .appButton(fill: Color.brandGreen, foreground: .white)
                     .padding(.horizontal, 16)
             }
             .buttonStyle(.pressFeedback)
@@ -504,7 +486,7 @@ struct TournamentDetailView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.body.weight(.semibold))
+            .appFont(.body, weight: .semibold)
             .foregroundStyle(.primary)
     }
 
@@ -563,7 +545,7 @@ private struct InvitePlayersSheet: View {
             VStack(spacing: 0) {
                 if let sendErrorMessage {
                     Text(sendErrorMessage)
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 16)
@@ -574,7 +556,7 @@ private struct InvitePlayersSheet: View {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
                     TextField("Search by name or username", text: $searchQuery)
-                        .font(.subheadline)
+                        .appFont(.small)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .onChange(of: searchQuery) { _, query in
@@ -615,14 +597,14 @@ private struct InvitePlayersSheet: View {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(profile.displayName)
-                                            .font(.subheadline.weight(.medium))
+                                            .appFont(.small, weight: .medium)
                                         if let u = profile.username {
-                                            Text("@\(u)").font(.caption).foregroundStyle(.secondary)
+                                            Text("@\(u)").appFont(.small).foregroundStyle(.secondary)
                                         }
                                     }
                                     Spacer()
                                     if alreadyInPool {
-                                        Text("Invited").font(.caption).foregroundStyle(.secondary)
+                                        Text("Invited").appFont(.small).foregroundStyle(.secondary)
                                     } else if selected {
                                         Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor)
                                     }
@@ -717,31 +699,31 @@ struct TeeTimeCard: View {
 
     var body: some View {
         if let session {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Tee times")
-                    .font(.title3.weight(.medium))
+                    .appFont(.large, weight: .medium)
                     .accessibilityAddTraits(.isHeader)
                 if let me, let mine = teeTime(in: session, for: me) {
                     Text("Your tee time, Day \(session.dayNumber) \(session.title): \(label(mine))")
-                        .font(.subheadline.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                 } else {
                     Text("No tee time for you yet in Day \(session.dayNumber) \(session.title)")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
                 DisclosureGroup("Everyone's tee times", isExpanded: $showAll) {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(tournament.sortedSessions.filter { s in tournament.teeTimes.contains { $0.sessionID == s.id } }) { s in
                             Text("Day \(s.dayNumber), \(s.title)")
-                                .font(.footnote.weight(.semibold))
+                                .appFont(.small, weight: .semibold)
                                 .padding(.top, 4)
                             ForEach(groups(in: s), id: \.time) { group in
                                 HStack(alignment: .firstTextBaseline) {
                                     Text(label(group.time))
-                                        .font(.subheadline.monospacedDigit())
+                                        .appFont(.small, monospacedDigit: true)
                                         .frame(width: 96, alignment: .leading)
                                     Text(group.names.joined(separator: ", "))
-                                        .font(.subheadline)
+                                        .appFont(.small)
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -749,7 +731,7 @@ struct TeeTimeCard: View {
                     }
                     .padding(.top, 6)
                 }
-                .font(.subheadline)
+                .appFont(.small)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)

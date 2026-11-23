@@ -54,7 +54,7 @@ struct EditRoundSheet: View {
                                     .frame(width: 26, height: 26)
                                     .overlay(
                                         Image(systemName: "camera.fill")
-                                            .scaledFont(size: 11, weight: .medium)
+                                            .appFont(.small, weight: .medium)
                                             .foregroundStyle(Color.accentColor)
                                     )
                                     .offset(x: 4, y: 4)
@@ -74,21 +74,21 @@ struct EditRoundSheet: View {
                             HStack {
                                 Spacer()
                                 Text("Remove Logo")
-                                    .font(.subheadline)
+                                    .appFont(.small)
                                 Spacer()
                             }
                         }
                     }
                 } header: {
                     Text("Course Logo")
-                        .font(.caption)
+                        .appFont(.small)
                 }
 
                 // MARK: Course info
                 Section {
                     LabeledContent("Course") {
                         TextField("Course name", text: $round.courseName)
-                            .font(.callout)
+                            .appFont(.body)
                             .multilineTextAlignment(.trailing)
                     }
 
@@ -97,10 +97,10 @@ struct EditRoundSheet: View {
                         selection: $round.date,
                         displayedComponents: .date
                     )
-                    .font(.callout)
+                    .appFont(.body)
                 } header: {
                     Text("Round Info")
-                        .font(.caption)
+                        .appFont(.small)
                 }
 
                 // MARK: Per-hole pars
@@ -108,14 +108,14 @@ struct EditRoundSheet: View {
                     nineHolePars(range: 0..<9)
                 } header: {
                     Text("Front 9 Pars")
-                        .font(.caption)
+                        .appFont(.small)
                 }
 
                 Section {
                     nineHolePars(range: 9..<18)
                 } header: {
                     Text("Back 9 Pars")
-                        .font(.caption)
+                        .appFont(.small)
                 }
 
                 if round.courseID != nil {
@@ -123,9 +123,9 @@ struct EditRoundSheet: View {
                         HStack(spacing: 8) {
                             Image(systemName: "info.circle")
                                 .foregroundStyle(.secondary)
-                                .scaledFont(size: 14)
+                                .appFont(.small)
                             Text("Pars were loaded from the course database. Any changes you make here will override them for this round only.")
-                                .font(.footnote)
+                                .appFont(.small)
                                 .foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 2)
@@ -169,7 +169,7 @@ struct EditRoundSheet: View {
             HStack(spacing: 0) {
                 ForEach(range, id: \.self) { index in
                     Text("\(index + 1)")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
@@ -192,7 +192,7 @@ struct EditRoundSheet: View {
             }
         } label: {
             Text("\(pars[index])")
-                .font(.subheadline.weight(.semibold).monospacedDigit())
+                .appFont(.small, weight: .semibold, monospacedDigit: true)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .background(parBackground(pars[index]))
                 .foregroundStyle(parForeground(pars[index]))

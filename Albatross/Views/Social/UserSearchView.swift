@@ -19,7 +19,7 @@ struct UserSearchView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(.secondary)
                         TextField("Search by name or @username", text: $query)
-                            .font(.callout)
+                            .appFont(.body)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
                             .onChange(of: query) { _, newValue in
@@ -33,12 +33,10 @@ struct UserSearchView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
+                    .appListRowPadding()
                     .background(Color(.secondarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .appListRowPadding()
 
                     if socialStore.isSearching {
                         ProgressView()
@@ -76,9 +74,9 @@ struct UserSearchView: View {
             IconView("crossed-clubs", size: 48)
                 .foregroundStyle(Color.accentColor.opacity(0.6))
             Text("Search for golfers")
-                .font(.body.weight(.semibold))
+                .appFont(.body, weight: .semibold)
             Text("Find friends by their name or @username")
-                .font(.subheadline)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             Spacer()
@@ -93,9 +91,9 @@ struct UserSearchView: View {
                 .scaledFont(size: 40)
                 .foregroundStyle(.tertiary)
             Text("No golfers found")
-                .font(.body.weight(.semibold))
+                .appFont(.body, weight: .semibold)
             Text("Try a different name or username")
-                .font(.subheadline)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
             Spacer()
         }
@@ -147,17 +145,17 @@ struct SearchResultRow: View {
                         .fill(Color.accentColor.opacity(0.15))
                         .frame(width: 44, height: 44)
                     Text(initials)
-                        .font(.callout.weight(.semibold))
+                        .appFont(.body, weight: .semibold)
                         .foregroundStyle(Color.accentColor)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(profile.displayName)
-                        .font(.subheadline.weight(.medium))
+                        .appFont(.small, weight: .medium)
                         .foregroundStyle(.primary)
                     if let username = profile.username, !username.isEmpty {
                         Text("@\(username)")
-                            .font(.caption)
+                            .appFont(.small)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -167,8 +165,7 @@ struct SearchResultRow: View {
                 // Follow / Following button
                 FollowButton(userID: profile.id)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .appListRowPadding()
             .contentShape(Rectangle())
         }
         .buttonStyle(.pressFeedback)
@@ -192,7 +189,7 @@ struct FollowButton: View {
     var body: some View {
         Button(action: toggle) {
             Text(isFollowing ? "Following" : "Follow")
-                .font(.footnote)
+                .appFont(.small)
                 .foregroundStyle(isFollowing ? .secondary : Color.accentColor)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 6)

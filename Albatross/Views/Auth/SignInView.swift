@@ -41,7 +41,7 @@ struct SignInView: View {
                             .kerning(8)
 
                         Text("Track every round.")
-                            .font(.subheadline)
+                            .appFont(.small)
                             .foregroundStyle(.white.opacity(0.55))
                     }
                     .padding(.top, 72)
@@ -97,7 +97,7 @@ struct SignInView: View {
                         // Error message
                         if let error = authStore.errorMessage {
                             Text(error)
-                                .font(.footnote)
+                                .appFont(.small)
                                 .foregroundStyle(.red.opacity(0.9))
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 4)
@@ -116,7 +116,7 @@ struct SignInView: View {
                                         .tint(Color.brandGreen)
                                 } else {
                                     Text(isSignUp ? "Create Account" : "Sign In")
-                                        .font(.body.weight(.semibold))
+                                        .appFont(.body, weight: .semibold)
                                         .foregroundStyle(Color.brandGreen)
                                 }
                             }
@@ -142,7 +142,7 @@ struct SignInView: View {
                                 Text("Don't have an account? **Create one**")
                             }
                         }
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.white.opacity(0.6))
                     }
                     .buttonStyle(.pressFeedback)
@@ -151,7 +151,7 @@ struct SignInView: View {
                     VStack(spacing: 4) {
                         Button(action: onContinueWithoutAccount) {
                             Text("Continue without an account")
-                                .font(.subheadline.weight(.medium))
+                                .appFont(.small, weight: .medium)
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity, minHeight: 44)
                                 .contentShape(Rectangle())
@@ -159,7 +159,7 @@ struct SignInView: View {
                         .buttonStyle(.pressFeedback)
 
                         Text("Your rounds stay on this phone. Sign in later to sync and see friends.")
-                            .font(.caption)
+                            .appFont(.small)
                             .foregroundStyle(.white.opacity(0.6))
                             .multilineTextAlignment(.center)
                     }
@@ -167,7 +167,7 @@ struct SignInView: View {
                     .padding(.top, 12)
 
                     Text("By continuing you agree to our\nTerms of Service and Privacy Policy.")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.white.opacity(0.3))
                         .multilineTextAlignment(.center)
                         .padding(.top, 28)
@@ -192,19 +192,19 @@ struct SignInView: View {
     ) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .scaledFont(size: 15, weight: .medium)
+                .appFont(.body, weight: .medium)
                 .foregroundStyle(.white.opacity(0.5))
                 .frame(width: 20)
 
             if secure {
                 SecureField(placeholder, text: text)
-                    .font(.callout)
+                    .appFont(.body)
                     .foregroundStyle(.white)
                     .tint(.white)
                     .autocorrectionDisabled()
             } else {
                 TextField(placeholder, text: text)
-                    .font(.callout)
+                    .appFont(.body)
                     .foregroundStyle(.white)
                     .tint(.white)
                     .keyboardType(keyboard)

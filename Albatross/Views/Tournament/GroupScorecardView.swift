@@ -65,7 +65,7 @@ struct GroupScorecardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 28) {
                 header
 
                 if ordered.isEmpty {
@@ -79,14 +79,14 @@ struct GroupScorecardView: View {
                 if !unsynced.isEmpty {
                     HStack {
                         Text("\(unsynced.count) not saved yet")
-                            .font(.footnote).foregroundStyle(.orange)
+                            .appFont(.small).foregroundStyle(.orange)
                         Spacer()
                         Button("Retry") { Task { await flushUnsynced() } }
-                            .font(.footnote.weight(.semibold))
+                            .appFont(.small, weight: .semibold)
                     }
                 }
                 if let errorMessage {
-                    Text(errorMessage).font(.footnote).foregroundStyle(.red)
+                    Text(errorMessage).appFont(.small).foregroundStyle(.red)
                 }
             }
             .padding(16)
@@ -110,11 +110,11 @@ struct GroupScorecardView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(iAmScorer ? "You are keeping score for the group" : "\(scorerName) is keeping score for this group")
                 .accessibilityHint(group.count > 1 ? "Covers both matches in the foursome" : "")
-                .font(.body.weight(.semibold))
+                .appFont(.body, weight: .semibold)
             Text(allSubmitted ? "Submitted. The match result is final."
                  : iAmScorer ? "Enter every player's strokes. Everyone else can watch along."
                  : "These cards update on their own. Only the scorer can change them.")
-                .font(.footnote).foregroundStyle(.secondary)
+                .appFont(.small).foregroundStyle(.secondary)
         }
     }
 
@@ -122,12 +122,12 @@ struct GroupScorecardView: View {
         VStack(alignment: .leading, spacing: 12) {
             if iAmScorer {
                 Text("The group scorecards have not been started yet.")
-                    .font(.subheadline).foregroundStyle(.secondary)
+                    .appFont(.small).foregroundStyle(.secondary)
                 Button {
                     Task { await start() }
                 } label: {
                     Text(isBusy ? "Starting…" : "Start the group scorecards")
-                        .font(.subheadline.weight(.medium))
+                        .appFont(.small, weight: .medium)
                         .frame(maxWidth: .infinity).padding(.vertical, 14)
                         .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .foregroundStyle(.white)
@@ -136,7 +136,7 @@ struct GroupScorecardView: View {
                 .disabled(isBusy)
             } else {
                 Text(loaded ? "\(scorerName) has not started the scorecards yet." : "Loading…")
-                    .font(.subheadline).foregroundStyle(.secondary)
+                    .appFont(.small).foregroundStyle(.secondary)
             }
         }
     }
@@ -149,7 +149,7 @@ struct GroupScorecardView: View {
                 Button { hole = max(0, hole - 1) } label: { Image(systemName: "chevron.left") }
                     .disabled(hole == 0)
                 Spacer()
-                Text("Hole \(hole + 1)  ·  Par \(par)").font(.headline)
+                Text("Hole \(hole + 1)  ·  Par \(par)").appFont(.large, weight: .semibold)
                 Spacer()
                 Button { hole = min(17, hole + 1) } label: { Image(systemName: "chevron.right") }
                     .disabled(hole == 17)
@@ -160,10 +160,10 @@ struct GroupScorecardView: View {
                 ForEach(Array(ordered.enumerated()), id: \.element.id) { i, c in
                     Button { cardIndex = i } label: {
                         HStack {
-                            Text(label(for: c)).font(.subheadline)
+                            Text(label(for: c)).appFont(.small)
                             Spacer()
                             Text(value(c, hole).map(String.init) ?? "–")
-                                .font(.title3.weight(.semibold)).monospacedDigit()
+                                .appFont(.large, weight: .semibold).monospacedDigit()
                         }
                         .padding(.horizontal, 12).padding(.vertical, 10)
                         .background(i == cardIndex ? Color.brandGreen.opacity(0.15) : Color(.secondarySystemGroupedBackground),
@@ -173,12 +173,12 @@ struct GroupScorecardView: View {
                 }
             }
 
-            Text("Strokes for \(label(for: card))").font(.footnote).foregroundStyle(.secondary)
+            Text("Strokes for \(label(for: card))").appFont(.small).foregroundStyle(.secondary)
             let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)
             LazyVGrid(columns: columns, spacing: 8) {
                 ForEach(1...10, id: \.self) { n in
                     Button { enter(n, card: card) } label: {
-                        Text("\(n)").font(.title3.weight(.semibold))
+                        Text("\(n)").appFont(.large, weight: .semibold)
                             .frame(maxWidth: .infinity).padding(.vertical, 12)
                             .background(Color(.secondarySystemGroupedBackground),
                                         in: RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -187,7 +187,7 @@ struct GroupScorecardView: View {
                 }
             }
             Button("Clear this hole") { enter(nil, card: card) }
-                .font(.footnote)
+                .appFont(.small)
         }
         .padding(14)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -198,18 +198,18 @@ struct GroupScorecardView: View {
             ForEach(ordered) { c in
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text(label(for: c)).font(.subheadline.weight(.semibold))
+                        Text(label(for: c)).appFont(.small, weight: .semibold)
                         Spacer()
                         Text("\((0..<18).compactMap { value(c, $0) }.reduce(0, +))")
-                            .font(.subheadline.weight(.semibold)).monospacedDigit()
+                            .appFont(.small, weight: .semibold).monospacedDigit()
                     }
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 4) {
                             ForEach(0..<18, id: \.self) { h in
                                 VStack(spacing: 2) {
-                                    Text("\(h + 1)").font(.caption2).foregroundStyle(.secondary)
+                                    Text("\(h + 1)").appFont(.small).foregroundStyle(.secondary)
                                     Text(value(c, h).map(String.init) ?? "–")
-                                        .font(.footnote.weight(.medium)).monospacedDigit()
+                                        .appFont(.small, weight: .medium).monospacedDigit()
                                         .frame(width: 26, height: 26)
                                         .background(h == hole && iAmScorer ? Color.brandGreen.opacity(0.2) : Color.clear,
                                                     in: RoundedRectangle(cornerRadius: 6, style: .continuous))
@@ -230,7 +230,7 @@ struct GroupScorecardView: View {
                 Task { await finish() }
             } label: {
                 Text(isBusy ? "Submitting…" : "Finish and submit the group scorecards")
-                    .font(.subheadline.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .frame(maxWidth: .infinity).padding(.vertical, 14)
                     .background(allFilled && unsynced.isEmpty ? Color.brandGreen : Color.gray.opacity(0.4),
                                 in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -240,7 +240,7 @@ struct GroupScorecardView: View {
             .disabled(!allFilled || !unsynced.isEmpty || isBusy)
 
             Button("Step down as scorer") { Task { await stepDown() } }
-                .font(.footnote).disabled(isBusy)
+                .appFont(.small).disabled(isBusy)
         }
     }
 

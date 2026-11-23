@@ -103,7 +103,7 @@ struct TournamentMatchupView: View {
 
                 if let error = errorMessage {
                     Text(error)
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.red)
                         .padding(.horizontal, 20)
                         .padding(.top, 8)
@@ -129,7 +129,7 @@ struct TournamentMatchupView: View {
         HStack {
             VStack(spacing: 4) {
                 Text(teamA?.name ?? "Team A")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
                     .foregroundStyle(.primary)
                 if current.status == .complete {
                     Text(String(format: "%.1f", current.pointsTeamA))
@@ -141,22 +141,22 @@ struct TournamentMatchupView: View {
 
             VStack(spacing: 6) {
                 Image(systemName: "flag.2.crossed.fill")
-                    .scaledFont(size: 20)
+                    .appFont(.large)
                     .foregroundStyle(Color.accentColor.opacity(0.7))
                 Text(current.matchType.displayName)
-                    .font(.caption2)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                 if courseName != "TBD" {
                     Text(courseName)
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.tertiary)
                 }
             }
 
             VStack(spacing: 4) {
                 Text(teamB?.name ?? "Team B")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
                     .foregroundStyle(.primary)
                 if current.status == .complete {
                     Text(String(format: "%.1f", current.pointsTeamB))
@@ -183,7 +183,7 @@ struct TournamentMatchupView: View {
             Text(current.matchType.playersPerSide == 1
                  ? "Pick one player per team for this match."
                  : "Pick \(current.matchType.playersPerSide) players per team for this match.")
-                .font(.footnote)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 16)
@@ -207,14 +207,10 @@ struct TournamentMatchupView: View {
                         ProgressView().tint(.white)
                     } else {
                         Text("Confirm pairings")
-                            .font(.callout.weight(.medium))
+                            .appFont(.body, weight: .medium)
                     }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(canConfirmPairings ? Color.brandGreen : Color(.systemFill))
-                .foregroundStyle(canConfirmPairings ? .white : .secondary)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .appButton(fill: canConfirmPairings ? Color.brandGreen : Color(.systemFill), foreground: canConfirmPairings ? .white : .secondary)
             }
             .buttonStyle(.pressFeedback)
             .disabled(!canConfirmPairings || isSavingPairings)
@@ -228,7 +224,7 @@ struct TournamentMatchupView: View {
                             label: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
-                .font(.subheadline.weight(.medium))
+                .appFont(.small, weight: .medium)
                 .foregroundStyle(.secondary)
                 .padding(.leading, 4)
 
@@ -247,13 +243,13 @@ struct TournamentMatchupView: View {
                             .frame(width: 32, height: 32)
                             .overlay(
                                 Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                    .font(.footnote.weight(.semibold))
+                                    .appFont(.small, weight: .semibold)
                                     .foregroundStyle(isSelected ? .white : Color.accentColor)
                             )
 
                         if tournament.isCaptain(player.userID) { CaptainBadge() }
                         Text(player.profile?.displayName ?? "Player")
-                            .font(.subheadline)
+                            .appFont(.small)
                             .foregroundStyle(.primary)
 
                         Spacer()
@@ -296,7 +292,7 @@ struct TournamentMatchupView: View {
                 )
 
                 Text("vs")
-                    .font(.subheadline)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
                     .padding(.top, 28)
 
@@ -314,7 +310,7 @@ struct TournamentMatchupView: View {
     private func playerColumn(teamName: String, playerIDs: [UUID], players: [TournamentPlayer]) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(teamName)
-                .font(.footnote.weight(.medium))
+                .appFont(.small, weight: .medium)
                 .foregroundStyle(.secondary)
 
             ForEach(playerIDs, id: \.self) { uid in
@@ -325,12 +321,12 @@ struct TournamentMatchupView: View {
                         .frame(width: 30, height: 30)
                         .overlay(
                             Text(String((player?.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                .font(.caption.weight(.semibold))
+                                .appFont(.small, weight: .semibold)
                                 .foregroundStyle(Color.accentColor)
                         )
                     if tournament.isCaptain(uid) { CaptainBadge() }
                     Text(player?.profile?.displayName ?? "Player")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.primary)
                 }
             }
@@ -396,14 +392,14 @@ struct TournamentMatchupView: View {
     }
 
     private var groupScoringSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Group scorecard")
                 .padding(.horizontal, 20)
                 .padding(.top, 16)
             Text(current.scorerUserID == myUserID
                  ? "You are keeping score for everyone in your foursome."
                  : "\(scorerNameText) is keeping score for everyone in the foursome.")
-                .font(.footnote)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
             NavigationLink(destination: GroupScorecardView(tournament: tournament, matchup: current)) {
@@ -424,12 +420,8 @@ struct TournamentMatchupView: View {
                 Task { await assignScorer(me) }
             } label: {
                 Label("I'll keep score for the group", systemImage: "person.3.fill")
-                    .font(.subheadline.weight(.medium))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color(.secondarySystemGroupedBackground))
-                    .foregroundStyle(Color.accentColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .appFont(.small, weight: .medium)
+                    .appButton(fill: Color(.secondarySystemGroupedBackground), foreground: Color.accentColor)
             }
             .buttonStyle(.pressFeedback)
             .padding(.horizontal, 16)
@@ -454,7 +446,7 @@ struct TournamentMatchupView: View {
         } label: {
             Label(current.scorerUserID == nil ? "Assign a group scorer" : "Change the group scorer",
                   systemImage: "person.badge.key")
-                .font(.footnote.weight(.medium))
+                .appFont(.small, weight: .medium)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 10)
         }
@@ -473,12 +465,8 @@ struct TournamentMatchupView: View {
 
     private func scoreEntryButton(label: String, icon: String, style: ButtonStyle2) -> some View {
         Label(label, systemImage: icon)
-            .font(.subheadline.weight(.medium))
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(style == .primary ? Color.brandGreen : Color(.secondarySystemGroupedBackground))
-            .foregroundStyle(style == .primary ? .white : Color.accentColor)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .appFont(.small, weight: .medium)
+            .appButton(fill: style == .primary ? Color.brandGreen : Color(.secondarySystemGroupedBackground), foreground: style == .primary ? .white : Color.accentColor)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(style == .primary ? .clear : Color.accentColor.opacity(0.4), lineWidth: 1)
@@ -502,11 +490,11 @@ struct TournamentMatchupView: View {
                     }
                 }()
                 Text(result == .tie ? "Match tied!" : "\(winnerName) wins!")
-                    .font(.body.weight(.semibold))
+                    .appFont(.body, weight: .semibold)
                     .foregroundStyle(.primary)
 
                 Text("\(String(format: "%.1f", current.pointsTeamA)) – \(String(format: "%.1f", current.pointsTeamB))")
-                    .font(.subheadline)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
         }
@@ -561,7 +549,7 @@ struct TournamentMatchupView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.body.weight(.semibold))
+            .appFont(.body, weight: .semibold)
             .foregroundStyle(.primary)
     }
 }

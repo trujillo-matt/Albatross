@@ -32,7 +32,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 32) {
+                VStack(alignment: .leading, spacing: 28) {
                     continueSection
 
                     if !tournamentStore.myTournaments.isEmpty {
@@ -69,7 +69,7 @@ struct HomeView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.title3.weight(.medium))
+            .appFont(.large, weight: .medium)
             .accessibilityAddTraits(.isHeader)
     }
 
@@ -86,13 +86,13 @@ struct HomeView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(round.courseName)
-                            .font(.headline)
+                            .appFont(.large, weight: .semibold)
                         Text(progressText(for: round))
-                            .font(.subheadline.monospacedDigit())
+                            .appFont(.small, monospacedDigit: true)
                             .foregroundStyle(.secondary)
                         Button { onOpenRound(round.id) } label: {
                             Text("Resume round")
-                                .font(.subheadline.weight(.medium))
+                                .appFont(.small, weight: .medium)
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 16)
                                 .frame(minHeight: 44)
@@ -110,16 +110,16 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 12) {
                 sectionHeader("Continue")
                 VStack(alignment: .leading, spacing: 12) {
-                    IconView("tee", size: 32)
+                    IconView("tee", size: AppSpacing.listIcon)
                         .foregroundStyle(Color.accentColor)
                     Text("No round in progress")
-                        .font(.headline)
+                        .appFont(.large, weight: .semibold)
                     Text("Start one and it waits here until you pick it back up.")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                     Button(action: onNewRound) {
                         Text("Start a round")
-                            .font(.subheadline.weight(.medium))
+                            .appFont(.small, weight: .medium)
                             .foregroundStyle(.white)
                             .padding(.horizontal, 16)
                             .frame(minHeight: 44)
@@ -160,17 +160,17 @@ struct HomeView: View {
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(tournament.name)
-                    .font(.body.weight(.medium))
+                    .appFont(.body, weight: .medium)
                     .foregroundStyle(.primary)
                 Text(tournament.matchups.isEmpty
                      ? "\(tournament.dayCount) day\(tournament.dayCount == 1 ? "" : "s")"
                      : "\(tournament.dayCount) day\(tournament.dayCount == 1 ? "" : "s") · \(tournament.matchCount) matches")
-                    .font(.subheadline)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
             Spacer()
             Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
+                .appFont(.small, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }
         .padding(.horizontal, 16)
@@ -187,16 +187,16 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity, minHeight: 80)
             } else if socialStore.following.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    IconView("crossed-clubs", size: 32)
+                    IconView("crossed-clubs", size: AppSpacing.listIcon)
                         .foregroundStyle(Color.accentColor)
                     Text("Follow friends to see their rounds here")
-                        .font(.headline)
+                        .appFont(.large, weight: .semibold)
                     Text("Find golfers you know and their scores show up in this feed.")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                     Button { showUserSearch = true } label: {
                         Text("Find friends")
-                            .font(.subheadline.weight(.medium))
+                            .appFont(.small, weight: .medium)
                             .foregroundStyle(Color.accentColor)
                             .padding(.horizontal, 16)
                             .frame(minHeight: 44)
@@ -209,7 +209,7 @@ struct HomeView: View {
                 .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             } else if socialStore.friendsFeed.isEmpty {
                 Text("Your friends have not posted a round yet")
-                    .font(.subheadline)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -267,7 +267,7 @@ struct FeedItemCard: View {
                             .fill(Color.accentColor.opacity(0.15))
                             .frame(width: 40, height: 40)
                         Text(initials.isEmpty ? "?" : initials)
-                            .font(.subheadline.weight(.semibold))
+                            .appFont(.small, weight: .semibold)
                             .foregroundStyle(Color.accentColor)
                     }
                     .frame(width: 44, height: 44)
@@ -278,13 +278,13 @@ struct FeedItemCard: View {
                 VStack(alignment: .leading, spacing: 1) {
                     Button(action: onTapProfile) {
                         Text(profile.displayName)
-                            .font(.subheadline.weight(.semibold))
+                            .appFont(.small, weight: .semibold)
                             .foregroundStyle(.primary)
                     }
                     .buttonStyle(.pressFeedback)
 
                     Text(round.date.formatted(date: .abbreviated, time: .omitted))
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
 
@@ -296,7 +296,7 @@ struct FeedItemCard: View {
                         .font(.title2.weight(.semibold))
                         .foregroundStyle(.primary)
                     Text(diff == 0 ? "E" : diff > 0 ? "+\(diff)" : "\(diff)")
-                        .font(.caption)
+                        .appFont(.small)
                         .foregroundStyle(scoreColor(diff))
                 }
             }
@@ -306,10 +306,10 @@ struct FeedItemCard: View {
 
             // Course name
             HStack {
-                IconView("flag", size: 14)
+                IconView("flag", size: AppSpacing.listIcon)
                     .foregroundStyle(Color.accentColor.opacity(0.8))
                 Text(round.courseName)
-                    .font(.footnote.weight(.medium))
+                    .appFont(.small, weight: .medium)
                     .foregroundStyle(.primary)
                 Spacer()
             }
@@ -356,7 +356,7 @@ struct FeedItemCard: View {
                 .frame(height: 28)
             if let s = score {
                 Text("\(s)")
-                    .font(.caption2.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
                     .foregroundStyle(fg)
             }
         }

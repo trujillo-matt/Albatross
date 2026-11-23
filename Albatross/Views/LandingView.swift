@@ -28,7 +28,7 @@ struct LandingView: View {
                     .padding(.top, 12)
 
                 Text("Est. 2026")
-                    .scaledFont(size: 14, weight: .regular)
+                    .appFont(.small)
                     .foregroundStyle(.white.opacity(0.75))
                     .tracking(3)
                     .padding(.top, 16)

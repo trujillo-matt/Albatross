@@ -44,12 +44,8 @@ struct TournamentStandingsView: View {
                 // ── Share button ───────────────────────────────────────────
                 Button(action: generateAndShare) {
                     Label("Share standings", systemImage: "square.and.arrow.up")
-                        .font(.subheadline.weight(.medium))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.brandGreen)
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .appFont(.small, weight: .medium)
+                        .appButton(fill: Color.brandGreen, foreground: .white)
                 }
                 .buttonStyle(.pressFeedback)
                 .padding(.horizontal, 16)
@@ -82,7 +78,7 @@ struct TournamentStandingsView: View {
             HStack(alignment: .center) {
                 VStack(spacing: 6) {
                     Text(s.teamA.name)
-                        .font(.callout.weight(.semibold))
+                        .appFont(.body, weight: .semibold)
                         .foregroundStyle(.primary)
                     Text(String(format: "%.1f", s.pointsTeamA))
                         .scaledFont(size: 48, weight: .semibold)
@@ -92,16 +88,16 @@ struct TournamentStandingsView: View {
 
                 VStack(spacing: 4) {
                     Text("vs")
-                        .font(.body)
+                        .appFont(.body)
                         .foregroundStyle(.secondary)
                     Text("first to \(String(format: "%.1f", s.pointsToWin))")
-                        .font(.caption2)
+                        .appFont(.small)
                         .foregroundStyle(.tertiary)
                 }
 
                 VStack(spacing: 6) {
                     Text(s.teamB.name)
-                        .font(.callout.weight(.semibold))
+                        .appFont(.body, weight: .semibold)
                         .foregroundStyle(.primary)
                     Text(String(format: "%.1f", s.pointsTeamB))
                         .scaledFont(size: 48, weight: .semibold)
@@ -119,7 +115,7 @@ struct TournamentStandingsView: View {
                     Image(systemName: "trophy.fill")
                         .foregroundStyle(.yellow)
                     Text("\(winner.name) wins!")
-                        .font(.callout.weight(.semibold))
+                        .appFont(.body, weight: .semibold)
                         .foregroundStyle(.primary)
                 }
                 .padding(.horizontal, 20)
@@ -168,10 +164,10 @@ struct TournamentStandingsView: View {
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("Match \(matchup.matchupNumber)")
-                    .font(.subheadline.weight(.semibold))
+                    .appFont(.small, weight: .semibold)
                     .foregroundStyle(.primary)
                 Text(matchup.matchType.displayName)
-                    .font(.caption)
+                    .appFont(.small)
                     .foregroundStyle(.secondary)
             }
 
@@ -185,7 +181,7 @@ struct TournamentStandingsView: View {
                         isWinner: matchup.pointsTeamA > matchup.pointsTeamB
                     )
                     Text("–")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                     resultScore(
                         name: teamBName,
@@ -195,7 +191,7 @@ struct TournamentStandingsView: View {
                 }
             } else {
                 Text(matchup.status == .active ? "In Progress" : "Pending")
-                    .font(.caption)
+                    .appFont(.small)
                     .foregroundStyle(matchup.status == .active ? Color.accentColor : .orange)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
@@ -203,8 +199,7 @@ struct TournamentStandingsView: View {
                     .clipShape(Capsule())
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .appListRowPadding()
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
@@ -212,10 +207,10 @@ struct TournamentStandingsView: View {
     private func resultScore(name: String, points: Double, isWinner: Bool) -> some View {
         VStack(spacing: 2) {
             Text(String(format: "%.1f", points))
-                .font(.callout.weight(.semibold))
+                .appFont(.body, weight: .semibold)
                 .foregroundStyle(isWinner ? Color.accentColor : .primary)
             Text(name)
-                .font(.caption2)
+                .appFont(.small)
                 .foregroundStyle(.secondary)
         }
     }
@@ -236,7 +231,7 @@ struct TournamentStandingsView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.body.weight(.semibold))
+            .appFont(.body, weight: .semibold)
             .foregroundStyle(.primary)
     }
 }
@@ -272,7 +267,7 @@ private struct StandingsShareCard: View {
                         .frame(width: 48, height: 48)
 
                     Text("ALBATROSS")
-                        .font(.footnote.weight(.semibold))
+                        .appFont(.small, weight: .semibold)
                         .tracking(4)
                         .foregroundStyle(brandGreen)
 
@@ -283,7 +278,7 @@ private struct StandingsShareCard: View {
                         .padding(.horizontal, 32)
 
                     Text(tournament.matchType.displayName)
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(Color(white: 0.5))
                 }
                 .padding(.top, 40)
@@ -294,7 +289,7 @@ private struct StandingsShareCard: View {
                 HStack(alignment: .center, spacing: 0) {
                     VStack(spacing: 8) {
                         Text(standings.teamA.name)
-                            .font(.body.weight(.semibold))
+                            .appFont(.body, weight: .semibold)
                             .foregroundStyle(.primary)
                         Text(String(format: "%.1f", standings.pointsTeamA))
                             .scaledFont(size: 72, weight: .semibold)
@@ -308,7 +303,7 @@ private struct StandingsShareCard: View {
 
                     VStack(spacing: 8) {
                         Text(standings.teamB.name)
-                            .font(.body.weight(.semibold))
+                            .appFont(.body, weight: .semibold)
                             .foregroundStyle(.primary)
                         Text(String(format: "%.1f", standings.pointsTeamB))
                             .scaledFont(size: 72, weight: .semibold)
@@ -320,7 +315,7 @@ private struct StandingsShareCard: View {
 
                 // Points to win
                 Text("First to \(String(format: "%.1f", standings.pointsToWin)) wins")
-                    .font(.subheadline)
+                    .appFont(.small)
                     .foregroundStyle(Color(white: 0.5))
                     .padding(.top, 12)
 
@@ -333,16 +328,16 @@ private struct StandingsShareCard: View {
                         let tBName = tournament.teams.first(where: { $0.id == m.teamBID })?.name ?? "B"
                         HStack {
                             Text("Match \(m.matchupNumber)")
-                                .font(.footnote)
+                                .appFont(.small)
                                 .foregroundStyle(Color(white: 0.5))
                             Spacer()
                             if m.status == .complete {
                                 Text("\(tAName) \(String(format: "%.1f", m.pointsTeamA)) – \(String(format: "%.1f", m.pointsTeamB)) \(tBName)")
-                                    .font(.footnote.weight(.medium))
+                                    .appFont(.small, weight: .medium)
                                     .foregroundStyle(Color(white: 0.3))
                             } else {
                                 Text(m.status == .active ? "In Progress" : "Pending")
-                                    .font(.footnote)
+                                    .appFont(.small)
                                     .foregroundStyle(Color(white: 0.6))
                             }
                         }

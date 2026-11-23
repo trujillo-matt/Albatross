@@ -64,7 +64,7 @@ export default function AdminTournament() {
   const tabs = Object.keys(TAB_LABEL) as Tab[];
   return (
     <Page wide>
-      <div className="space-y-6">
+      <div className="space-y-7">
         <header className="space-y-3 print:hidden">
           <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-stone-500 transition-colors duration-150 ease-out hover:text-stone-900">
             <ChevronLeftIcon />All tournaments
@@ -192,7 +192,7 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
   const host = typeof window === "undefined" ? "" : window.location.host;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {issued.length > 0 && (
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
@@ -227,7 +227,7 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
             {data.players.map((p) => {
               const c = codes.find((x) => x.user_id === p.user_id);
               return (
-                <li key={p.id} className="row px-4">
+                <li key={p.id} className="row">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-stone-900">{p.display_name}{p.is_admin && <span className="text-xs text-stone-500">Admin</span>}</div>
                     <div className="muted flex flex-wrap items-center gap-x-2">
@@ -355,7 +355,7 @@ function Matches({ data, act, userId, reload }: { data: TournamentData; act: Act
   if (data.sessions.length > 0 && data.matchups.some((m) => m.session_id)) {
     const editable = data.matchups.filter((m) => m.status !== "complete");
     return (
-      <div className="space-y-6">
+      <div className="space-y-7">
         <DayBoard data={data} userId={userId} isAdmin reload={reload} />
         {editable.length > 0 && (
           <details className="card">
@@ -555,7 +555,7 @@ function Audit({ id }: { id: string }) {
         <div className="card overflow-hidden p-0">
           <ul className="rows">
             {rows.map((r, i) => (
-              <li key={i} className="space-y-1 px-4 py-3 text-sm">
+              <li key={i} className="space-y-1 px-5 py-3 text-sm">
                 <div className="flex items-center justify-between gap-3"><span className="text-stone-900">{sentence(r.action)}</span><span className="muted">{shortDateTime(r.created_at)}</span></div>
                 <div className="muted">{r.actor_name ?? "Unknown"}{r.reason ? `, ${r.reason}` : ""}</div>
                 {r.before != null && r.after != null && <div className="font-mono text-xs text-stone-500">{JSON.stringify(r.before)} to {JSON.stringify(r.after)}</div>}

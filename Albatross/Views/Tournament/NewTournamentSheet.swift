@@ -76,17 +76,17 @@ struct NewTournamentSheet: View {
         Form {
             Section("Tournament name") {
                 TextField("e.g. Ryder Cup 2025", text: $name)
-                    .font(.callout)
+                    .appFont(.body)
             }
 
             Section {
                 Stepper(value: $days, in: 1...7) {
                     HStack {
                         Text("Days")
-                            .font(.callout)
+                            .appFont(.body)
                         Spacer()
                         Text("\(days)")
-                            .font(.callout.weight(.semibold))
+                            .appFont(.body, weight: .semibold)
                             .foregroundStyle(Color.accentColor)
                     }
                 }
@@ -94,7 +94,7 @@ struct NewTournamentSheet: View {
                 Text("Days of play")
             } footer: {
                 Text("Each day has its own course and one or two sessions, each with a format. The matches in a session come from the players: every player plays once, so singles make one match per player and pairs make half as many. Extra players sit out, and captains call out who plays whom before each session. Points to win is set when the tournament starts.")
-                    .font(.caption)
+                    .appFont(.small)
             }
         }
     }
@@ -107,11 +107,11 @@ struct NewTournamentSheet: View {
                 ForEach(0..<days, id: \.self) { index in
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Day \(index + 1)")
-                            .font(.footnote.weight(.medium))
+                            .appFont(.small, weight: .medium)
                             .foregroundStyle(.secondary)
 
                         TextField("Course name (optional)", text: courseNameBinding(for: index))
-                            .font(.callout)
+                            .appFont(.body)
 
                         Picker("Format", selection: matchTypeBinding(for: index)) {
                             ForEach(TournamentMatchType.allCases, id: \.self) { type in
@@ -121,7 +121,7 @@ struct NewTournamentSheet: View {
                         .pickerStyle(.menu)
 
                         Toggle("Add an afternoon session", isOn: hasSecondBinding(for: index))
-                            .font(.callout)
+                            .appFont(.body)
                         if hasSecondBinding(for: index).wrappedValue {
                             Picker("Afternoon format", selection: secondTypeBinding(for: index)) {
                                 ForEach(TournamentMatchType.allCases, id: \.self) { type in
@@ -137,7 +137,7 @@ struct NewTournamentSheet: View {
                 Text("Course and format for each day")
             } footer: {
                 Text("Course names can be updated later from the tournament detail page.")
-                    .font(.caption)
+                    .appFont(.small)
             }
         }
     }
@@ -151,7 +151,7 @@ struct NewTournamentSheet: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                 TextField("Search by name or username", text: $searchQuery)
-                    .font(.subheadline)
+                    .appFont(.small)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
                     .onChange(of: searchQuery) { _, query in
@@ -211,11 +211,11 @@ struct NewTournamentSheet: View {
                                 avatarView(profile, size: 38)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(profile.displayName)
-                                        .font(.subheadline.weight(.medium))
+                                        .appFont(.small, weight: .medium)
                                         .foregroundStyle(.primary)
                                     if let username = profile.username {
                                         Text("@\(username)")
-                                            .font(.caption)
+                                            .appFont(.small)
                                             .foregroundStyle(.secondary)
                                     }
                                 }
@@ -236,10 +236,10 @@ struct NewTournamentSheet: View {
                         .scaledFont(size: 36)
                         .foregroundStyle(Color.accentColor.opacity(0.5))
                     Text("Search for players to invite")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                     Text("You can also invite players after creating the tournament.")
-                        .font(.footnote)
+                        .appFont(.small)
                         .foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
@@ -252,7 +252,7 @@ struct NewTournamentSheet: View {
                         .scaledFont(size: 28)
                         .foregroundStyle(.tertiary)
                     Text("No players found")
-                        .font(.subheadline)
+                        .appFont(.small)
                         .foregroundStyle(.secondary)
                 }
                 .padding(.top, 40)
@@ -262,7 +262,7 @@ struct NewTournamentSheet: View {
             // Error message
             if let error = errorMessage {
                 Text(error)
-                    .font(.footnote)
+                    .appFont(.small)
                     .foregroundStyle(.red)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 8)
@@ -276,11 +276,11 @@ struct NewTournamentSheet: View {
     private func inviteChip(_ profile: UserProfile) -> some View {
         HStack(spacing: 6) {
             Text(profile.displayName)
-                .font(.footnote)
+                .appFont(.small)
                 .foregroundStyle(.primary)
             Button(action: { invitedProfiles.removeAll { $0.id == profile.id } }) {
                 Image(systemName: "xmark.circle.fill")
-                    .scaledFont(size: 13)
+                    .appFont(.small)
                     .foregroundStyle(Color(.tertiaryLabel))
                     .accessibilityLabel("Remove \(profile.displayName)")
             }

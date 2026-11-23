@@ -41,7 +41,7 @@ struct EditProfileView: View {
                                     .frame(width: 28, height: 28)
                                     .overlay(
                                         Image(systemName: "camera.fill")
-                                            .scaledFont(size: 12, weight: .medium)
+                                            .appFont(.small, weight: .medium)
                                             .foregroundStyle(Color.accentColor)
                                     )
                                     .offset(x: 4, y: 4)
@@ -61,28 +61,28 @@ struct EditProfileView: View {
                             HStack {
                                 Spacer()
                                 Text("Remove Photo")
-                                    .font(.subheadline)
+                                    .appFont(.small)
                                 Spacer()
                             }
                         }
                     }
                 } header: {
                     Text("Photo")
-                        .font(.caption)
+                        .appFont(.small)
                 }
 
                 // MARK: Profile info
                 Section {
                     LabeledContent("First Name") {
                         TextField("Your name", text: $displayName)
-                            .font(.callout)
+                            .appFont(.body)
                             .multilineTextAlignment(.trailing)
                     }
-                    .font(.callout)
+                    .appFont(.body)
 
                     LabeledContent("Username") {
                         TextField("username", text: $username)
-                            .font(.callout)
+                            .appFont(.body)
                             .multilineTextAlignment(.trailing)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
@@ -91,30 +91,30 @@ struct EditProfileView: View {
                                 if cleaned != val { username = cleaned }
                             }
                     }
-                    .font(.callout)
+                    .appFont(.body)
                 } header: {
                     Text("Profile Info")
-                        .font(.caption)
+                        .appFont(.small)
                 }
 
                 // MARK: Golf info
                 Section {
                     LabeledContent("Home Course") {
                         TextField("Course name", text: $homeCourse)
-                            .font(.callout)
+                            .appFont(.body)
                             .multilineTextAlignment(.trailing)
                     }
-                    .font(.callout)
+                    .appFont(.body)
 
                     LabeledContent("Location") {
                         TextField("City, State", text: $location)
-                            .font(.callout)
+                            .appFont(.body)
                             .multilineTextAlignment(.trailing)
                     }
-                    .font(.callout)
+                    .appFont(.body)
                 } header: {
                     Text("Golf Info")
-                        .font(.caption)
+                        .appFont(.small)
                 }
             }
             .navigationTitle("Edit Profile")

@@ -42,13 +42,13 @@ export default function Watch() {
   const name = (id: string) => d.teams.find((t) => t.id === id)?.name ?? "Team";
   return (
     <Page>
-      <div className="space-y-6">
+      <div className="space-y-7">
         <h1 className="h1">{d.name}</h1>
         <Scoreboard teams={[a && { name: a.name, points: pa }, b && { name: b.name, points: pb }]} toWin={Number(d.points_to_win)} complete={d.status === "complete"} />
         <div className="card overflow-hidden p-0">
           <ul className="rows">
             {d.matchups.map((m) => (
-              <li key={m.number} className="row px-4">
+              <li key={m.number} className="row">
                 <div>
                   <div className="text-stone-900">Match <span className="tnum">{m.number}</span></div>
                   <div className="muted">{FORMAT[m.type] ?? m.type}</div>

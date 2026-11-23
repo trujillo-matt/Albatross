@@ -36,7 +36,7 @@ export default function PlayerHub() {
 
   return (
     <Page>
-      <div className="space-y-6">
+      <div className="space-y-7">
         <header className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1">
             <h1 className="h1 truncate">{t.name}</h1>

@@ -72,7 +72,7 @@ export default function AdminHome() {
 
   return (
     <Page wide>
-      <div className="space-y-6">
+      <div className="space-y-7">
         <header className="flex items-end justify-between gap-4">
           <h1 className="h1">Your tournaments</h1>
           <button className="btn-ghost btn-sm" onClick={() => supabase.auth.signOut()}>Sign out</button>
