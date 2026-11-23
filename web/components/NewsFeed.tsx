@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { shortDateTime } from "@/lib/labels";
+import { timeAgo } from "@/lib/labels";
 import { Dot, type Tone } from "./ui";
 
 interface NewsItem { id: string; tournament_id: string; kind: string; headline: string; created_at: string }
@@ -43,7 +43,7 @@ export default function NewsFeed({ tournamentIds, names }: { tournamentIds: stri
               <li key={n.id} className="row">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-stone-900"><Dot tone={TONE[n.kind] ?? "idle"} />{n.headline}</div>
-                  <div className="muted">{names?.[n.tournament_id] ? `${names[n.tournament_id]} · ` : ""}{shortDateTime(n.created_at)}</div>
+                  <div className="muted">{names?.[n.tournament_id] ? `${names[n.tournament_id]} · ` : ""}{timeAgo(n.created_at)}</div>
                 </div>
               </li>
             ))}

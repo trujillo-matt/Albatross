@@ -36,3 +36,12 @@ test("groups are the players sharing a tee time, earliest first", () => {
   const groups = groupsForSession(rows, "s", players);
   assert.deepEqual(groups.map((g) => g.players.map((p) => p.user_id)), [["a", "b"], ["c"]]);
 });
+
+import { timeAgo } from "./labels.ts";
+test("news times read as 'x minutes ago'", () => {
+  const now = Date.parse("2026-11-22T12:00:00Z");
+  assert.equal(timeAgo("2026-11-22T11:58:00Z", now), "2 minutes ago");
+  assert.equal(timeAgo("2026-11-22T09:00:00Z", now), "3 hours ago");
+  assert.equal(timeAgo("2026-11-22T11:59:50Z", now), "just now");
+  assert.equal(timeAgo("2026-11-21T10:00:00Z", now), "yesterday");
+});
