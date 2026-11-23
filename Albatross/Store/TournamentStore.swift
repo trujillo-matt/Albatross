@@ -1,32 +1,32 @@
-import Combine
 import Foundation
 import Supabase
 import SwiftUI
 
 @MainActor
-final class TournamentStore: ObservableObject {
+@Observable
+final class TournamentStore {
 
     // MARK: - Published State
 
-    @Published private(set) var myTournaments: [Tournament] = []
-    @Published private(set) var pendingInvites: [Tournament] = []
+    private(set) var myTournaments: [Tournament] = []
+    private(set) var pendingInvites: [Tournament] = []
     /// The latest tournament news across my tournaments, newest first.
-    @Published private(set) var news: [TournamentNewsItem] = []
+    private(set) var news: [TournamentNewsItem] = []
     /// Where each match being played stands, by match id. Filled by `refreshLive`.
-    @Published private(set) var liveStatus: [UUID: LiveMatchStatus] = [:]
-    @Published var isLoading: Bool = false
-    @Published var errorMessage: String? = nil
+    private(set) var liveStatus: [UUID: LiveMatchStatus] = [:]
+    var isLoading: Bool = false
+    var errorMessage: String? = nil
 
     // Draft room live state — populated by Realtime subscriptions
-    @Published private(set) var captainVotes: [TournamentCaptainVote] = []
-    @Published private(set) var draftPlayers: [TournamentPlayer] = []
-    @Published private(set) var activeTournament: Tournament? = nil
+    private(set) var captainVotes: [TournamentCaptainVote] = []
+    private(set) var draftPlayers: [TournamentPlayer] = []
+    private(set) var activeTournament: Tournament? = nil
 
     // MARK: - Dependencies
 
-    weak var authStore: AuthStore?
-    private var draftChannel: RealtimeChannelV2? = nil
-    private var standingsChannel: RealtimeChannelV2? = nil
+    @ObservationIgnored weak var authStore: AuthStore?
+    @ObservationIgnored private var draftChannel: RealtimeChannelV2? = nil
+    @ObservationIgnored private var standingsChannel: RealtimeChannelV2? = nil
 
     #if DEBUG
     /// Sets live match statuses for the demo.
@@ -35,7 +35,7 @@ final class TournamentStore: ObservableObject {
     }
 
     /// Group scorecards for the demo, by match. The demo has no cloud rounds to read them from.
-    private var demoGroupCards: [UUID: [GroupCard]] = [:]
+    @ObservationIgnored private var demoGroupCards: [UUID: [GroupCard]] = [:]
 
     func seedGroupCardsForDemo(_ cards: [UUID: [GroupCard]]) {
         demoGroupCards = cards
@@ -46,7 +46,7 @@ final class TournamentStore: ObservableObject {
     }
 
     /// True while the tournament demo data is showing. Loads that would replace it with cloud results are skipped.
-    private(set) var isShowingDemo = false
+    @ObservationIgnored private(set) var isShowingDemo = false
 
     /// Fills the list with local data. Used by the tournament demo launch argument.
     func seedForDemo(_ tournaments: [Tournament]) {

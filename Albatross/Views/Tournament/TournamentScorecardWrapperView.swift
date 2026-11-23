@@ -4,10 +4,10 @@ import SwiftUI
 /// presents the booklet scorecard, then on finish records the matchup round and — if all
 /// players have submitted — auto-calculates and saves the matchup result.
 struct TournamentScorecardWrapperView: View {
-    @EnvironmentObject private var roundStore: RoundStore
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var authStore: AuthStore
-    @EnvironmentObject private var courseStore: CourseStore
+    @Environment(RoundStore.self) private var roundStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(AuthStore.self) private var authStore
+    @Environment(CourseStore.self) private var courseStore
 
     let tournament: Tournament
     let matchup: TournamentMatchup

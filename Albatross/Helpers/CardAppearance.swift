@@ -1,4 +1,3 @@
-import Combine
 import SwiftUI
 
 /// The paper a scorecard is printed on. `club` lets each course keep its own stock on the shelf.
@@ -86,13 +85,14 @@ enum AccentInk: String, CaseIterable, Identifiable {
 /// How the player's scorecards look. One place decides paper, ink and what the card records,
 /// and it is carried across the app: the card, covers, stats and share images.
 @MainActor
-final class CardAppearance: ObservableObject {
+@Observable
+final class CardAppearance {
     static let fairway = Color.brandGreen
     static let cream = Color(red: 0.985, green: 0.975, blue: 0.94)
 
-    @Published var paper: PaperStock { didSet { defaults.set(paper.rawValue, forKey: Keys.paper) } }
-    @Published var accent: AccentInk { didSet { defaults.set(accent.rawValue, forKey: Keys.accent) } }
-    @Published var tracksPuttsAndGreens: Bool { didSet { defaults.set(tracksPuttsAndGreens, forKey: Keys.tracks) } }
+    var paper: PaperStock { didSet { defaults.set(paper.rawValue, forKey: Keys.paper) } }
+    var accent: AccentInk { didSet { defaults.set(accent.rawValue, forKey: Keys.accent) } }
+    var tracksPuttsAndGreens: Bool { didSet { defaults.set(tracksPuttsAndGreens, forKey: Keys.tracks) } }
 
     private let defaults: UserDefaults
 
@@ -185,8 +185,8 @@ struct SwatchPicker<Value: Hashable & Identifiable>: View {
 /// With a round it styles that one card; without one it sets the default for every card
 /// that has not been given its own style.
 struct CardStyleForm: View {
-    @EnvironmentObject private var appearance: CardAppearance
-    @EnvironmentObject private var store: RoundStore
+    @Environment(CardAppearance.self) private var appearance
+    @Environment(RoundStore.self) private var store
 
     /// The card being styled. nil edits the default in Settings.
     var round: Round?
@@ -219,7 +219,7 @@ struct CardStyleForm: View {
                 get: { current.paper.flatMap(PaperStock.init(rawValue:)) ?? .inherit },
                 set: { newValue in update { $0.paper = newValue == .inherit ? nil : newValue.rawValue } })
         }
-        return $appearance.paper
+        return Bindable(appearance).paper
     }
 
     private var inkBinding: Binding<AccentInk> {
@@ -228,7 +228,7 @@ struct CardStyleForm: View {
                 get: { current.ink.flatMap(AccentInk.init(rawValue:)) ?? .inherit },
                 set: { newValue in update { $0.ink = newValue == .inherit ? nil : newValue.rawValue } })
         }
-        return $appearance.accent
+        return Bindable(appearance).accent
     }
 
     private func update(_ change: (inout Round) -> Void) {
@@ -267,7 +267,7 @@ struct CardStyleForm: View {
             )
 
             if round == nil {
-                Toggle(isOn: $appearance.tracksPuttsAndGreens) {
+                Toggle(isOn: Bindable(appearance).tracksPuttsAndGreens) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Putts and greens")
                             .font(.body)

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct TournamentStandingsView: View {
-    @EnvironmentObject private var tournamentStore: TournamentStore
+    @Environment(TournamentStore.self) private var tournamentStore
     @Environment(\.displayScale) private var displayScale
 
     let tournament: Tournament

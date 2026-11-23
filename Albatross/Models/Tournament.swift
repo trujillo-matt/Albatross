@@ -585,3 +585,13 @@ struct CaptainPresence: Codable {
         case present
     }
 }
+
+// MARK: - Equatable
+// The stores publish these, and an @Observable store skips the update when a new value equals the old one.
+extension Tournament: Equatable {}
+extension TournamentTeam: Equatable {}
+extension TournamentPlayer: Equatable {}
+extension TournamentMatchup: Equatable {}
+extension TournamentCourse: Equatable {}
+extension TournamentSession: Equatable {}
+extension TournamentCaptainVote: Equatable {}

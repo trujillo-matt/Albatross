@@ -22,9 +22,9 @@ struct BookletView: View {
     /// so Back returns to the library instead of the finished scorecard.
     var onShowSummary: (_ roundID: UUID, _ replacing: Bool) -> Void
 
-    @EnvironmentObject private var store: RoundStore
-    @EnvironmentObject private var courseStore: CourseStore
-    @EnvironmentObject private var appearance: CardAppearance
+    @Environment(RoundStore.self) private var store
+    @Environment(CourseStore.self) private var courseStore
+    @Environment(CardAppearance.self) private var appearance
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -1201,8 +1201,8 @@ private func previewStore() -> RoundStore {
     }
     .frame(width: 280)
     .environment(\.horizontalSizeClass, .compact)
-    .environmentObject(store)
-    .environmentObject(CourseStore())
+    .environment(store)
+    .environment(CourseStore())
 }
 
 #Preview("Compact, 390 pt") {
@@ -1212,8 +1212,8 @@ private func previewStore() -> RoundStore {
     }
     .frame(width: 390)
     .environment(\.horizontalSizeClass, .compact)
-    .environmentObject(store)
-    .environmentObject(CourseStore())
+    .environment(store)
+    .environment(CourseStore())
 }
 
 #Preview("Regular, 820 pt, dark") {
@@ -1224,7 +1224,7 @@ private func previewStore() -> RoundStore {
     .frame(width: 820)
     .environment(\.horizontalSizeClass, .regular)
     .preferredColorScheme(.dark)
-    .environmentObject(store)
-    .environmentObject(CourseStore())
+    .environment(store)
+    .environment(CourseStore())
 }
 #endif

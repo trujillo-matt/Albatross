@@ -1,4 +1,3 @@
-import Combine
 import Foundation
 import Supabase
 import SwiftUI
@@ -80,11 +79,12 @@ private struct RoundRow: Codable {
 // MARK: - RoundStore
 
 @MainActor
-final class RoundStore: ObservableObject {
-    @Published private(set) var rounds: [Round] = []
+@Observable
+final class RoundStore {
+    private(set) var rounds: [Round] = []
 
     // Set by AlbatrossApp after both stores are created
-    weak var authStore: AuthStore?
+    @ObservationIgnored weak var authStore: AuthStore?
 
     private let saveURL: URL = {
         let documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]

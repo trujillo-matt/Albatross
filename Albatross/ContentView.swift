@@ -2,10 +2,10 @@ import SwiftUI
 
 struct ContentView: View {
     // All stores flow down from AlbatrossApp via environment
-    @EnvironmentObject private var roundStore:  RoundStore
-    @EnvironmentObject private var courseStore: CourseStore
-    @EnvironmentObject private var authStore:   AuthStore
-    @EnvironmentObject private var socialStore: SocialStore
+    @Environment(RoundStore.self) private var roundStore
+    @Environment(CourseStore.self) private var courseStore
+    @Environment(AuthStore.self) private var authStore
+    @Environment(SocialStore.self) private var socialStore
 
     @Binding var selectedTab: Int
     @Binding var pendingRoundID: UUID?
@@ -62,8 +62,8 @@ private extension View {
 
 #Preview {
     ContentView(selectedTab: .constant(1), pendingRoundID: .constant(nil), pendingNewRound: .constant(false))
-        .environmentObject(RoundStore())
-        .environmentObject(CourseStore())
-        .environmentObject(AuthStore())
-        .environmentObject(SocialStore())
+        .environment(RoundStore())
+        .environment(CourseStore())
+        .environment(AuthStore())
+        .environment(SocialStore())
 }

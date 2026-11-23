@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SignInView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @EnvironmentObject private var authStore: AuthStore
+    @Environment(AuthStore.self) private var authStore
 
     /// Lets someone use the app with no account. Their rounds stay on the phone.
     var onContinueWithoutAccount: () -> Void = {}
@@ -242,5 +242,5 @@ struct SignInView: View {
 
 #Preview {
     SignInView()
-        .environmentObject(AuthStore())
+        .environment(AuthStore())
 }

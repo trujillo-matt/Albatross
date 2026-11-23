@@ -35,6 +35,17 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "F3BE4F702F47C60C00DF4336"
+               BuildableName = "AlbatrossTests.xctest"
+               BlueprintName = "AlbatrossTests"
+               ReferencedContainer = "container:Albatross.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "F3BE4F7A2F47C60C00DF4336"
                BuildableName = "AlbatrossUITests.xctest"
                BlueprintName = "AlbatrossUITests"

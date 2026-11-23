@@ -186,3 +186,5 @@ func handicapIndex(for rounds: [Round]) -> Double? {
     let avg = best8.reduce(0, +) / Double(best8.count)
     return (avg * 0.96 * 10).rounded() / 10
 }
+
+extension Round: Equatable {}

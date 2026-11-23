@@ -2,8 +2,8 @@ import SwiftUI
 
 struct NewTournamentSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var socialStore: SocialStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(SocialStore.self) private var socialStore
 
     // ── Step tracking ────────────────────────────────────────────────────
     @State private var step = 1

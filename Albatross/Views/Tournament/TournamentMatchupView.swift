@@ -3,9 +3,9 @@ import SwiftUI
 /// Captain (or commissioner) sets player pairings for a matchup,
 /// then each player launches their scorecard from this view.
 struct TournamentMatchupView: View {
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var authStore: AuthStore
-    @EnvironmentObject private var roundStore: RoundStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(AuthStore.self) private var authStore
+    @Environment(RoundStore.self) private var roundStore
 
     let tournament: Tournament
     let matchup: TournamentMatchup

@@ -3,8 +3,8 @@ import SwiftUI
 
 /// The player's game in numbers, drawn from every finished 18-hole round.
 struct StatsView: View {
-    @EnvironmentObject private var store: RoundStore
-    @EnvironmentObject private var appearance: CardAppearance
+    @Environment(RoundStore.self) private var store
+    @Environment(CardAppearance.self) private var appearance
     @Environment(\.colorScheme) private var colorScheme
 
     private var stats: RoundStats { RoundStats(rounds: store.rounds) }
@@ -345,7 +345,7 @@ struct DashboardCard<Content: View>: View {
 
 #Preview {
     StatsView()
-        .environmentObject({
+        .environment({
             let store = RoundStore()
             for index in 0..<8 {
                 var round = Round(courseName: index % 3 == 0 ? "Pebble Beach" : "Augusta National")
@@ -356,5 +356,5 @@ struct DashboardCard<Content: View>: View {
             }
             return store
         }())
-        .environmentObject(CardAppearance())
+        .environment(CardAppearance())
 }

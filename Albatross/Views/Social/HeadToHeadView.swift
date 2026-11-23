@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct HeadToHeadView: View {
-    @EnvironmentObject private var roundStore: RoundStore
+    @Environment(RoundStore.self) private var roundStore
 
     let myProfile: UserProfile
     let theirProfile: UserProfile

@@ -3,9 +3,9 @@ import SwiftUI
 /// One player keeps score for everyone in the match. The scorer sees every card and a stroke pad;
 /// everyone else sees the same cards read-only, refreshed every few seconds.
 struct GroupScorecardView: View {
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var authStore: AuthStore
-    @EnvironmentObject private var courseStore: CourseStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(AuthStore.self) private var authStore
+    @Environment(CourseStore.self) private var courseStore
 
     let tournament: Tournament
     let matchup: TournamentMatchup

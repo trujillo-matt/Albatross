@@ -3,8 +3,8 @@ import SwiftUI
 /// A day at a time: each session's auto-filled lineup, then the captains' callouts, then the locked matches.
 /// Every rule lives in the database (migration 008); this view shows state and sends the captain's choice.
 struct TournamentSessionsView: View {
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var authStore: AuthStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(AuthStore.self) private var authStore
 
     let tournamentID: UUID
 

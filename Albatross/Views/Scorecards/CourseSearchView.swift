@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct CourseSearchView: View {
-    @EnvironmentObject private var courseStore: CourseStore
+    @Environment(CourseStore.self) private var courseStore
 
     /// Called when the user picks a course from results
     var onSelect: (Course) -> Void
@@ -16,7 +16,7 @@ struct CourseSearchView: View {
                     .foregroundStyle(.secondary)
                     .appFont(.body)
 
-                TextField("Search courses…", text: $courseStore.searchText)
+                TextField("Search courses…", text: Bindable(courseStore).searchText)
                     .appFont(.body)
                     .autocorrectionDisabled()
                     .submitLabel(.search)

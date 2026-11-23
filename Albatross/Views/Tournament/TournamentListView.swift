@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct TournamentListView: View {
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var authStore: AuthStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(AuthStore.self) private var authStore
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var showNewTournament = false
@@ -285,7 +285,7 @@ struct TournamentListView: View {
 /// "Tournament news": birdies, changed scores and finished matches from my tournaments.
 /// Refreshes while it is on screen.
 struct TournamentNewsFeed: View {
-    @EnvironmentObject private var tournamentStore: TournamentStore
+    @Environment(TournamentStore.self) private var tournamentStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

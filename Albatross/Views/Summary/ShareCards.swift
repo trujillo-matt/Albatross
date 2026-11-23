@@ -62,7 +62,7 @@ struct CoverShareCard: View {
             VStack(spacing: 0) {
                 Spacer(minLength: 0)
                 CourseCoverView(round: round)
-                    .environmentObject(appearance)
+                    .environment(appearance)
                     .frame(width: 296, height: 411)
                 Spacer(minLength: 0)
                 ShareFooter()

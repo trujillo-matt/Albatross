@@ -9,7 +9,7 @@ enum RoundSortOrder: String, CaseIterable {
 
 /// The library: every round is a booklet on a shelf. Tapping one opens it.
 struct ScorecardsView: View {
-    @EnvironmentObject private var store: RoundStore
+    @Environment(RoundStore.self) private var store
 
     var pendingRoundID: Binding<UUID?> = .constant(nil)
     var pendingNewRound: Binding<Bool> = .constant(false)
@@ -290,10 +290,10 @@ struct ScorecardsView: View {
 
 #Preview {
     ScorecardsView()
-        .environmentObject(CourseStore())
-        .environmentObject(TournamentStore())
-        .environmentObject(AuthStore())
-        .environmentObject({
+        .environment(CourseStore())
+        .environment(TournamentStore())
+        .environment(AuthStore())
+        .environment({
             let s = RoundStore()
             var r1 = Round(courseName: "Augusta National")
             r1.scores = Array(repeating: 5, count: 18)

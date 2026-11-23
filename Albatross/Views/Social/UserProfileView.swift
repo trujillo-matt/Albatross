@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct UserProfileView: View {
-    @EnvironmentObject private var socialStore: SocialStore
-    @EnvironmentObject private var authStore: AuthStore
+    @Environment(SocialStore.self) private var socialStore
+    @Environment(AuthStore.self) private var authStore
     @Environment(\.dismiss) private var dismiss
 
     let profile: UserProfile

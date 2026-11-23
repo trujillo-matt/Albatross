@@ -1,5 +1,5 @@
 import Foundation
-import Combine
+import Observation
 import Supabase
 
 // MARK: - Feed Item
@@ -13,21 +13,22 @@ struct FeedItem: Identifiable {
 // MARK: - SocialStore
 
 @MainActor
-final class SocialStore: ObservableObject {
+@Observable
+final class SocialStore {
 
     // People the current user follows (with their profiles)
-    @Published var following: [UserProfile] = []
+    var following: [UserProfile] = []
     // People who follow the current user
-    @Published var followers: [UserProfile] = []
+    var followers: [UserProfile] = []
     // Activity feed: completed rounds from followed users
-    @Published var friendsFeed: [FeedItem] = []
+    var friendsFeed: [FeedItem] = []
     // Search results
-    @Published var searchResults: [UserProfile] = []
-    @Published var isSearching = false
-    @Published var isLoadingFeed = false
+    var searchResults: [UserProfile] = []
+    var isSearching = false
+    var isLoadingFeed = false
 
     // Set by AlbatrossApp after both stores are initialised
-    weak var authStore: AuthStore?
+    @ObservationIgnored weak var authStore: AuthStore?
 
     // MARK: - Follow state
 
@@ -314,3 +315,5 @@ final class SocialStore: ObservableObject {
         }
     }
 }
+
+extension FeedItem: Equatable {}

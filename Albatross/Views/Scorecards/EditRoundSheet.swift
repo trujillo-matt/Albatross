@@ -3,7 +3,7 @@ import PhotosUI
 
 struct EditRoundSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var store: RoundStore
+    @Environment(RoundStore.self) private var store
 
     @State private var round: Round
     @State private var pars: [Int]
@@ -247,5 +247,5 @@ struct EditRoundSheet: View {
         r.scores = Array(repeating: 5, count: 9) + Array(repeating: nil, count: 9)
         return r
     }(), onSave: { _ in })
-    .environmentObject(RoundStore())
+    .environment(RoundStore())
 }

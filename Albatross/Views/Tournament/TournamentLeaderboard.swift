@@ -3,7 +3,7 @@ import SwiftUI
 /// The tournament board, set out like a broadcast singles board: a title band, the two teams with
 /// their running points, then each day's matches, the leading side of a live match filled in its team colour.
 struct TournamentLeaderboard: View {
-    @EnvironmentObject private var tournamentStore: TournamentStore
+    @Environment(TournamentStore.self) private var tournamentStore
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 

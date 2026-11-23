@@ -3,8 +3,8 @@ import PhotosUI
 
 struct NewRoundSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var store: RoundStore
-    @EnvironmentObject private var courseStore: CourseStore
+    @Environment(RoundStore.self) private var store
+    @Environment(CourseStore.self) private var courseStore
 
     /// Whether the user has tapped "Enter manually" and is typing a free-form name
     @State private var isManualEntry = false
@@ -410,6 +410,6 @@ struct NewRoundSheet: View {
 
 #Preview {
     NewRoundSheet(onRoundCreated: { _ in })
-        .environmentObject(RoundStore())
-        .environmentObject(CourseStore())
+        .environment(RoundStore())
+        .environment(CourseStore())
 }

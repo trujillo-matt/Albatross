@@ -94,3 +94,5 @@ enum GroupScoring {
         return nil
     }
 }
+
+extension GroupCard: Equatable {}

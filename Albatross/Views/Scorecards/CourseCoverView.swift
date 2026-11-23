@@ -96,7 +96,7 @@ struct CourseCoverView: View {
     /// When true the cover stretches to fill the space it is given instead of keeping a booklet's proportions.
     var fillsSpace = false
 
-    @EnvironmentObject private var appearance: CardAppearance
+    @Environment(CardAppearance.self) private var appearance
 
     private var style: CoverStyle { CoverStyle(courseName: round.courseName) }
     private var paper: Color { appearance.coverPaper(for: round) }

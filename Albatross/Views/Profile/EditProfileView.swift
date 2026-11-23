@@ -3,7 +3,7 @@ import SwiftUI
 
 struct EditProfileView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var authStore: AuthStore
+    @Environment(AuthStore.self) private var authStore
 
     @State private var displayName: String
     @State private var username: String
@@ -213,5 +213,5 @@ struct EditProfileView: View {
         initialHomeCourse: "Augusta National",
         initialLocation: "Atlanta, GA"
     )
-    .environmentObject(AuthStore())
+    .environment(AuthStore())
 }

@@ -2,9 +2,9 @@ import SwiftUI
 
 /// The Clubhouse: where your golf starts. The round you are in, your tournaments, then friends.
 struct HomeView: View {
-    @EnvironmentObject private var roundStore: RoundStore
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var socialStore: SocialStore
+    @Environment(RoundStore.self) private var roundStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(SocialStore.self) private var socialStore
 
     /// Opens a round's booklet on the Scorecards tab.
     var onOpenRound: (UUID) -> Void
@@ -374,8 +374,8 @@ struct FeedItemCard: View {
 
 #Preview {
     HomeView(onOpenRound: { _ in }, onNewRound: {})
-        .environmentObject(RoundStore())
-        .environmentObject(TournamentStore())
-        .environmentObject(SocialStore())
-        .environmentObject(CardAppearance())
+        .environment(RoundStore())
+        .environment(TournamentStore())
+        .environment(SocialStore())
+        .environment(CardAppearance())
 }

@@ -2,8 +2,8 @@ import SwiftUI
 
 /// Live draft room — Phase 1: captain voting; Phase 2: snake draft.
 struct TournamentDraftView: View {
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var authStore: AuthStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(AuthStore.self) private var authStore
 
     let tournament: Tournament
 

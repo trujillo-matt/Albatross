@@ -4,7 +4,7 @@ import SwiftUI
 /// every card shows its top edge, and the last one shows in full. Tapping a card lifts it to the top,
 /// the others drop away, and its details and actions appear beneath it.
 struct WalletStackView: View {
-    @EnvironmentObject private var appearance: CardAppearance
+    @Environment(CardAppearance.self) private var appearance
 
     let rounds: [Round]
     let namespace: Namespace.ID
@@ -115,7 +115,7 @@ struct WalletStackView: View {
 
 /// What sits under a lifted card: the round in numbers, then what to do with it.
 private struct DetailsPanel: View {
-    @EnvironmentObject private var appearance: CardAppearance
+    @Environment(CardAppearance.self) private var appearance
 
     let round: Round
     var onOpen: () -> Void
@@ -207,7 +207,7 @@ private struct DetailsPanel: View {
 
 /// One round as a card: the course's paper and ink, the course at the top edge, the score in pencil.
 private struct WalletCard: View {
-    @EnvironmentObject private var appearance: CardAppearance
+    @Environment(CardAppearance.self) private var appearance
 
     let round: Round
     let height: CGFloat

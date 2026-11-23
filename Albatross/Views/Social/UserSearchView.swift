@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct UserSearchView: View {
-    @EnvironmentObject private var socialStore: SocialStore
+    @Environment(SocialStore.self) private var socialStore
     @Environment(\.dismiss) private var dismiss
 
     @State private var query = ""
@@ -132,7 +132,7 @@ struct UserSearchView: View {
 // MARK: - Search result row
 
 struct SearchResultRow: View {
-    @EnvironmentObject private var socialStore: SocialStore
+    @Environment(SocialStore.self) private var socialStore
     let profile: UserProfile
     let onTap: () -> Void
 
@@ -180,7 +180,7 @@ struct SearchResultRow: View {
 // MARK: - Reusable Follow button
 
 struct FollowButton: View {
-    @EnvironmentObject private var socialStore: SocialStore
+    @Environment(SocialStore.self) private var socialStore
     let userID: UUID
     @State private var isLoading = false
 

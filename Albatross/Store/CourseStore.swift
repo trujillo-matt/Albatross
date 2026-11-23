@@ -1,22 +1,23 @@
 import Foundation
-import Combine
+import Observation
 
 @MainActor
-final class CourseStore: ObservableObject {
-    @Published private(set) var allCourses: [Course] = []
+@Observable
+final class CourseStore {
+    private(set) var allCourses: [Course] = []
 
     /// Bound to the search field — debounced before filtering
-    @Published var searchText: String = ""
+    var searchText: String = "" { didSet { scheduleSearch() } }
 
     /// Debounced, filtered results — updated ~200ms after typing stops
-    @Published private(set) var results: [Course] = []
+    private(set) var results: [Course] = []
 
     /// Courses flagged isPreloaded — shown in the "Suggested" section before any search query
     var preloadedCourses: [Course] {
         allCourses.filter { $0.isPreloaded }
     }
 
-    private var cancellables = Set<AnyCancellable>()
+    @ObservationIgnored private var searchTask: Task<Void, Never>?
 
     /// Courses the user typed in themselves, kept on the phone so they turn up in search next time.
     private static var customCoursesURL: URL {
@@ -27,26 +28,25 @@ final class CourseStore: ObservableObject {
     init() {
         loadBundle()
         loadCustomCourses()
-        setupSearch()
     }
 
-    private func setupSearch() {
-        $searchText
-            .debounce(for: .milliseconds(200), scheduler: RunLoop.main)
-            .map { [weak self] query -> [Course] in
-                guard let self else { return [] }
-                let q = query.trimmingCharacters(in: .whitespaces)
-                guard !q.isEmpty else { return [] }
-                return self.allCourses
-                    .filter {
-                        $0.name.localizedCaseInsensitiveContains(q) ||
-                        $0.city.localizedCaseInsensitiveContains(q) ||
-                        $0.state.localizedCaseInsensitiveContains(q)
-                    }
-                    .prefix(20)
-                    .map { $0 }
-            }
-            .assign(to: &$results)
+    /// Filters the courses about 200 ms after the last keystroke.
+    private func scheduleSearch() {
+        searchTask?.cancel()
+        let query = searchText.trimmingCharacters(in: .whitespaces)
+        guard !query.isEmpty else { results = []; return }
+        searchTask = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled, let self else { return }
+            results = allCourses
+                .filter {
+                    $0.name.localizedCaseInsensitiveContains(query) ||
+                    $0.city.localizedCaseInsensitiveContains(query) ||
+                    $0.state.localizedCaseInsensitiveContains(query)
+                }
+                .prefix(20)
+                .map { $0 }
+        }
     }
 
     /// Saves a course entered by hand. A course with the same name is kept as it is.

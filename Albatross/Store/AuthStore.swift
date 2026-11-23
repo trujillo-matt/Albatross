@@ -1,20 +1,20 @@
-import Combine
 import Foundation
 import Supabase
 import SwiftUI
 
 @MainActor
-final class AuthStore: ObservableObject {
+@Observable
+final class AuthStore {
 
     // MARK: - Published state
 
-    @Published private(set) var isSignedIn: Bool = false
-    @Published private(set) var currentProfile: UserProfile? = nil
-    @Published private(set) var isLoading: Bool = false
-    @Published var errorMessage: String? = nil
+    private(set) var isSignedIn: Bool = false
+    private(set) var currentProfile: UserProfile? = nil
+    private(set) var isLoading: Bool = false
+    var errorMessage: String? = nil
 
     // Set by AlbatrossApp after both stores are initialised
-    weak var roundStore: RoundStore?
+    @ObservationIgnored weak var roundStore: RoundStore?
 
     // MARK: - Init
 

@@ -6,8 +6,8 @@ import Photos
 struct RoundSummaryView: View {
     private let initialRound: Round
 
-    @EnvironmentObject private var store: RoundStore
-    @EnvironmentObject private var appearance: CardAppearance
+    @Environment(RoundStore.self) private var store
+    @Environment(CardAppearance.self) private var appearance
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.displayScale) private var displayScale
@@ -384,6 +384,6 @@ struct ActivityViewController: UIViewControllerRepresentable {
             return r
         }())
     }
-    .environmentObject(RoundStore())
-    .environmentObject(CardAppearance())
+    .environment(RoundStore())
+    .environment(CardAppearance())
 }

@@ -2,10 +2,10 @@ import SwiftUI
 
 /// Who you are as a golfer: a membership card in your paper and ink, then friends, tournaments and settings.
 struct ProfileView: View {
-    @EnvironmentObject private var authStore: AuthStore
-    @EnvironmentObject private var roundStore: RoundStore
-    @EnvironmentObject private var socialStore: SocialStore
-    @EnvironmentObject private var appearance: CardAppearance
+    @Environment(AuthStore.self) private var authStore
+    @Environment(RoundStore.self) private var roundStore
+    @Environment(SocialStore.self) private var socialStore
+    @Environment(CardAppearance.self) private var appearance
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -396,8 +396,8 @@ struct SettingsSheet: View {
 
 #Preview {
     ProfileView()
-        .environmentObject(AuthStore())
-        .environmentObject({
+        .environment(AuthStore())
+        .environment({
             let s = RoundStore()
             var r1 = Round(courseName: "Augusta National")
             r1.scores = Array(repeating: 4, count: 18)

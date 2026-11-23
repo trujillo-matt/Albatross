@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct TournamentDetailView: View {
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var authStore: AuthStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(AuthStore.self) private var authStore
 
     let tournament: Tournament
 
@@ -530,8 +530,8 @@ struct TournamentDetailView: View {
 
 private struct InvitePlayersSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var tournamentStore: TournamentStore
-    @EnvironmentObject private var socialStore: SocialStore
+    @Environment(TournamentStore.self) private var tournamentStore
+    @Environment(SocialStore.self) private var socialStore
 
     let tournament: Tournament
 
