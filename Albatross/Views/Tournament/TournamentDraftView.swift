@@ -90,9 +90,34 @@ struct TournamentDraftView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 if !captainsAreSet {
-                    captainVotePhase
+                    CaptainVotePhase(
+                        players: acceptedPlayers,
+                        voteCounts: Dictionary(grouping: tournamentStore.captainVotes, by: \.nomineeUserID).mapValues(\.count),
+                        voterCount: uniqueVoterCount,
+                        selected: selectedNominees,
+                        alreadyVoted: iAlreadyVoted,
+                        isCommissioner: isCommissioner,
+                        isSubmittingVote: isSubmittingVote,
+                        isFinalizingCaptains: isFinalizingCaptains,
+                        onToggle: toggleNominee,
+                        onSubmit: submitVote,
+                        onFinalize: { finalizeCaptains() })
                 } else {
-                    snakeDraftPhase
+                    SnakeDraftPhase(
+                        teamA: teamA,
+                        teamB: teamB,
+                        teamAPlayers: teamAPlayers,
+                        teamBPlayers: teamBPlayers,
+                        undrafted: undraftedPlayers,
+                        isTeamATurn: isTeamATurn,
+                        allDrafted: allDrafted,
+                        iAmOnClock: iAmOnClock,
+                        onClockTeamName: onClockTeam?.name,
+                        isCommissioner: isCommissioner,
+                        isStartingTournament: isStartingTournament,
+                        onPick: makePick,
+                        onOverride: overridePick,
+                        onStart: startTournament)
                 }
 
                 if let error = errorMessage {
@@ -116,420 +141,28 @@ struct TournamentDraftView: View {
         .onDisappear {
             Task { await tournamentStore.unsubscribeFromDraftRoom() }
         }
-        .sheet(isPresented: $showTieSheet) { tieBreakSheet }
-    }
-
-    // MARK: - Tie break (commissioner)
-
-    private var tieBreakSheet: some View {
-        NavigationStack {
-            List(tieCandidates, id: \.self) { id in
-                let name = current.playerPool.first(where: { $0.userID == id })?.profile?.displayName ?? "Player"
-                let selected = tieSelection.contains(id)
-                Button {
-                    if selected { tieSelection.removeAll { $0 == id } }
-                    else if tieSelection.count < tieSlots { tieSelection.append(id) }
-                } label: {
-                    HStack {
-                        Text(name).font(.custom("Baskerville", size: 15)).foregroundStyle(.primary)
-                        Spacer()
-                        if selected { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) }
-                    }
-                }
-            }
-            .navigationTitle("Break the tie")
-            .navigationBarTitleDisplayMode(.inline)
-            .safeAreaInset(edge: .top) {
-                Text("These nominees are tied. Choose \(tieSlots) to become captain.")
-                    .font(.custom("Baskerville", size: 13))
-                    .foregroundStyle(.secondary)
-                    .padding()
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { showTieSheet = false } }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Confirm") {
-                        showTieSheet = false
-                        finalizeCaptains(tiebreakWinners: tieSelection)
-                    }
-                    .disabled(tieSelection.count != tieSlots)
-                }
-            }
+        .sheet(isPresented: $showTieSheet) {
+            TieBreakSheet(
+                candidates: tieCandidates.map { id in
+                    (id: id, name: current.playerPool.first(where: { $0.userID == id })?.profile?.displayName ?? "Player")
+                },
+                slots: tieSlots,
+                selection: $tieSelection,
+                onCancel: { showTieSheet = false },
+                onConfirm: {
+                    showTieSheet = false
+                    finalizeCaptains(tiebreakWinners: tieSelection)
+                })
         }
     }
 
-    // MARK: - Phase 1: Captain Vote
-
-    private var captainVotePhase: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Header
-            phaseBanner(
-                phase: "Phase 1",
-                title: "Vote for captains",
-                subtitle: "Choose 2 nominees. Top 2 vote-getters become team captains."
-            )
-
-            // Vote tally
-            HStack(spacing: 6) {
-                Image(systemName: "person.2.fill")
-                    .appFont(.small)
-                    .foregroundStyle(Color.accentColor)
-                Text("\(uniqueVoterCount) of \(acceptedPlayers.count) players voted")
-                    .appFont(.small)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 16)
-
-            // Player list
-            sectionHeader("Select up to 2 nominees")
-                .padding(.horizontal, 20)
-                .padding(.bottom, 10)
-
-            ForEach(acceptedPlayers) { player in
-                let isSelected = selectedNominees.contains(player.userID)
-                let alreadyVoted = iAlreadyVoted
-                Button(action: {
-                    guard !alreadyVoted else { return }
-                    if isSelected {
-                        selectedNominees.removeAll { $0 == player.userID }
-                    } else if selectedNominees.count < 2 {
-                        selectedNominees.append(player.userID)
-                    }
-                }) {
-                    HStack(spacing: 12) {
-                        Circle()
-                            .fill(isSelected ? Color.brandGreen : Color.accentColor.opacity(0.15))
-                            .frame(width: 36, height: 36)
-                            .overlay(
-                                Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                    .appFont(.small, weight: .semibold)
-                                    .foregroundStyle(isSelected ? .white : Color.accentColor)
-                            )
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(player.profile?.displayName ?? "Player")
-                                .appFont(.small, weight: .medium)
-                                .foregroundStyle(.primary)
-                            if let username = player.profile?.username {
-                                Text("@\(username)")
-                                    .appFont(.small)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-
-                        Spacer()
-
-                        // Live counts are hidden from voters until they have voted, so early
-                        // results do not sway the ballot. The commissioner always sees them.
-                        let voteCount = tournamentStore.captainVotes.filter { $0.nomineeUserID == player.userID }.count
-                        if voteCount > 0 && (isCommissioner || alreadyVoted) {
-                            Text("\(voteCount)")
-                                .appFont(.small, weight: .semibold)
-                                .foregroundStyle(Color.accentColor)
-                        }
-
-                        if isSelected {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(Color.accentColor)
-                        }
-                    }
-                    .appListRowPadding()
-                    .background(Color(.secondarySystemGroupedBackground))
-                }
-                .buttonStyle(.pressFeedback)
-                .disabled(alreadyVoted)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 4)
-            }
-
-            // Submit vote button
-            if !iAlreadyVoted {
-                Button(action: submitVote) {
-                    Group {
-                        if isSubmittingVote {
-                            ProgressView().tint(.white)
-                        } else {
-                            Text("Submit Votes (\(selectedNominees.count)/2)")
-                                .appFont(.body, weight: .medium)
-                        }
-                    }
-                    .appButton(fill: selectedNominees.count == 2 ? Color.brandGreen : Color(.systemFill), foreground: selectedNominees.count == 2 ? .white : .secondary)
-                }
-                .buttonStyle(.pressFeedback)
-                .disabled(selectedNominees.count < 2 || isSubmittingVote)
-                .padding(.horizontal, 16)
-                .padding(.top, 20)
-            } else {
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(Color.accentColor)
-                    Text("Your vote is in")
-                        .appFont(.small)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-            }
-
-            // Commissioner: finalize captains
-            if isCommissioner {
-                VStack(spacing: 8) {
-                    Divider().padding(.top, 20)
-
-                    Text("Admin actions")
-                        .appFont(.small, weight: .medium)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 8)
-
-                    Button(action: { finalizeCaptains() }) {
-                        Group {
-                            if isFinalizingCaptains {
-                                ProgressView().tint(.white)
-                            } else {
-                                Text("Finalize captains")
-                                    .appFont(.small, weight: .medium)
-                            }
-                        }
-                        .appButton(fill: Color.accentColor.opacity(0.15), foreground: Color.accentColor)
-                    }
-                    .buttonStyle(.pressFeedback)
-                    .disabled(isFinalizingCaptains)
-                }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 8)
-            }
+    private func toggleNominee(_ id: UUID) {
+        guard !iAlreadyVoted else { return }
+        if selectedNominees.contains(id) {
+            selectedNominees.removeAll { $0 == id }
+        } else if selectedNominees.count < 2 {
+            selectedNominees.append(id)
         }
-    }
-
-    // MARK: - Phase 2: Snake Draft
-
-    private var snakeDraftPhase: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            phaseBanner(
-                phase: "Phase 2",
-                title: "Snake Draft",
-                subtitle: allDrafted ? "All players have been drafted!" : "Captains take turns picking their teams."
-            )
-
-            // Team columns
-            HStack(alignment: .top, spacing: 12) {
-                teamColumn(team: teamA, players: teamAPlayers, isOnClock: isTeamATurn && !allDrafted)
-                teamColumn(team: teamB, players: teamBPlayers, isOnClock: !isTeamATurn && !allDrafted)
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 20)
-
-            // Undrafted players — shown to the captain who is on the clock
-            if !allDrafted {
-                if iAmOnClock {
-                    sectionHeader("Your Pick")
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 10)
-
-                    ForEach(undraftedPlayers) { player in
-                        Button(action: { makePick(player) }) {
-                            HStack(spacing: 12) {
-                                Circle()
-                                    .fill(Color.accentColor.opacity(0.15))
-                                    .frame(width: 36, height: 36)
-                                    .overlay(
-                                        Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                            .appFont(.small, weight: .semibold)
-                                            .foregroundStyle(Color.accentColor)
-                                    )
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(player.profile?.displayName ?? "Player")
-                                        .appFont(.small, weight: .medium)
-                                    if let u = player.profile?.username {
-                                        Text("@\(u)").appFont(.small).foregroundStyle(.secondary)
-                                    }
-                                }
-                                Spacer()
-                                Image(systemName: "plus.circle.fill")
-                                    .foregroundStyle(Color.accentColor)
-                            }
-                            .appListRowPadding()
-                            .background(Color(.secondarySystemGroupedBackground))
-                        }
-                        .buttonStyle(.pressFeedback)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 4)
-                    }
-                } else {
-                    // Waiting for other captain
-                    HStack(spacing: 10) {
-                        ProgressView()
-                        Text("\(onClockTeam?.name ?? "Captain") is on the clock…")
-                            .appFont(.small)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 16)
-
-                    // Commissioner override
-                    if isCommissioner {
-                        Divider().padding(.horizontal, 16)
-                        Text("Admin override")
-                            .appFont(.small, weight: .medium)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 20)
-                            .padding(.top, 12)
-                            .padding(.bottom, 8)
-
-                        ForEach(undraftedPlayers) { player in
-                            overridePickRow(player)
-                                .padding(.horizontal, 16)
-                                .padding(.bottom, 4)
-                        }
-                    }
-                }
-            }
-
-            // Start tournament button (all players drafted, commissioner only)
-            if allDrafted && isCommissioner {
-                Button(action: startTournament) {
-                    Group {
-                        if isStartingTournament {
-                            ProgressView().tint(.white)
-                        } else {
-                            Label("Start tournament", systemImage: "flag.fill")
-                                .appFont(.body, weight: .medium)
-                        }
-                    }
-                    .appButton(fill: Color.brandGreen, foreground: .white)
-                }
-                .buttonStyle(.pressFeedback)
-                .disabled(isStartingTournament)
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-            }
-        }
-    }
-
-    private func teamColumn(team: TournamentTeam?, players: [TournamentPlayer], isOnClock: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Text(team?.name ?? "Team")
-                    .appFont(.small, weight: .semibold)
-                    .foregroundStyle(.primary)
-                if isOnClock {
-                    // Pulsing green dot
-                    Circle()
-                        .fill(Color.brandGreen)
-                        .frame(width: 8, height: 8)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.accentColor.opacity(0.4), lineWidth: 3)
-                        )
-                }
-            }
-
-            Divider()
-
-            ForEach(players) { player in
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.15))
-                        .frame(width: 28, height: 28)
-                        .overlay(
-                            Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
-                                .appFont(.small, weight: .semibold)
-                                .foregroundStyle(Color.accentColor)
-                        )
-                    if player.userID == team?.captainUserID { CaptainBadge() }
-                    Text(player.profile?.displayName ?? "Player")
-                        .appFont(.small)
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                }
-            }
-
-            if players.isEmpty {
-                Text("No players yet")
-                    .appFont(.small)
-                    .foregroundStyle(.tertiary)
-                    .italic()
-            }
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            isOnClock
-                ? Color.accentColor.opacity(0.06)
-                : Color(.secondarySystemGroupedBackground)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(isOnClock ? Color.accentColor.opacity(0.4) : Color(.separator).opacity(0.3), lineWidth: isOnClock ? 1.5 : 0.5)
-        )
-    }
-
-    private func overridePickRow(_ player: TournamentPlayer) -> some View {
-        HStack(spacing: 10) {
-            Text(player.profile?.displayName ?? "Player")
-                .appFont(.small)
-                .foregroundStyle(.primary)
-            Spacer()
-            if let tA = teamA {
-                Button(action: { overridePick(player, to: tA) }) {
-                    Text(tA.name)
-                        .appFont(.small)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.brandGreen)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.pressFeedback)
-            }
-            if let tB = teamB {
-                Button(action: { overridePick(player, to: tB) }) {
-                    Text(tB.name)
-                        .appFont(.small)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.blue)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.pressFeedback)
-            }
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    // MARK: - Subviews
-
-    private func phaseBanner(phase: String, title: String, subtitle: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(phase)
-                .appFont(.small)
-                .foregroundStyle(Color.accentColor)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(Color.accentColor.opacity(0.12))
-                .clipShape(Capsule())
-            Text(title)
-                .appFont(.large, weight: .semibold)
-                .foregroundStyle(.primary)
-            Text(subtitle)
-                .appFont(.small)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 20)
-        .padding(.bottom, 16)
-    }
-
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .appFont(.body, weight: .semibold)
-            .foregroundStyle(.primary)
     }
 
     // MARK: - Actions
@@ -617,5 +250,483 @@ struct TournamentDraftView: View {
     private func refreshTournament() async {
         await tournamentStore.loadMyTournaments()
         liveT = tournamentStore.myTournaments.first(where: { $0.id == tournament.id })
+    }
+}
+
+// MARK: - Sections
+//
+// Each part of the room is its own view with only the values it draws, so a vote arriving does not
+// rebuild the draft board, and a pick does not rebuild the ballot.
+
+private struct DraftPhaseBanner: View {
+    let phase: String
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(phase)
+                .appFont(.small)
+                .foregroundStyle(Color.accentColor)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Color.accentColor.opacity(0.12))
+                .clipShape(Capsule())
+            Text(title)
+                .appFont(.large, weight: .semibold)
+                .foregroundStyle(.primary)
+            Text(subtitle)
+                .appFont(.small)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 16)
+    }
+}
+
+private struct DraftSectionHeader: View {
+    let title: String
+
+    var body: some View {
+        Text(title)
+            .appFont(.body, weight: .semibold)
+            .foregroundStyle(.primary)
+    }
+}
+
+private struct PlayerInitial: View {
+    let name: String?
+    var fill: Color = Color.accentColor.opacity(0.15)
+    var textColor: Color = Color.accentColor
+    var size: CGFloat = 36
+
+    var body: some View {
+        Circle()
+            .fill(fill)
+            .frame(width: size, height: size)
+            .overlay(
+                Text(String((name ?? "?").prefix(1)).uppercased())
+                    .appFont(.small, weight: .semibold)
+                    .foregroundStyle(textColor)
+            )
+    }
+}
+
+// MARK: Phase 1: captain vote
+
+private struct CaptainVotePhase: View {
+    let players: [TournamentPlayer]
+    let voteCounts: [UUID: Int]
+    let voterCount: Int
+    let selected: [UUID]
+    let alreadyVoted: Bool
+    let isCommissioner: Bool
+    let isSubmittingVote: Bool
+    let isFinalizingCaptains: Bool
+    var onToggle: (UUID) -> Void
+    var onSubmit: () -> Void
+    var onFinalize: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            DraftPhaseBanner(
+                phase: "Phase 1",
+                title: "Vote for captains",
+                subtitle: "Choose 2 nominees. Top 2 vote-getters become team captains."
+            )
+
+            // Vote tally
+            HStack(spacing: 6) {
+                Image(systemName: "person.2.fill")
+                    .appFont(.small)
+                    .foregroundStyle(Color.accentColor)
+                Text("\(voterCount) of \(players.count) players voted")
+                    .appFont(.small)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 16)
+
+            DraftSectionHeader(title: "Select up to 2 nominees")
+                .padding(.horizontal, 20)
+                .padding(.bottom, 10)
+
+            ForEach(players) { player in
+                NomineeRow(
+                    player: player,
+                    isSelected: selected.contains(player.userID),
+                    // Live counts are hidden from voters until they have voted, so early
+                    // results do not sway the ballot. The commissioner always sees them.
+                    voteCount: (isCommissioner || alreadyVoted) ? (voteCounts[player.userID] ?? 0) : 0,
+                    isLocked: alreadyVoted,
+                    onTap: { onToggle(player.userID) })
+                .padding(.horizontal, 16)
+                .padding(.bottom, 4)
+            }
+
+            if !alreadyVoted {
+                Button(action: onSubmit) {
+                    Group {
+                        if isSubmittingVote {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text("Submit Votes (\(selected.count)/2)")
+                                .appFont(.body, weight: .medium)
+                        }
+                    }
+                    .appButton(fill: selected.count == 2 ? Color.brandGreen : Color(.systemFill), foreground: selected.count == 2 ? .white : .secondary)
+                }
+                .buttonStyle(.pressFeedback)
+                .disabled(selected.count < 2 || isSubmittingVote)
+                .padding(.horizontal, 16)
+                .padding(.top, 20)
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color.accentColor)
+                    Text("Your vote is in")
+                        .appFont(.small)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
+            }
+
+            if isCommissioner {
+                VStack(spacing: 8) {
+                    Divider().padding(.top, 20)
+
+                    Text("Admin actions")
+                        .appFont(.small, weight: .medium)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 8)
+
+                    Button(action: onFinalize) {
+                        Group {
+                            if isFinalizingCaptains {
+                                ProgressView().tint(.white)
+                            } else {
+                                Text("Finalize captains")
+                                    .appFont(.small, weight: .medium)
+                            }
+                        }
+                        .appButton(fill: Color.accentColor.opacity(0.15), foreground: Color.accentColor)
+                    }
+                    .buttonStyle(.pressFeedback)
+                    .disabled(isFinalizingCaptains)
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
+            }
+        }
+    }
+}
+
+private struct NomineeRow: View {
+    let player: TournamentPlayer
+    let isSelected: Bool
+    /// Zero hides the count.
+    let voteCount: Int
+    let isLocked: Bool
+    var onTap: () -> Void
+
+    var body: some View {
+        Button(action: { if !isLocked { onTap() } }) {
+            HStack(spacing: 12) {
+                PlayerInitial(
+                    name: player.profile?.displayName,
+                    fill: isSelected ? Color.brandGreen : Color.accentColor.opacity(0.15),
+                    textColor: isSelected ? .white : Color.accentColor)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(player.profile?.displayName ?? "Player")
+                        .appFont(.small, weight: .medium)
+                        .foregroundStyle(.primary)
+                    if let username = player.profile?.username {
+                        Text("@\(username)")
+                            .appFont(.small)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer()
+
+                if voteCount > 0 {
+                    Text("\(voteCount)")
+                        .appFont(.small, weight: .semibold)
+                        .foregroundStyle(Color.accentColor)
+                }
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+            .appListRowPadding()
+            .background(Color(.secondarySystemGroupedBackground))
+        }
+        .buttonStyle(.pressFeedback)
+        .disabled(isLocked)
+    }
+}
+
+// MARK: Phase 2: snake draft
+
+private struct SnakeDraftPhase: View {
+    let teamA: TournamentTeam?
+    let teamB: TournamentTeam?
+    let teamAPlayers: [TournamentPlayer]
+    let teamBPlayers: [TournamentPlayer]
+    let undrafted: [TournamentPlayer]
+    let isTeamATurn: Bool
+    let allDrafted: Bool
+    let iAmOnClock: Bool
+    let onClockTeamName: String?
+    let isCommissioner: Bool
+    let isStartingTournament: Bool
+    var onPick: (TournamentPlayer) -> Void
+    var onOverride: (TournamentPlayer, TournamentTeam) -> Void
+    var onStart: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            DraftPhaseBanner(
+                phase: "Phase 2",
+                title: "Snake Draft",
+                subtitle: allDrafted ? "All players have been drafted!" : "Captains take turns picking their teams."
+            )
+
+            HStack(alignment: .top, spacing: 12) {
+                DraftTeamColumn(team: teamA, players: teamAPlayers, isOnClock: isTeamATurn && !allDrafted)
+                DraftTeamColumn(team: teamB, players: teamBPlayers, isOnClock: !isTeamATurn && !allDrafted)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 20)
+
+            // Undrafted players — shown to the captain who is on the clock
+            if !allDrafted {
+                if iAmOnClock {
+                    DraftSectionHeader(title: "Your Pick")
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 10)
+
+                    ForEach(undrafted) { player in
+                        PickRow(player: player, onTap: { onPick(player) })
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 4)
+                    }
+                } else {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("\(onClockTeamName ?? "Captain") is on the clock…")
+                            .appFont(.small)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 16)
+
+                    if isCommissioner {
+                        Divider().padding(.horizontal, 16)
+                        Text("Admin override")
+                            .appFont(.small, weight: .medium)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
+                            .padding(.bottom, 8)
+
+                        ForEach(undrafted) { player in
+                            OverridePickRow(player: player, teamA: teamA, teamB: teamB, onOverride: { onOverride(player, $0) })
+                                .padding(.horizontal, 16)
+                                .padding(.bottom, 4)
+                        }
+                    }
+                }
+            }
+
+            // Start tournament button (all players drafted, commissioner only)
+            if allDrafted && isCommissioner {
+                Button(action: onStart) {
+                    Group {
+                        if isStartingTournament {
+                            ProgressView().tint(.white)
+                        } else {
+                            Label("Start tournament", systemImage: "flag.fill")
+                                .appFont(.body, weight: .medium)
+                        }
+                    }
+                    .appButton(fill: Color.brandGreen, foreground: .white)
+                }
+                .buttonStyle(.pressFeedback)
+                .disabled(isStartingTournament)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+            }
+        }
+    }
+}
+
+private struct PickRow: View {
+    let player: TournamentPlayer
+    var onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                PlayerInitial(name: player.profile?.displayName)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(player.profile?.displayName ?? "Player")
+                        .appFont(.small, weight: .medium)
+                    if let u = player.profile?.username {
+                        Text("@\(u)").appFont(.small).foregroundStyle(.secondary)
+                    }
+                }
+                Spacer()
+                Image(systemName: "plus.circle.fill")
+                    .foregroundStyle(Color.accentColor)
+            }
+            .appListRowPadding()
+            .background(Color(.secondarySystemGroupedBackground))
+        }
+        .buttonStyle(.pressFeedback)
+    }
+}
+
+private struct DraftTeamColumn: View {
+    let team: TournamentTeam?
+    let players: [TournamentPlayer]
+    let isOnClock: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Text(team?.name ?? "Team")
+                    .appFont(.small, weight: .semibold)
+                    .foregroundStyle(.primary)
+                if isOnClock {
+                    Circle()
+                        .fill(Color.brandGreen)
+                        .frame(width: 8, height: 8)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.accentColor.opacity(0.4), lineWidth: 3)
+                        )
+                }
+            }
+
+            Divider()
+
+            ForEach(players) { player in
+                HStack(spacing: 6) {
+                    PlayerInitial(name: player.profile?.displayName, size: 28)
+                    if player.userID == team?.captainUserID { CaptainBadge() }
+                    Text(player.profile?.displayName ?? "Player")
+                        .appFont(.small)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                }
+            }
+
+            if players.isEmpty {
+                Text("No players yet")
+                    .appFont(.small)
+                    .foregroundStyle(.tertiary)
+                    .italic()
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            isOnClock
+                ? Color.accentColor.opacity(0.06)
+                : Color(.secondarySystemGroupedBackground)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .strokeBorder(isOnClock ? Color.accentColor.opacity(0.4) : Color(.separator).opacity(0.3), lineWidth: isOnClock ? 1.5 : 0.5)
+        )
+    }
+}
+
+private struct OverridePickRow: View {
+    let player: TournamentPlayer
+    let teamA: TournamentTeam?
+    let teamB: TournamentTeam?
+    var onOverride: (TournamentTeam) -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(player.profile?.displayName ?? "Player")
+                .appFont(.small)
+                .foregroundStyle(.primary)
+            Spacer()
+            if let teamA {
+                teamButton(teamA, color: .brandGreen)
+            }
+            if let teamB {
+                teamButton(teamB, color: .blue)
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func teamButton(_ team: TournamentTeam, color: Color) -> some View {
+        Button(action: { onOverride(team) }) {
+            Text(team.name)
+                .appFont(.small)
+                .foregroundStyle(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(color)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.pressFeedback)
+    }
+}
+
+// MARK: Tie break
+
+private struct TieBreakSheet: View {
+    let candidates: [(id: UUID, name: String)]
+    let slots: Int
+    @Binding var selection: [UUID]
+    var onCancel: () -> Void
+    var onConfirm: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            List(candidates, id: \.id) { candidate in
+                let selected = selection.contains(candidate.id)
+                Button {
+                    if selected { selection.removeAll { $0 == candidate.id } }
+                    else if selection.count < slots { selection.append(candidate.id) }
+                } label: {
+                    HStack {
+                        Text(candidate.name).font(.custom("Baskerville", size: 15)).foregroundStyle(.primary)
+                        Spacer()
+                        if selected { Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.accentColor) }
+                    }
+                }
+            }
+            .navigationTitle("Break the tie")
+            .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .top) {
+                Text("These nominees are tied. Choose \(slots) to become captain.")
+                    .font(.custom("Baskerville", size: 13))
+                    .foregroundStyle(.secondary)
+                    .padding()
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel) }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Confirm", action: onConfirm)
+                        .disabled(selection.count != slots)
+                }
+            }
+        }
     }
 }

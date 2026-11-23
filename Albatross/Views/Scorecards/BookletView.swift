@@ -76,13 +76,15 @@ struct BookletView: View {
             ZStack(alignment: .bottom) {
                 Color(.systemGroupedBackground)
 
-                Group {
-                    if isSpread {
-                        spread(round, insets: insets, bottomReserve: bottomReserve)
-                    } else {
-                        pager(round, insets: insets, bottomReserve: bottomReserve)
-                    }
-                }
+                BookletPages(
+                    round: round,
+                    activeHole: $activeHole,
+                    page: $page,
+                    showCourseDetail: $showCourseDetail,
+                    insets: insets,
+                    bottomReserve: bottomReserve,
+                    isSpread: isSpread,
+                    spineEmphasis: spineEmphasis)
 
                 if showsStrip {
                     PencilStrip(
@@ -162,93 +164,6 @@ struct BookletView: View {
         .hingeFeedback { pulseSpine() }
     }
 
-    /// One page at a time. Paging gives the flip between cover and interior pages.
-    private func pager(_ round: Round, insets: EdgeInsets, bottomReserve: CGFloat) -> some View {
-        ScrollView(.horizontal) {
-            LazyHStack(spacing: 0) {
-                ForEach(BookletPage.allCases) { bookletPage in
-                    pageContent(bookletPage, round: round, insets: insets, bottomReserve: bottomReserve)
-                        .containerRelativeFrame([.horizontal, .vertical])
-                        .id(bookletPage)
-                        .scrollTransition(axis: .horizontal) { view, phase in
-                            // Reduce Motion keeps the page change but drops the tilt.
-                            view
-                                .rotation3DEffect(
-                                    .degrees(reduceMotion ? 0 : phase.value * -22),
-                                    axis: (x: 0, y: 1, z: 0),
-                                    anchor: .leading,
-                                    perspective: 0.5
-                                )
-                                .opacity(1 - abs(phase.value) * 0.3)
-                        }
-                }
-            }
-            .scrollTargetLayout()
-        }
-        .scrollTargetBehavior(.paging)
-        .scrollPosition(id: $page)
-        .scrollIndicators(.hidden)
-        .clippedToHorizontalSafeArea()
-        .accessibilityAction(named: "Open scorecard") { withAnimation { page = .front } }
-        .accessibilityAction(named: "Next page") { turnPage(by: 1) }
-        .accessibilityAction(named: "Previous page") { turnPage(by: -1) }
-    }
-
-    @ViewBuilder
-    private func pageContent(_ bookletPage: BookletPage, round: Round, insets: EdgeInsets, bottomReserve: CGFloat) -> some View {
-        switch bookletPage {
-        case .cover:
-            CourseCoverView(round: round, fillsSpace: true)
-                .padding(.horizontal, 12)
-                .padding(.top, insets.top + 12)
-                // Room under the cover for the hint.
-                .padding(.bottom, insets.bottom + 56)
-                .overlay(alignment: .bottom) {
-                    Label("Swipe to open", systemImage: "chevron.left.2")
-                        .appFont(.small)
-                        .foregroundStyle(.secondary)
-                        .padding(.bottom, insets.bottom + 18)
-                }
-        case .front:
-            paper(title: "Front 9", holes: 1...9, round: round, insets: insets, bottomReserve: bottomReserve, showsHeader: true)
-        case .back:
-            paper(title: "Back 9", holes: 10...18, round: round, insets: insets, bottomReserve: bottomReserve, showsHeader: false)
-        }
-    }
-
-    /// Both interior pages side by side, like an open booklet.
-    private func spread(_ round: Round, insets: EdgeInsets, bottomReserve: CGFloat) -> some View {
-        HStack(spacing: 0) {
-            paper(title: "Front 9", holes: 1...9, round: round, insets: insets, bottomReserve: bottomReserve, showsHeader: true)
-            Rectangle()
-                .fill(Color.black.opacity(spineEmphasis ? 0.35 : 0.14))
-                .frame(width: spineEmphasis ? 2 : 1)
-            paper(title: "Back 9", holes: 10...18, round: round, insets: insets, bottomReserve: bottomReserve, showsHeader: false)
-        }
-        .clippedToHorizontalSafeArea()
-    }
-
-    private func paper(title: String, holes: ClosedRange<Int>, round: Round, insets: EdgeInsets, bottomReserve: CGFloat, showsHeader: Bool) -> some View {
-        PaperPage(
-            // The front names the club; the back says which nine it is.
-            title: showsHeader ? round.courseName : "Back nine",
-            subtitle: showsHeader ? round.date.formatted(date: .abbreviated, time: .omitted) : backSubtitle(round),
-            holes: holes,
-            round: round,
-            activeHole: activeHole,
-            topInset: insets.top,
-            bottomReserve: bottomReserve,
-            // The sidebar button floats over the top corner of an open spread.
-            bannerInset: isSpread ? 56 : 0,
-            opensCourse: showsHeader,
-            paper: appearance.pageColor(for: round),
-            ink: appearance.ink(for: round),
-            tracks: appearance.tracksPuttsAndGreens,
-            onCourseTap: { showCourseDetail = true },
-            onSelect: { activeHole = $0 }
-        )
-    }
-
     // MARK: - Toolbar
 
     @ToolbarContentBuilder
@@ -296,12 +211,6 @@ struct BookletView: View {
         }
     }
 
-    private func turnPage(by offset: Int) {
-        let current = page?.rawValue ?? 0
-        guard let target = BookletPage(rawValue: current + offset) else { return }
-        withAnimation { page = target }
-    }
-
     /// Writes a score (or clears it) for the active hole, then moves the pencil on.
     private func record(_ value: Int?) {
         guard var updated = round else { return }
@@ -338,18 +247,6 @@ struct BookletView: View {
         activeHole = entry.hole
     }
 
-    /// The back page's line under the banner: where the round stands.
-    private func backSubtitle(_ round: Round) -> String {
-        guard round.holesPlayed > 0 else { return round.courseName }
-        var parts = ["Total \(round.totalScore)"]
-        if appearance.tracksPuttsAndGreens {
-            if let putts = round.totalPutts { parts.append("\(putts) putts") }
-            let greens = round.greens()
-            if greens.known > 0 { parts.append("\(greens.hit)/\(greens.known) greens") }
-        }
-        return parts.joined(separator: " · ")
-    }
-
     /// Putts are written before the score and leave the pencil where it is.
     private func recordPutts(_ value: Int?) {
         guard var updated = round else { return }
@@ -381,6 +278,138 @@ struct BookletView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
             withAnimation(.easeIn(duration: 0.4)) { spineEmphasis = false }
         }
+    }
+}
+
+// MARK: - The pages
+
+/// The cover and the two interior pages: one at a time at compact width, side by side as a spread at
+/// regular width. It holds no state of its own, so it is rebuilt only when the round, the active hole
+/// or the layout changes, not when the strip or a sheet does.
+private struct BookletPages: View {
+    let round: Round
+    @Binding var activeHole: Int
+    @Binding var page: BookletPage?
+    @Binding var showCourseDetail: Bool
+    let insets: EdgeInsets
+    let bottomReserve: CGFloat
+    let isSpread: Bool
+    let spineEmphasis: Bool
+
+    @Environment(CardAppearance.self) private var appearance
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if isSpread {
+            spread
+        } else {
+            pager
+        }
+    }
+
+    /// One page at a time. Paging gives the flip between cover and interior pages.
+    private var pager: some View {
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 0) {
+                ForEach(BookletPage.allCases) { bookletPage in
+                    pageContent(bookletPage)
+                        .containerRelativeFrame([.horizontal, .vertical])
+                        .id(bookletPage)
+                        .scrollTransition(axis: .horizontal) { view, phase in
+                            // Reduce Motion keeps the page change but drops the tilt.
+                            view
+                                .rotation3DEffect(
+                                    .degrees(reduceMotion ? 0 : phase.value * -22),
+                                    axis: (x: 0, y: 1, z: 0),
+                                    anchor: .leading,
+                                    perspective: 0.5
+                                )
+                                .opacity(1 - abs(phase.value) * 0.3)
+                        }
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.paging)
+        .scrollPosition(id: $page)
+        .scrollIndicators(.hidden)
+        .clippedToHorizontalSafeArea()
+        .accessibilityAction(named: "Open scorecard") { withAnimation { page = .front } }
+        .accessibilityAction(named: "Next page") { turnPage(by: 1) }
+        .accessibilityAction(named: "Previous page") { turnPage(by: -1) }
+    }
+
+    @ViewBuilder
+    private func pageContent(_ bookletPage: BookletPage) -> some View {
+        switch bookletPage {
+        case .cover:
+            CourseCoverView(round: round, fillsSpace: true)
+                .padding(.horizontal, 12)
+                .padding(.top, insets.top + 12)
+                // Room under the cover for the hint.
+                .padding(.bottom, insets.bottom + 56)
+                .overlay(alignment: .bottom) {
+                    Label("Swipe to open", systemImage: "chevron.left.2")
+                        .appFont(.small)
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, insets.bottom + 18)
+                }
+        case .front:
+            paper(holes: 1...9, showsHeader: true)
+        case .back:
+            paper(holes: 10...18, showsHeader: false)
+        }
+    }
+
+    /// Both interior pages side by side, like an open booklet.
+    private var spread: some View {
+        HStack(spacing: 0) {
+            paper(holes: 1...9, showsHeader: true)
+            Rectangle()
+                .fill(Color.black.opacity(spineEmphasis ? 0.35 : 0.14))
+                .frame(width: spineEmphasis ? 2 : 1)
+            paper(holes: 10...18, showsHeader: false)
+        }
+        .clippedToHorizontalSafeArea()
+    }
+
+    private func paper(holes: ClosedRange<Int>, showsHeader: Bool) -> some View {
+        PaperPage(
+            // The front names the club; the back says which nine it is.
+            title: showsHeader ? round.courseName : "Back nine",
+            subtitle: showsHeader ? round.date.formatted(date: .abbreviated, time: .omitted) : backSubtitle,
+            holes: holes,
+            round: round,
+            activeHole: activeHole,
+            topInset: insets.top,
+            bottomReserve: bottomReserve,
+            // The sidebar button floats over the top corner of an open spread.
+            bannerInset: isSpread ? 56 : 0,
+            opensCourse: showsHeader,
+            paper: appearance.pageColor(for: round),
+            ink: appearance.ink(for: round),
+            tracks: appearance.tracksPuttsAndGreens,
+            onCourseTap: { showCourseDetail = true },
+            onSelect: { activeHole = $0 }
+        )
+    }
+
+    /// The back page's line under the banner: where the round stands.
+    private var backSubtitle: String {
+        guard round.holesPlayed > 0 else { return round.courseName }
+        var parts = ["Total \(round.totalScore)"]
+        if appearance.tracksPuttsAndGreens {
+            if let putts = round.totalPutts { parts.append("\(putts) putts") }
+            let greens = round.greens()
+            if greens.known > 0 { parts.append("\(greens.hit)/\(greens.known) greens") }
+        }
+        return parts.joined(separator: " · ")
+    }
+
+    private func turnPage(by offset: Int) {
+        let current = page?.rawValue ?? 0
+        guard let target = BookletPage(rawValue: current + offset) else { return }
+        withAnimation { page = target }
     }
 }
 

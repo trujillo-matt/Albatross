@@ -19,21 +19,40 @@ struct TournamentDetailView: View {
         authStore.currentProfile?.id == current.creatorUserID
     }
 
+    private var acceptedCount: Int {
+        current.playerPool.filter { $0.inviteStatus == .accepted }.count
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
-                // ── Header card ──────────────────────────────────────────
-                headerCard
+                TournamentHeaderCard(
+                    status: current.status,
+                    formatName: current.matchType.displayName,
+                    dayCount: current.dayCount,
+                    matchCount: current.matchups.isEmpty ? nil : current.matchCount,
+                    pointsToWin: current.pointsToWin,
+                    acceptedPlayers: acceptedCount,
+                    courses: current.courses)
 
-                // ── Status-driven body ───────────────────────────────────
                 switch current.status {
-                case .setup:    setupBody
-                case .draft:    draftBody
-                case .active:   activeBody
-                case .complete: completeBody
+                case .setup:
+                    TournamentSetupSection(
+                        players: current.playerPool,
+                        captainIDs: Set(current.teams.compactMap(\.captainUserID)),
+                        acceptedCount: acceptedCount,
+                        isCommissioner: isCommissioner,
+                        isStartingDraft: isStartingDraft,
+                        onInvite: { showInviteSearch = true },
+                        onStartDraft: startDraft)
+                case .draft:
+                    TournamentDraftLink(tournament: current)
+                case .active:
+                    TournamentActiveSection(tournament: current, me: authStore.currentProfile?.id)
+                case .complete:
+                    TournamentCompleteSection(tournament: current)
                 }
 
-                // ── Error ────────────────────────────────────────────────
                 if let error = errorMessage {
                     Text(error)
                         .appFont(.small)
@@ -89,29 +108,61 @@ struct TournamentDetailView: View {
         }
     }
 
-    // MARK: - Header card
+    private func startDraft() {
+        isStartingDraft = true
+        Task {
+            do {
+                try await tournamentStore.startDraft(tournamentID: current.id)
+                await refreshTournament()
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            isStartingDraft = false
+        }
+    }
 
-    private var headerCard: some View {
+    private func refreshTournament() async {
+        await tournamentStore.loadMyTournaments()
+        liveT = tournamentStore.myTournaments.first(where: { $0.id == tournament.id })
+    }
+}
+
+// MARK: - Sections
+//
+// Each part of the screen is its own view with only the values it draws, so a change to one part
+// (a player accepting, a match going live) does not rebuild the others.
+
+private struct TournamentHeaderCard: View {
+    let status: TournamentStatus
+    let formatName: String
+    let dayCount: Int
+    /// Nil until the matches exist.
+    let matchCount: Int?
+    let pointsToWin: Double
+    let acceptedPlayers: Int
+    let courses: [TournamentCourse]
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                statusBadge(current.status)
+                TournamentStatusBadge(status: status)
                 Spacer()
-                Text(current.matchType.displayName)
+                Text(formatName)
                     .appFont(.small)
                     .foregroundStyle(.secondary)
             }
 
             HStack(spacing: 20) {
-                statItem(label: current.dayCount == 1 ? "Day" : "Days", value: "\(current.dayCount)")
-                statItem(label: "Matches", value: current.matchups.isEmpty ? "—" : "\(current.matchCount)")
-                statItem(label: "Points to Win", value: String(format: "%.1f", current.pointsToWin))
-                statItem(label: "Players", value: "\(current.playerPool.filter { $0.inviteStatus == .accepted }.count)")
+                StatItem(label: dayCount == 1 ? "Day" : "Days", value: "\(dayCount)")
+                StatItem(label: "Matches", value: matchCount.map(String.init) ?? "—")
+                StatItem(label: "Points to Win", value: String(format: "%.1f", pointsToWin))
+                StatItem(label: "Players", value: "\(acceptedPlayers)")
             }
 
-            if !current.courses.isEmpty {
+            if !courses.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        ForEach(current.courses) { course in
+                        ForEach(courses) { course in
                             Text("R\(course.roundNumber): \(course.courseName)")
                                 .appFont(.small)
                                 .foregroundStyle(.secondary)
@@ -132,8 +183,13 @@ struct TournamentDetailView: View {
         .padding(.top, 16)
         .padding(.bottom, 8)
     }
+}
 
-    private func statItem(label: String, value: String) -> some View {
+private struct StatItem: View {
+    let label: String
+    let value: String
+
+    var body: some View {
         VStack(spacing: 2) {
             Text(value)
                 .appFont(.body, weight: .semibold)
@@ -143,36 +199,65 @@ struct TournamentDetailView: View {
                 .foregroundStyle(.secondary)
         }
     }
+}
 
-    private func statusBadge(_ status: TournamentStatus) -> some View {
+private struct TournamentStatusBadge: View {
+    let status: TournamentStatus
+
+    private var color: Color {
+        switch status {
+        case .setup:    .orange
+        case .draft:    .blue
+        case .active:   Color.accentColor
+        case .complete: .secondary
+        }
+    }
+
+    var body: some View {
         HStack(spacing: 5) {
             Circle()
-                .fill(statusColor(status))
+                .fill(color)
                 .frame(width: 8, height: 8)
             Text(status.rawValue.capitalized)
                 .appFont(.small, weight: .medium)
-                .foregroundStyle(statusColor(status))
+                .foregroundStyle(color)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 4)
-        .background(statusColor(status).opacity(0.12))
+        .background(color.opacity(0.12))
         .clipShape(Capsule())
     }
+}
 
-    // MARK: - Setup body
+private struct TournamentSetupSection: View {
+    let players: [TournamentPlayer]
+    let captainIDs: Set<UUID>
+    let acceptedCount: Int
+    let isCommissioner: Bool
+    let isStartingDraft: Bool
+    var onInvite: () -> Void
+    var onStartDraft: () -> Void
 
-    private var setupBody: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionHeader("Player Pool")
+            Text("Player Pool")
+                .appFont(.body, weight: .semibold)
+                .foregroundStyle(.primary)
                 .padding(.horizontal, 20)
                 .padding(.top, 24)
                 .padding(.bottom, 12)
 
-            playerPoolList
+            VStack(spacing: 1) {
+                ForEach(players) { player in
+                    PlayerPoolRow(player: player, isCaptain: captainIDs.contains(player.userID))
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .padding(.horizontal, 16)
 
             if isCommissioner {
                 VStack(spacing: 12) {
-                    Button(action: { showInviteSearch = true }) {
+                    Button(action: onInvite) {
                         Label("Invite players", systemImage: "person.badge.plus")
                             .appFont(.small, weight: .medium)
                             .appButton(fill: Color(.secondarySystemGroupedBackground), foreground: Color.accentColor)
@@ -183,8 +268,7 @@ struct TournamentDetailView: View {
                     }
                     .buttonStyle(.pressFeedback)
 
-                    let acceptedCount = current.playerPool.filter { $0.inviteStatus == .accepted }.count
-                    Button(action: startDraft) {
+                    Button(action: onStartDraft) {
                         Group {
                             if isStartingDraft {
                                 ProgressView()
@@ -211,18 +295,13 @@ struct TournamentDetailView: View {
             }
         }
     }
+}
 
-    private var playerPoolList: some View {
-        VStack(spacing: 1) {
-            ForEach(current.playerPool) { player in
-                playerRow(player)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .padding(.horizontal, 16)
-    }
+private struct PlayerPoolRow: View {
+    let player: TournamentPlayer
+    let isCaptain: Bool
 
-    private func playerRow(_ player: TournamentPlayer) -> some View {
+    var body: some View {
         HStack(spacing: 12) {
             Circle()
                 .fill(Color.accentColor.opacity(0.15))
@@ -235,7 +314,7 @@ struct TournamentDetailView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    if current.isCaptain(player.userID) { CaptainBadge() }
+                    if isCaptain { CaptainBadge() }
                     Text(player.profile?.displayName ?? "Player")
                         .appFont(.small, weight: .medium)
                         .foregroundStyle(.primary)
@@ -249,7 +328,7 @@ struct TournamentDetailView: View {
 
             Spacer()
 
-            inviteStatusBadge(player.inviteStatus)
+            InviteStatusBadge(status: player.inviteStatus)
 
             if player.isAdmin {
                 Image(systemName: "star.fill")
@@ -260,22 +339,36 @@ struct TournamentDetailView: View {
         .appListRowPadding()
         .background(Color(.secondarySystemGroupedBackground))
     }
+}
 
-    private func inviteStatusBadge(_ status: InviteStatus) -> some View {
-        Text(status.rawValue.capitalized)
-            .appFont(.small)
-            .foregroundStyle(inviteStatusColor(status))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(inviteStatusColor(status).opacity(0.12))
-            .clipShape(Capsule())
+private struct InviteStatusBadge: View {
+    let status: InviteStatus
+
+    private var color: Color {
+        switch status {
+        case .pending:  .orange
+        case .accepted: Color.accentColor
+        case .declined: .red
+        }
     }
 
-    // MARK: - Draft body
+    var body: some View {
+        Text(status.rawValue.capitalized)
+            .appFont(.small)
+            .foregroundStyle(color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(color.opacity(0.12))
+            .clipShape(Capsule())
+    }
+}
 
-    private var draftBody: some View {
+private struct TournamentDraftLink: View {
+    let tournament: Tournament
+
+    var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            NavigationLink(destination: TournamentDraftView(tournament: current)) {
+            NavigationLink(destination: TournamentDraftView(tournament: tournament)) {
                 HStack(spacing: 14) {
                     Image(systemName: "person.2.wave.2.fill")
                         .scaledFont(size: 28)
@@ -308,20 +401,23 @@ struct TournamentDetailView: View {
             .padding(.top, 20)
         }
     }
+}
 
-    // MARK: - Active body
+private struct TournamentActiveSection: View {
+    let tournament: Tournament
+    let me: UUID?
 
-    private var activeBody: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if !current.teeTimes.isEmpty {
-                TeeTimeCard(tournament: current, me: authStore.currentProfile?.id)
+            if !tournament.teeTimes.isEmpty {
+                TeeTimeCard(tournament: tournament, me: me)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
             }
 
             // Lineups and captain callouts for each session
-            if current.usesSessions {
-                NavigationLink(destination: TournamentSessionsView(tournamentID: current.id)) {
+            if tournament.usesSessions {
+                NavigationLink(destination: TournamentSessionsView(tournamentID: tournament.id)) {
                     HStack(spacing: 12) {
                         Image(systemName: "megaphone.fill")
                             .foregroundStyle(Color.accentColor)
@@ -329,7 +425,7 @@ struct TournamentDetailView: View {
                             Text("Lineups and callouts")
                                 .appFont(.body, weight: .semibold)
                                 .foregroundStyle(.primary)
-                            Text(current.currentSession.map { "\($0.title), \($0.status.displayName)" } ?? "")
+                            Text(tournament.currentSession.map { "\($0.title), \($0.status.displayName)" } ?? "")
                                 .appFont(.small)
                                 .foregroundStyle(.secondary)
                         }
@@ -348,13 +444,13 @@ struct TournamentDetailView: View {
             }
 
             // The board: team points and every match, each row opening its match
-            TournamentLeaderboard(tournament: current) { matchup in
-                AnyView(TournamentMatchupView(tournament: current, matchup: matchup))
+            TournamentLeaderboard(tournament: tournament) { matchup in
+                AnyView(TournamentMatchupView(tournament: tournament, matchup: matchup))
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)
 
-            NavigationLink(destination: TournamentStandingsView(tournament: current)) {
+            NavigationLink(destination: TournamentStandingsView(tournament: tournament)) {
                 Label("Full standings", systemImage: "chart.bar.fill")
                     .appFont(.small, weight: .medium)
                     .appButton(fill: Color(.secondarySystemGroupedBackground), foreground: Color.accentColor)
@@ -364,8 +460,52 @@ struct TournamentDetailView: View {
             .buttonStyle(.pressFeedback)
         }
     }
+}
 
-    private func standingsSummaryCard(_ standings: TournamentStandings) -> some View {
+private struct TournamentCompleteSection: View {
+    @Environment(TournamentStore.self) private var tournamentStore
+
+    let tournament: Tournament
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if let standings = tournamentStore.standings(for: tournament) {
+                StandingsSummaryCard(standings: standings)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+
+                if let winner = standings.leader {
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 6) {
+                            Image(systemName: "trophy.fill")
+                                .scaledFont(size: 28)
+                                .foregroundStyle(.yellow)
+                            Text("\(winner.name) wins!")
+                                .appFont(.body, weight: .semibold)
+                                .foregroundStyle(.primary)
+                        }
+                        Spacer()
+                    }
+                    .padding(.top, 8)
+                }
+            }
+
+            NavigationLink(destination: TournamentStandingsView(tournament: tournament)) {
+                Label("View full standings", systemImage: "chart.bar.fill")
+                    .appFont(.small, weight: .medium)
+                    .appButton(fill: Color.brandGreen, foreground: .white)
+                    .padding(.horizontal, 16)
+            }
+            .buttonStyle(.pressFeedback)
+        }
+    }
+}
+
+private struct StandingsSummaryCard: View {
+    let standings: TournamentStandings
+
+    var body: some View {
         HStack {
             VStack(spacing: 4) {
                 Text(standings.teamA.name)
@@ -399,130 +539,6 @@ struct TournamentDetailView: View {
         .padding(16)
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    private func matchupRow(_ matchup: TournamentMatchup) -> some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Match \(matchup.matchupNumber)")
-                    .appFont(.small, weight: .semibold)
-                    .foregroundStyle(.primary)
-                Text(matchup.matchType.displayName)
-                    .appFont(.small)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            if matchup.status == .complete {
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(String(format: "%.1f", matchup.pointsTeamA)) – \(String(format: "%.1f", matchup.pointsTeamB))")
-                        .appFont(.small, weight: .semibold)
-                        .foregroundStyle(.primary)
-                    Text("Complete")
-                        .appFont(.small)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
-                matchupStatusBadge(matchup.status)
-            }
-
-            Image(systemName: "chevron.right")
-                .appFont(.small, weight: .semibold)
-                .foregroundStyle(Color(.tertiaryLabel))
-        }
-        .appListRowPadding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
-
-    private func matchupStatusBadge(_ status: MatchupStatus) -> some View {
-        Text(status == .active ? "In Progress" : "Pending")
-            .appFont(.small)
-            .foregroundStyle(status == .active ? Color.accentColor : .orange)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background((status == .active ? Color.brandGreen : Color.orange).opacity(0.12))
-            .clipShape(Capsule())
-    }
-
-    // MARK: - Complete body
-
-    private var completeBody: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if let standings = tournamentStore.standings(for: current) {
-                standingsSummaryCard(standings)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-
-                if let winner = standings.leader {
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 6) {
-                            Image(systemName: "trophy.fill")
-                                .scaledFont(size: 28)
-                                .foregroundStyle(.yellow)
-                            Text("\(winner.name) wins!")
-                                .appFont(.body, weight: .semibold)
-                                .foregroundStyle(.primary)
-                        }
-                        Spacer()
-                    }
-                    .padding(.top, 8)
-                }
-            }
-
-            NavigationLink(destination: TournamentStandingsView(tournament: current)) {
-                Label("View full standings", systemImage: "chart.bar.fill")
-                    .appFont(.small, weight: .medium)
-                    .appButton(fill: Color.brandGreen, foreground: .white)
-                    .padding(.horizontal, 16)
-            }
-            .buttonStyle(.pressFeedback)
-        }
-    }
-
-    // MARK: - Helpers
-
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .appFont(.body, weight: .semibold)
-            .foregroundStyle(.primary)
-    }
-
-    private func statusColor(_ status: TournamentStatus) -> Color {
-        switch status {
-        case .setup:    return .orange
-        case .draft:    return .blue
-        case .active:   return Color.accentColor
-        case .complete: return .secondary
-        }
-    }
-
-    private func inviteStatusColor(_ status: InviteStatus) -> Color {
-        switch status {
-        case .pending:  return .orange
-        case .accepted: return Color.accentColor
-        case .declined: return .red
-        }
-    }
-
-    private func startDraft() {
-        isStartingDraft = true
-        Task {
-            do {
-                try await tournamentStore.startDraft(tournamentID: current.id)
-                await refreshTournament()
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-            isStartingDraft = false
-        }
-    }
-
-    private func refreshTournament() async {
-        await tournamentStore.loadMyTournaments()
-        liveT = tournamentStore.myTournaments.first(where: { $0.id == tournament.id })
     }
 }
 
