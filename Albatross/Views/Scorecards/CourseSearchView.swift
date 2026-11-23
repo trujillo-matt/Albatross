@@ -24,14 +24,14 @@ struct CourseSearchView: View {
                 if !courseStore.searchText.isEmpty {
                     Button(action: { courseStore.searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(Color(.tertiaryLabel))
+                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
                             .accessibilityLabel("Clear Search")
                     }
                     .buttonStyle(.pressFeedback)
                 }
             }
             .appListRowPadding()
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 20)
             .padding(.top, 4)
@@ -45,14 +45,14 @@ struct CourseSearchView: View {
                     } else if courseStore.results.isEmpty {
                         noResults
                     } else {
-                        ForEach(Array(courseStore.results.enumerated()), id: \.element.id) { index, course in
+                        ForEach(courseStore.results.enumerated(), id: \.element.id) { index, course in
                             courseRow(course)
-                                .background(Color(.secondarySystemGroupedBackground))
+                                .background(Color(uiColor: .secondarySystemGroupedBackground))
 
                             if index < courseStore.results.count - 1 {
                                 Divider()
                                     .padding(.leading, 60)
-                                    .background(Color(.secondarySystemGroupedBackground))
+                                    .background(Color(uiColor: .secondarySystemGroupedBackground))
                             }
                         }
                     }
@@ -65,7 +65,7 @@ struct CourseSearchView: View {
                     HStack(spacing: 12) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(Color(.tertiarySystemGroupedBackground))
+                                .fill(Color(uiColor: .tertiarySystemGroupedBackground))
                                 .frame(width: 36, height: 36)
                             Image(systemName: "pencil")
                                 .appFont(.small)
@@ -78,12 +78,12 @@ struct CourseSearchView: View {
 
                         Spacer()
 
-                        Image(systemName: "chevron.right")
+                        Image(systemName: "chevron.forward")
                             .appFont(.small, weight: .semibold)
-                            .foregroundStyle(Color(.tertiaryLabel))
+                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
                     }
                     .appListRowPadding()
-                    .background(Color(.secondarySystemGroupedBackground))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.pressFeedback)
@@ -131,9 +131,9 @@ struct CourseSearchView: View {
                         .foregroundStyle(.tertiary)
                 }
 
-                Image(systemName: "chevron.right")
+                Image(systemName: "chevron.forward")
                     .appFont(.small, weight: .semibold)
-                    .foregroundStyle(Color(.tertiaryLabel))
+                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
             }
             .appListRowPadding()
             .contentShape(Rectangle())
@@ -159,14 +159,14 @@ struct CourseSearchView: View {
                 .padding(.horizontal, 4)
                 .padding(.bottom, 8)
 
-                ForEach(Array(preloaded.enumerated()), id: \.element.id) { index, course in
+                ForEach(preloaded.enumerated(), id: \.element.id) { index, course in
                     courseRow(course)
-                        .background(Color(.secondarySystemGroupedBackground))
+                        .background(Color(uiColor: .secondarySystemGroupedBackground))
 
                     if index < preloaded.count - 1 {
                         Divider()
                             .padding(.leading, 60)
-                            .background(Color(.secondarySystemGroupedBackground))
+                            .background(Color(uiColor: .secondarySystemGroupedBackground))
                     }
                 }
             }
@@ -179,7 +179,7 @@ struct CourseSearchView: View {
     private var noResults: some View {
         VStack(spacing: 10) {
             IconView("map", size: AppSpacing.listIcon)
-                .foregroundStyle(Color(.tertiaryLabel))
+                .foregroundStyle(Color(uiColor: .tertiaryLabel))
             Text("No courses found for \"\(courseStore.searchText)\"")
                 .appFont(.small)
                 .foregroundStyle(.secondary)

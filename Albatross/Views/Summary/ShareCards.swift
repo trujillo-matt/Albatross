@@ -33,7 +33,7 @@ private func toPar(_ round: Round) -> String {
 }
 
 private struct ShareFooter: View {
-    var color: Color = Color(.secondaryLabel)
+    var color: Color = Color(uiColor: .secondaryLabel)
 
     var body: some View {
         HStack(spacing: 6) {
@@ -110,7 +110,7 @@ struct ScorecardShareCard: View {
                 .minimumScaleFactor(0.7)
             Text(round.date.formatted(date: .long, time: .omitted))
                 .appFont(.small)
-                .foregroundStyle(Color(.secondaryLabel))
+                .foregroundStyle(Color(uiColor: .secondaryLabel))
             VStack(spacing: 2) {
                 Rectangle().fill(style.ink).frame(height: 1.5)
                 Rectangle().fill(style.ink.opacity(0.5)).frame(height: 0.5)
@@ -164,7 +164,7 @@ struct ScorecardShareCard: View {
                 }
             }
         }
-        .overlay(Rectangle().strokeBorder(style.ink, lineWidth: 1))
+        .overlay { Rectangle().strokeBorder(style.ink, lineWidth: 1) }
     }
 
     private func total(_ holes: ClosedRange<Int>) -> Int? {
@@ -213,7 +213,7 @@ struct ScorecardShareCard: View {
                     .foregroundStyle(BookletStyle.pencilGraphite)
                 Text(detail)
                     .appFont(.small)
-                    .foregroundStyle(Color(.secondaryLabel))
+                    .foregroundStyle(Color(uiColor: .secondaryLabel))
             }
             Spacer()
         }
@@ -249,7 +249,7 @@ struct ScoreShareCard: View {
                             .scaledToFill()
                             .frame(width: 56, height: 56)
                             .clipShape(Circle())
-                            .overlay(Circle().strokeBorder(Color.black.opacity(0.08), lineWidth: 0.5))
+                            .overlay { Circle().strokeBorder(Color.black.opacity(0.08), lineWidth: 0.5) }
                     }
                     VStack(spacing: 0) {
                         Text("\(round.totalScore)")
@@ -270,7 +270,7 @@ struct ScoreShareCard: View {
                             .multilineTextAlignment(.center)
                         Text(round.date.formatted(date: .long, time: .omitted))
                             .appFont(.small)
-                            .foregroundStyle(Color(.secondaryLabel))
+                            .foregroundStyle(Color(uiColor: .secondaryLabel))
                     }
                     .padding(.horizontal, 32)
                 }
@@ -299,7 +299,7 @@ struct ScoreShareCard: View {
                 .foregroundStyle(.primary)
             Text(label)
                 .appFont(.small)
-                .foregroundStyle(Color(.secondaryLabel))
+                .foregroundStyle(Color(uiColor: .secondaryLabel))
         }
         .frame(maxWidth: .infinity)
     }

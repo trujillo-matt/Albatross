@@ -216,10 +216,10 @@ struct SignInView: View {
         .padding(.vertical, 15)
         .background(Color.white.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
-        )
+        }
     }
 
     // MARK: - Submit

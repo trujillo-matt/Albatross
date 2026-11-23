@@ -53,11 +53,11 @@ struct RoundSummaryView: View {
             .padding(.vertical, 16)
             .readableContentWidth(isWide ? 920 : 520)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Share")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
-        .overlay(savedConfirmationOverlay)
+        .overlay { savedConfirmationOverlay }
         .sheet(isPresented: $showShareSheet) {
             ActivityViewController(activityItems: shareItems)
         }
@@ -158,11 +158,11 @@ struct RoundSummaryView: View {
                         .foregroundStyle(selectedTemplate == template ? Color.accentColor : Color.secondary)
                         .frame(maxWidth: .infinity, minHeight: 64)
                         .background(
-                            selectedTemplate == template ? Color.accentColor.opacity(0.14) : Color(.secondarySystemGroupedBackground),
+                            selectedTemplate == template ? Color.accentColor.opacity(0.14) : Color(uiColor: .secondarySystemGroupedBackground),
                             in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .overlay(
+                        .overlay {
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(selectedTemplate == template ? Color.brandGreen : Color.clear, lineWidth: 1.5))
+                                .strokeBorder(selectedTemplate == template ? Color.brandGreen : Color.clear, lineWidth: 1.5)}
                     }
                     .buttonStyle(.pressFeedback)
                     .accessibilityLabel(template.label)
@@ -200,7 +200,7 @@ struct RoundSummaryView: View {
             }
         }
         .padding(.vertical, 16)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private var toParText: String {
@@ -232,7 +232,7 @@ struct RoundSummaryView: View {
                 Label("Save to Photos", systemImage: "photo.badge.arrow.down")
                     .appFont(.body)
                     .frame(maxWidth: .infinity, minHeight: 52)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .foregroundStyle(.primary)
             }
             .disabled(isRendering)

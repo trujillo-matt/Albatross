@@ -112,7 +112,7 @@ struct TournamentMatchupView: View {
                 Spacer().frame(height: 40)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Match \(current.matchupNumber)")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(isPresented: $showScorecard) {
@@ -132,7 +132,7 @@ struct TournamentMatchupView: View {
                     .appFont(.small, weight: .semibold)
                     .foregroundStyle(.primary)
                 if current.status == .complete {
-                    Text(String(format: "%.1f", current.pointsTeamA))
+                    Text(current.pointsTeamA.formatted(.number.precision(.fractionLength(1))))
                         .font(.title.weight(.semibold))
                         .foregroundStyle(current.pointsTeamA > current.pointsTeamB ? Color.accentColor : .primary)
                 }
@@ -159,7 +159,7 @@ struct TournamentMatchupView: View {
                     .appFont(.small, weight: .semibold)
                     .foregroundStyle(.primary)
                 if current.status == .complete {
-                    Text(String(format: "%.1f", current.pointsTeamB))
+                    Text(current.pointsTeamB.formatted(.number.precision(.fractionLength(1))))
                         .font(.title.weight(.semibold))
                         .foregroundStyle(current.pointsTeamB > current.pointsTeamA ? Color.accentColor : .primary)
                 }
@@ -167,7 +167,7 @@ struct TournamentMatchupView: View {
             .frame(maxWidth: .infinity)
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
@@ -210,7 +210,7 @@ struct TournamentMatchupView: View {
                             .appFont(.body, weight: .medium)
                     }
                 }
-                .appButton(fill: canConfirmPairings ? Color.brandGreen : Color(.systemFill), foreground: canConfirmPairings ? .white : .secondary)
+                .appButton(fill: canConfirmPairings ? Color.brandGreen : Color(uiColor: .systemFill), foreground: canConfirmPairings ? .white : .secondary)
             }
             .buttonStyle(.pressFeedback)
             .disabled(!canConfirmPairings || isSavingPairings)
@@ -241,11 +241,11 @@ struct TournamentMatchupView: View {
                         Circle()
                             .fill(isSelected ? Color.brandGreen : Color.accentColor.opacity(0.15))
                             .frame(width: 32, height: 32)
-                            .overlay(
+                            .overlay {
                                 Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
                                     .appFont(.small, weight: .semibold)
                                     .foregroundStyle(isSelected ? .white : Color.accentColor)
-                            )
+                            }
 
                         if tournament.isCaptain(player.userID) { CaptainBadge() }
                         Text(player.profile?.displayName ?? "Player")
@@ -261,7 +261,7 @@ struct TournamentMatchupView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .background(Color(.secondarySystemGroupedBackground))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.pressFeedback)
@@ -319,11 +319,11 @@ struct TournamentMatchupView: View {
                     Circle()
                         .fill(Color.accentColor.opacity(0.15))
                         .frame(width: 30, height: 30)
-                        .overlay(
+                        .overlay {
                             Text(String((player?.profile?.displayName ?? "?").prefix(1)).uppercased())
                                 .appFont(.small, weight: .semibold)
                                 .foregroundStyle(Color.accentColor)
-                        )
+                        }
                     if tournament.isCaptain(uid) { CaptainBadge() }
                     Text(player?.profile?.displayName ?? "Player")
                         .appFont(.small)
@@ -356,11 +356,13 @@ struct TournamentMatchupView: View {
             let myRound = existingRound()
             if let round = myRound {
                 // Already started — resume
-                NavigationLink(destination: TournamentScorecardWrapperView(
+                NavigationLink {
+                    TournamentScorecardWrapperView(
                     tournament: tournament,
                     matchup: current,
                     existingRound: round
-                )) {
+                )
+                } label: {
                     scoreEntryButton(label: round.status == .completed ? "View Scorecard" : "Resume Scorecard",
                                      icon: round.status == .completed ? "checkmark.circle.fill" : "pencil.circle.fill",
                                      style: .secondary)
@@ -369,11 +371,13 @@ struct TournamentMatchupView: View {
                 .padding(.horizontal, 16)
             } else {
                 // New round
-                NavigationLink(destination: TournamentScorecardWrapperView(
+                NavigationLink {
+                    TournamentScorecardWrapperView(
                     tournament: tournament,
                     matchup: current,
                     existingRound: nil
-                )) {
+                )
+                } label: {
                     scoreEntryButton(label: "Enter Scorecard",
                                      icon: "pencil.circle.fill",
                                      style: .primary)
@@ -402,7 +406,9 @@ struct TournamentMatchupView: View {
                 .appFont(.small)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 20)
-            NavigationLink(destination: GroupScorecardView(tournament: tournament, matchup: current)) {
+            NavigationLink {
+                GroupScorecardView(tournament: tournament, matchup: current)
+            } label: {
                 scoreEntryButton(label: current.scorerUserID == myUserID ? "Open the group scorecard" : "Watch the scorecards",
                                  icon: current.scorerUserID == myUserID ? "pencil.circle.fill" : "eye.fill",
                                  style: current.scorerUserID == myUserID ? .primary : .secondary)
@@ -421,7 +427,7 @@ struct TournamentMatchupView: View {
             } label: {
                 Label("I'll keep score for the group", systemImage: "person.3.fill")
                     .appFont(.small, weight: .medium)
-                    .appButton(fill: Color(.secondarySystemGroupedBackground), foreground: Color.accentColor)
+                    .appButton(fill: Color(uiColor: .secondarySystemGroupedBackground), foreground: Color.accentColor)
             }
             .buttonStyle(.pressFeedback)
             .padding(.horizontal, 16)
@@ -466,11 +472,11 @@ struct TournamentMatchupView: View {
     private func scoreEntryButton(label: String, icon: String, style: ButtonStyle2) -> some View {
         Label(label, systemImage: icon)
             .appFont(.small, weight: .medium)
-            .appButton(fill: style == .primary ? Color.brandGreen : Color(.secondarySystemGroupedBackground), foreground: style == .primary ? .white : Color.accentColor)
-            .overlay(
+            .appButton(fill: style == .primary ? Color.brandGreen : Color(uiColor: .secondarySystemGroupedBackground), foreground: style == .primary ? .white : Color.accentColor)
+            .overlay {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .strokeBorder(style == .primary ? .clear : Color.accentColor.opacity(0.4), lineWidth: 1)
-            )
+            }
     }
 
     // MARK: - Result card
@@ -493,14 +499,14 @@ struct TournamentMatchupView: View {
                     .appFont(.body, weight: .semibold)
                     .foregroundStyle(.primary)
 
-                Text("\(String(format: "%.1f", current.pointsTeamA)) – \(String(format: "%.1f", current.pointsTeamB))")
+                Text("\(current.pointsTeamA.formatted(.number.precision(.fractionLength(1)))) – \(current.pointsTeamB.formatted(.number.precision(.fractionLength(1))))")
                     .appFont(.small)
                     .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity)
         .padding(20)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 

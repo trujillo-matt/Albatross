@@ -74,7 +74,7 @@ struct BookletView: View {
                 : insets.bottom + 12
 
             ZStack(alignment: .bottom) {
-                Color(.systemGroupedBackground)
+                Color(uiColor: .systemGroupedBackground)
 
                 BookletPages(
                     round: round,
@@ -349,7 +349,7 @@ private struct BookletPages: View {
                 // Room under the cover for the hint.
                 .padding(.bottom, insets.bottom + 56)
                 .overlay(alignment: .bottom) {
-                    Label("Swipe to open", systemImage: "chevron.left.2")
+                    Label("Swipe to open", systemImage: "chevron.backward.2")
                         .appFont(.small)
                         .foregroundStyle(.secondary)
                         .padding(.bottom, insets.bottom + 18)
@@ -867,7 +867,7 @@ private struct DownTable: View {
 
                 totals(total: total)
             }
-            .overlay(Rectangle().strokeBorder(ink, lineWidth: 1))
+            .overlay { Rectangle().strokeBorder(ink, lineWidth: 1) }
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
     }
@@ -1070,7 +1070,7 @@ private struct AcrossTable: View {
                 }
             }
         }
-        .overlay(Rectangle().strokeBorder(ink, lineWidth: 1))
+        .overlay { Rectangle().strokeBorder(ink, lineWidth: 1) }
     }
 
     private func cellText(_ text: String) -> some View {
@@ -1181,7 +1181,7 @@ struct ScoreMark: View {
             } else {
                 Image(systemName: "plus")
                     .font(.system(size: side * 0.32, weight: .medium))
-                    .foregroundStyle(isActive ? accent : Color(.tertiaryLabel))
+                    .foregroundStyle(isActive ? accent : Color(uiColor: .tertiaryLabel))
             }
         }
         .frame(width: side, height: side)

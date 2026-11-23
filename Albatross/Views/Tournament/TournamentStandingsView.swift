@@ -54,7 +54,7 @@ struct TournamentStandingsView: View {
                 Spacer().frame(height: 40)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Standings")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showShareSheet) {
@@ -80,7 +80,7 @@ struct TournamentStandingsView: View {
                     Text(s.teamA.name)
                         .appFont(.body, weight: .semibold)
                         .foregroundStyle(.primary)
-                    Text(String(format: "%.1f", s.pointsTeamA))
+                    Text(s.pointsTeamA.formatted(.number.precision(.fractionLength(1))))
                         .scaledFont(size: 48, weight: .semibold)
                         .foregroundStyle(s.leader?.id == s.teamA.id ? Color.accentColor : .primary)
                 }
@@ -90,7 +90,7 @@ struct TournamentStandingsView: View {
                     Text("vs")
                         .appFont(.body)
                         .foregroundStyle(.secondary)
-                    Text("first to \(String(format: "%.1f", s.pointsToWin))")
+                    Text("first to \(s.pointsToWin.formatted(.number.precision(.fractionLength(1))))")
                         .appFont(.small)
                         .foregroundStyle(.tertiary)
                 }
@@ -99,7 +99,7 @@ struct TournamentStandingsView: View {
                     Text(s.teamB.name)
                         .appFont(.body, weight: .semibold)
                         .foregroundStyle(.primary)
-                    Text(String(format: "%.1f", s.pointsTeamB))
+                    Text(s.pointsTeamB.formatted(.number.precision(.fractionLength(1))))
                         .scaledFont(size: 48, weight: .semibold)
                         .foregroundStyle(s.leader?.id == s.teamB.id ? Color.accentColor : .primary)
                 }
@@ -120,12 +120,12 @@ struct TournamentStandingsView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.vertical, 10)
-                .background(Color(.tertiarySystemFill))
+                .background(Color(uiColor: .tertiarySystemFill))
                 .clipShape(Capsule())
             }
         }
         .padding(20)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
@@ -133,7 +133,7 @@ struct TournamentStandingsView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color(.systemFill))
+                    .fill(Color(uiColor: .systemFill))
                     .frame(height: 12)
 
                 let totalPoints = s.pointsTeamA + s.pointsTeamB
@@ -200,13 +200,13 @@ struct TournamentStandingsView: View {
             }
         }
         .appListRowPadding()
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private func resultScore(name: String, points: Double, isWinner: Bool) -> some View {
         VStack(spacing: 2) {
-            Text(String(format: "%.1f", points))
+            Text(points.formatted(.number.precision(.fractionLength(1))))
                 .appFont(.body, weight: .semibold)
                 .foregroundStyle(isWinner ? Color.accentColor : .primary)
             Text(name)
@@ -291,7 +291,7 @@ private struct StandingsShareCard: View {
                         Text(standings.teamA.name)
                             .appFont(.body, weight: .semibold)
                             .foregroundStyle(.primary)
-                        Text(String(format: "%.1f", standings.pointsTeamA))
+                        Text(standings.pointsTeamA.formatted(.number.precision(.fractionLength(1))))
                             .scaledFont(size: 72, weight: .semibold)
                             .foregroundStyle(standings.leader?.id == standings.teamA.id ? brandGreen : Color(white: 0.3))
                     }
@@ -305,7 +305,7 @@ private struct StandingsShareCard: View {
                         Text(standings.teamB.name)
                             .appFont(.body, weight: .semibold)
                             .foregroundStyle(.primary)
-                        Text(String(format: "%.1f", standings.pointsTeamB))
+                        Text(standings.pointsTeamB.formatted(.number.precision(.fractionLength(1))))
                             .scaledFont(size: 72, weight: .semibold)
                             .foregroundStyle(standings.leader?.id == standings.teamB.id ? brandGreen : Color(white: 0.3))
                     }
@@ -314,7 +314,7 @@ private struct StandingsShareCard: View {
                 .padding(.horizontal, 24)
 
                 // Points to win
-                Text("First to \(String(format: "%.1f", standings.pointsToWin)) wins")
+                Text("First to \(standings.pointsToWin.formatted(.number.precision(.fractionLength(1)))) wins")
                     .appFont(.small)
                     .foregroundStyle(Color(white: 0.5))
                     .padding(.top, 12)
@@ -332,7 +332,7 @@ private struct StandingsShareCard: View {
                                 .foregroundStyle(Color(white: 0.5))
                             Spacer()
                             if m.status == .complete {
-                                Text("\(tAName) \(String(format: "%.1f", m.pointsTeamA)) – \(String(format: "%.1f", m.pointsTeamB)) \(tBName)")
+                                Text("\(tAName) \(m.pointsTeamA.formatted(.number.precision(.fractionLength(1)))) – \(m.pointsTeamB.formatted(.number.precision(.fractionLength(1)))) \(tBName)")
                                     .appFont(.small, weight: .medium)
                                     .foregroundStyle(Color(white: 0.3))
                             } else {

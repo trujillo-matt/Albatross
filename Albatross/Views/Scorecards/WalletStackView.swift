@@ -33,7 +33,7 @@ struct WalletStackView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            ForEach(Array(rounds.enumerated()), id: \.element.id) { index, round in
+            ForEach(rounds.enumerated(), id: \.element.id) { index, round in
                 card(round, index: index)
             }
 
@@ -166,9 +166,9 @@ private struct DetailsPanel: View {
                 Button(role: .destructive, action: onDelete) {
                     Label("Delete", systemImage: "trash")
                         .appFont(.small, weight: .medium)
-                        .foregroundStyle(Color(.systemRed))
+                        .foregroundStyle(Color(uiColor: .systemRed))
                         .frame(maxWidth: .infinity, minHeight: 44)
-                        .background(Color(.systemRed).opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .background(Color(uiColor: .systemRed).opacity(0.12), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.pressFeedback)
@@ -176,7 +176,7 @@ private struct DetailsPanel: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func row(_ title: String, value: String) -> some View {

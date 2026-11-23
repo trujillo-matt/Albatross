@@ -48,7 +48,7 @@ struct HeadToHeadView: View {
 
     var body: some View {
         ZStack {
-            Color(.systemGroupedBackground).ignoresSafeArea()
+            Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: 28) {
@@ -94,7 +94,7 @@ struct HeadToHeadView: View {
             // VS badge
             ZStack {
                 Circle()
-                    .fill(Color(.systemGroupedBackground))
+                    .fill(Color(uiColor: .systemGroupedBackground))
                     .frame(width: 44, height: 44)
                     .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
                 Text("VS")
@@ -178,8 +178,8 @@ struct HeadToHeadView: View {
             Divider().padding(.leading, 16)
             statRow(
                 label: "Avg Score",
-                myValue:    myAvg.map    { String(format: "%.1f", $0) } ?? "—",
-                theirValue: theirAvg.map { String(format: "%.1f", $0) } ?? "—",
+                myValue:    myAvg.map    { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
+                theirValue: theirAvg.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
                 myWins:     myAvg != nil && theirAvg != nil && myAvg! < theirAvg!,
                 theirWins:  myAvg != nil && theirAvg != nil && theirAvg! < myAvg!,
                 isFirst: false
@@ -187,16 +187,16 @@ struct HeadToHeadView: View {
             Divider().padding(.leading, 16)
             statRow(
                 label: "Handicap",
-                myValue:    myHcp.map    { String(format: "%.1f", $0) } ?? "—",
-                theirValue: theirHcp.map { String(format: "%.1f", $0) } ?? "—",
+                myValue:    myHcp.map    { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
+                theirValue: theirHcp.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
                 myWins:     myHcp != nil && theirHcp != nil && myHcp! < theirHcp!,
                 theirWins:  myHcp != nil && theirHcp != nil && theirHcp! < myHcp!,
                 isFirst: false
             )
         }
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(uiColor: .separator).opacity(0.4), lineWidth: 0.5) }
     }
 
     private func statRow(label: String, myValue: String, theirValue: String,
@@ -269,16 +269,16 @@ struct HeadToHeadView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
-                .background(Color(.tertiarySystemGroupedBackground))
+                .background(Color(uiColor: .tertiarySystemGroupedBackground))
 
                 ForEach(sharedCourses) { course in
                     Divider()
                     sharedCourseRow(course)
                 }
             }
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+            .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(uiColor: .separator).opacity(0.4), lineWidth: 0.5) }
         }
     }
 
@@ -340,9 +340,9 @@ struct HeadToHeadView: View {
         }
         .padding(32)
         .frame(maxWidth: .infinity)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(uiColor: .separator).opacity(0.4), lineWidth: 0.5) }
     }
 
     // MARK: - Helpers

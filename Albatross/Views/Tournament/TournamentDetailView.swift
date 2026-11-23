@@ -64,7 +64,7 @@ struct TournamentDetailView: View {
                 Spacer().frame(height: 40)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle(current.name)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
@@ -155,12 +155,12 @@ private struct TournamentHeaderCard: View {
             HStack(spacing: 20) {
                 StatItem(label: dayCount == 1 ? "Day" : "Days", value: "\(dayCount)")
                 StatItem(label: "Matches", value: matchCount.map(String.init) ?? "—")
-                StatItem(label: "Points to Win", value: String(format: "%.1f", pointsToWin))
+                StatItem(label: "Points to Win", value: pointsToWin.formatted(.number.precision(.fractionLength(1))))
                 StatItem(label: "Players", value: "\(acceptedPlayers)")
             }
 
             if !courses.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
+                ScrollView(.horizontal) {
                     HStack(spacing: 8) {
                         ForEach(courses) { course in
                             Text("R\(course.roundNumber): \(course.courseName)")
@@ -168,16 +168,17 @@ private struct TournamentHeaderCard: View {
                                 .foregroundStyle(.secondary)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
-                                .background(Color(.tertiarySystemFill))
+                                .background(Color(uiColor: .tertiarySystemFill))
                                 .clipShape(Capsule())
                         }
                     }
                 }
+                .scrollIndicators(.hidden)
                 .clippedToHorizontalSafeArea()
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.horizontal, 16)
         .padding(.top, 16)
@@ -260,11 +261,11 @@ private struct TournamentSetupSection: View {
                     Button(action: onInvite) {
                         Label("Invite players", systemImage: "person.badge.plus")
                             .appFont(.small, weight: .medium)
-                            .appButton(fill: Color(.secondarySystemGroupedBackground), foreground: Color.accentColor)
-                            .overlay(
+                            .appButton(fill: Color(uiColor: .secondarySystemGroupedBackground), foreground: Color.accentColor)
+                            .overlay {
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .strokeBorder(Color.accentColor.opacity(0.4), lineWidth: 1)
-                            )
+                            }
                     }
                     .buttonStyle(.pressFeedback)
 
@@ -278,7 +279,7 @@ private struct TournamentSetupSection: View {
                                     .appFont(.body, weight: .medium)
                             }
                         }
-                        .appButton(fill: acceptedCount >= 2 ? Color.brandGreen : Color(.systemFill), foreground: acceptedCount >= 2 ? .white : .secondary)
+                        .appButton(fill: acceptedCount >= 2 ? Color.brandGreen : Color(uiColor: .systemFill), foreground: acceptedCount >= 2 ? .white : .secondary)
                     }
                     .buttonStyle(.pressFeedback)
                     .disabled(acceptedCount < 2 || isStartingDraft)
@@ -306,11 +307,11 @@ private struct PlayerPoolRow: View {
             Circle()
                 .fill(Color.accentColor.opacity(0.15))
                 .frame(width: 36, height: 36)
-                .overlay(
+                .overlay {
                     Text(String((player.profile?.displayName ?? "?").prefix(1)).uppercased())
                         .appFont(.small, weight: .semibold)
                         .foregroundStyle(Color.accentColor)
-                )
+                }
 
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
@@ -337,7 +338,7 @@ private struct PlayerPoolRow: View {
             }
         }
         .appListRowPadding()
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
     }
 }
 
@@ -368,7 +369,9 @@ private struct TournamentDraftLink: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            NavigationLink(destination: TournamentDraftView(tournament: tournament)) {
+            NavigationLink {
+                TournamentDraftView(tournament: tournament)
+            } label: {
                 HStack(spacing: 14) {
                     Image(systemName: "person.2.wave.2.fill")
                         .scaledFont(size: 28)
@@ -388,12 +391,12 @@ private struct TournamentDraftLink: View {
 
                     Spacer()
 
-                    Image(systemName: "chevron.right")
+                    Image(systemName: "chevron.forward")
                         .appFont(.small, weight: .semibold)
-                        .foregroundStyle(Color(.tertiaryLabel))
+                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
                 }
                 .padding(16)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(Color(uiColor: .secondarySystemGroupedBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(.pressFeedback)
@@ -417,7 +420,9 @@ private struct TournamentActiveSection: View {
 
             // Lineups and captain callouts for each session
             if tournament.usesSessions {
-                NavigationLink(destination: TournamentSessionsView(tournamentID: tournament.id)) {
+                NavigationLink {
+                    TournamentSessionsView(tournamentID: tournament.id)
+                } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "megaphone.fill")
                             .foregroundStyle(Color.accentColor)
@@ -430,12 +435,12 @@ private struct TournamentActiveSection: View {
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Image(systemName: "chevron.right")
+                        Image(systemName: "chevron.forward")
                             .appFont(.small, weight: .semibold)
-                            .foregroundStyle(Color(.tertiaryLabel))
+                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
                     }
                     .padding(16)
-                    .background(Color(.secondarySystemGroupedBackground))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
@@ -450,10 +455,12 @@ private struct TournamentActiveSection: View {
             .padding(.horizontal, 16)
             .padding(.top, 16)
 
-            NavigationLink(destination: TournamentStandingsView(tournament: tournament)) {
+            NavigationLink {
+                TournamentStandingsView(tournament: tournament)
+            } label: {
                 Label("Full standings", systemImage: "chart.bar.fill")
                     .appFont(.small, weight: .medium)
-                    .appButton(fill: Color(.secondarySystemGroupedBackground), foreground: Color.accentColor)
+                    .appButton(fill: Color(uiColor: .secondarySystemGroupedBackground), foreground: Color.accentColor)
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
             }
@@ -491,7 +498,9 @@ private struct TournamentCompleteSection: View {
                 }
             }
 
-            NavigationLink(destination: TournamentStandingsView(tournament: tournament)) {
+            NavigationLink {
+                TournamentStandingsView(tournament: tournament)
+            } label: {
                 Label("View full standings", systemImage: "chart.bar.fill")
                     .appFont(.small, weight: .medium)
                     .appButton(fill: Color.brandGreen, foreground: .white)
@@ -511,7 +520,7 @@ private struct StandingsSummaryCard: View {
                 Text(standings.teamA.name)
                     .appFont(.small, weight: .medium)
                     .foregroundStyle(.primary)
-                Text(String(format: "%.1f", standings.pointsTeamA))
+                Text(standings.pointsTeamA.formatted(.number.precision(.fractionLength(1))))
                     .font(.largeTitle.weight(.semibold))
                     .foregroundStyle(standings.leader?.id == standings.teamA.id ? Color.accentColor : .primary)
             }
@@ -521,7 +530,7 @@ private struct StandingsSummaryCard: View {
                 Text("vs")
                     .appFont(.small)
                     .foregroundStyle(.secondary)
-                Text("to \(String(format: "%.1f", standings.pointsToWin))")
+                Text("to \(standings.pointsToWin.formatted(.number.precision(.fractionLength(1))))")
                     .appFont(.small)
                     .foregroundStyle(.tertiary)
             }
@@ -530,14 +539,14 @@ private struct StandingsSummaryCard: View {
                 Text(standings.teamB.name)
                     .appFont(.small, weight: .medium)
                     .foregroundStyle(.primary)
-                Text(String(format: "%.1f", standings.pointsTeamB))
+                Text(standings.pointsTeamB.formatted(.number.precision(.fractionLength(1))))
                     .font(.largeTitle.weight(.semibold))
                     .foregroundStyle(standings.leader?.id == standings.teamB.id ? Color.accentColor : .primary)
             }
             .frame(maxWidth: .infinity)
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
@@ -589,7 +598,7 @@ private struct InvitePlayersSheet: View {
                     }
                 }
                 .padding(12)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(Color(uiColor: .secondarySystemGroupedBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
@@ -633,7 +642,7 @@ private struct InvitePlayersSheet: View {
                     .listStyle(.plain)
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Invite players")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -751,7 +760,7 @@ struct TeeTimeCard: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 }

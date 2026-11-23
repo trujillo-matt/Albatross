@@ -22,7 +22,7 @@ private struct HorizontalSafeAreaClip: ViewModifier {
     func body(content: Content) -> some View {
         // A mask is laid out inside the safe area even when the scroll view draws beyond it,
         // so a plain rectangle is exactly the safe area on every side.
-        content.mask(Rectangle().ignoresSafeArea(.container, edges: .vertical))
+        content.mask { Rectangle().ignoresSafeArea(.container, edges: .vertical) }
     }
 }
 

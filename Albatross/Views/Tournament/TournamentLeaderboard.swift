@@ -96,7 +96,9 @@ struct TournamentLeaderboard: View {
             dayBand(day)
             ForEach(day.matchups) { matchup in
                 if let rowDestination {
-                    NavigationLink(destination: rowDestination(matchup)) {
+                    NavigationLink {
+                        rowDestination(matchup)
+                    } label: {
                         row(matchup)
                     }
                     .buttonStyle(.pressFeedback)
@@ -235,7 +237,7 @@ struct TournamentLeaderboard: View {
     private func sideCell(names: [BoardName], edgeText: String, fill: Color?, isLeading: Bool) -> some View {
         let nameSize: AppTextSize = isWide ? .body : .small
         let nameStack = VStack(alignment: isLeading ? .trailing : .leading, spacing: 0) {
-            ForEach(names, id: \.text) { name in
+            ForEach(names) { name in
                 HStack(spacing: 4) {
                     if name.isCaptain { CaptainBadge(size: 14) }
                     Text(name.text)
@@ -264,7 +266,7 @@ struct TournamentLeaderboard: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(fill ?? Color(.secondarySystemGroupedBackground))
+        .background(fill ?? Color(uiColor: .secondarySystemGroupedBackground))
     }
 
     private func statusCell(_ matchup: TournamentMatchup, live: LiveMatchStatus?) -> some View {
@@ -321,7 +323,8 @@ struct TournamentLeaderboard: View {
         matchType == .matchPlay ? "\(lead) UP" : "−\(lead)"
     }
 
-    private struct BoardName {
+    private struct BoardName: Identifiable {
+        let id: UUID
         let text: String
         let isCaptain: Bool
     }
@@ -329,7 +332,7 @@ struct TournamentLeaderboard: View {
     private func names(for playerIDs: [UUID]) -> [BoardName] {
         playerIDs.map { id in
             let profile = tournament.playerPool.first { $0.userID == id }?.profile
-            return BoardName(text: Self.boardName(profile?.displayName ?? "Player"),
+            return BoardName(id: id, text: Self.boardName(profile?.displayName ?? "Player"),
                              isCaptain: tournament.isCaptain(id))
         }
     }

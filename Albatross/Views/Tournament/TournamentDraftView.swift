@@ -131,7 +131,7 @@ struct TournamentDraftView: View {
                 Spacer().frame(height: 40)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Vote and draft")
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -305,11 +305,11 @@ private struct PlayerInitial: View {
         Circle()
             .fill(fill)
             .frame(width: size, height: size)
-            .overlay(
+            .overlay {
                 Text(String((name ?? "?").prefix(1)).uppercased())
                     .appFont(.small, weight: .semibold)
                     .foregroundStyle(textColor)
-            )
+            }
     }
 }
 
@@ -375,7 +375,7 @@ private struct CaptainVotePhase: View {
                                 .appFont(.body, weight: .medium)
                         }
                     }
-                    .appButton(fill: selected.count == 2 ? Color.brandGreen : Color(.systemFill), foreground: selected.count == 2 ? .white : .secondary)
+                    .appButton(fill: selected.count == 2 ? Color.brandGreen : Color(uiColor: .systemFill), foreground: selected.count == 2 ? .white : .secondary)
                 }
                 .buttonStyle(.pressFeedback)
                 .disabled(selected.count < 2 || isSubmittingVote)
@@ -464,7 +464,7 @@ private struct NomineeRow: View {
                 }
             }
             .appListRowPadding()
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
         }
         .buttonStyle(.pressFeedback)
         .disabled(isLocked)
@@ -586,7 +586,7 @@ private struct PickRow: View {
                     .foregroundStyle(Color.accentColor)
             }
             .appListRowPadding()
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
         }
         .buttonStyle(.pressFeedback)
     }
@@ -607,10 +607,10 @@ private struct DraftTeamColumn: View {
                     Circle()
                         .fill(Color.brandGreen)
                         .frame(width: 8, height: 8)
-                        .overlay(
+                        .overlay {
                             Circle()
                                 .stroke(Color.accentColor.opacity(0.4), lineWidth: 3)
-                        )
+                        }
                 }
             }
 
@@ -639,13 +639,13 @@ private struct DraftTeamColumn: View {
         .background(
             isOnClock
                 ? Color.accentColor.opacity(0.06)
-                : Color(.secondarySystemGroupedBackground)
+                : Color(uiColor: .secondarySystemGroupedBackground)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .strokeBorder(isOnClock ? Color.accentColor.opacity(0.4) : Color(.separator).opacity(0.3), lineWidth: isOnClock ? 1.5 : 0.5)
-        )
+                .strokeBorder(isOnClock ? Color.accentColor.opacity(0.4) : Color(uiColor: .separator).opacity(0.3), lineWidth: isOnClock ? 1.5 : 0.5)
+        }
     }
 }
 
@@ -670,7 +670,7 @@ private struct OverridePickRow: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 

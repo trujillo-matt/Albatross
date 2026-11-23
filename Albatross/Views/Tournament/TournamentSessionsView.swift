@@ -40,7 +40,7 @@ struct TournamentSessionsView: View {
                 .padding(16)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Lineups and callouts")
         .navigationBarTitleDisplayMode(.inline)
         // While callouts are open, a captain checks in every few seconds. A pick only goes live with both here.
@@ -167,7 +167,7 @@ struct TournamentSessionsView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(10)
-                .background(Color(.tertiarySystemGroupedBackground))
+                .background(Color(uiColor: .tertiarySystemGroupedBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
 
@@ -202,7 +202,7 @@ struct TournamentSessionsView: View {
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
@@ -268,7 +268,7 @@ struct TournamentSessionsView: View {
                             .appFont(.body)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 8)
-                            .background(pickedPlayer == id ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemGroupedBackground))
+                            .background(pickedPlayer == id ? Color.accentColor.opacity(0.25) : Color(uiColor: .tertiarySystemGroupedBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     .buttonStyle(.plain)
@@ -285,7 +285,7 @@ struct TournamentSessionsView: View {
                     .appFont(.body)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
-                    .background(selected ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemGroupedBackground))
+                    .background(selected ? Color.accentColor.opacity(0.25) : Color(uiColor: .tertiarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
             .buttonStyle(.plain)
@@ -324,7 +324,7 @@ struct TournamentSessionsView: View {
                                 .appFont(.body)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 8)
-                                .background(pickedPlayer == player.userID ? Color.accentColor.opacity(0.25) : Color(.tertiarySystemGroupedBackground))
+                                .background(pickedPlayer == player.userID ? Color.accentColor.opacity(0.25) : Color(uiColor: .tertiarySystemGroupedBackground))
                                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
                         .buttonStyle(.plain)

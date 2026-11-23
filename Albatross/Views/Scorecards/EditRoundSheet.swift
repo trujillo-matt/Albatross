@@ -40,23 +40,23 @@ struct EditRoundSheet: View {
                                     Circle()
                                         .fill(Color.accentColor.opacity(0.12))
                                         .frame(width: 80, height: 80)
-                                        .overlay(
+                                        .overlay {
                                             Image("black-browed-albatross")
                                                 .resizable()
                                                 .scaledToFit()
                                                 .frame(width: 44, height: 44)
                                                 .opacity(0.7)
-                                        )
+                                        }
                                 }
 
                                 Circle()
-                                    .fill(Color(.secondarySystemGroupedBackground))
+                                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
                                     .frame(width: 26, height: 26)
-                                    .overlay(
+                                    .overlay {
                                         Image(systemName: "camera.fill")
                                             .appFont(.small, weight: .medium)
                                             .foregroundStyle(Color.accentColor)
-                                    )
+                                    }
                                     .offset(x: 4, y: 4)
                             }
                         }

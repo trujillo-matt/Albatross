@@ -22,7 +22,7 @@ struct StatsView: View {
                 .padding(16)
                 .readableContentWidth(920)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Stats")
         }
     }
@@ -69,14 +69,14 @@ struct StatsView: View {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 16, alignment: .leading)], spacing: 16) {
                 figure(
                     "Handicap index",
-                    stats.handicap.map { String(format: "%.1f", $0) } ?? "—",
+                    stats.handicap.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
                     note: stats.handicap == nil ? "Needs 3 rounds" : nil)
                 figure(
                     "Average",
-                    stats.averageScore.map { String(format: "%.1f", $0) } ?? "—",
+                    stats.averageScore.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—",
                     note: stats.recentChange.map { change in
                         let sign = change < 0 ? "−" : "+"
-                        return "\(sign)\(String(format: "%.1f", abs(change))) vs previous 5"
+                        return "\(sign)\(abs(change).formatted(.number.precision(.fractionLength(1)))) vs previous 5"
                     },
                     noteColor: (stats.recentChange ?? 0) <= 0 ? .accentColor : .secondary)
                 figure(
@@ -117,7 +117,7 @@ struct StatsView: View {
         let high = (scores.max() ?? 100) + 4
         return DashboardCard(title: "Score by round", subtitle: "Last \(recent.count) rounds, oldest to newest") {
             Chart {
-                ForEach(Array(recent.enumerated()), id: \.offset) { index, round in
+                ForEach(recent.enumerated(), id: \.element.id) { index, round in
                     LineMark(x: .value("Round", index + 1), y: .value("Score", round.totalScore))
                         .interpolationMethod(.monotone)
                         .foregroundStyle(Color.accentColor)
@@ -130,7 +130,7 @@ struct StatsView: View {
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                         .foregroundStyle(.secondary)
                         .annotation(position: .top, alignment: .trailing) {
-                            Text("Average \(String(format: "%.1f", average))")
+                            Text("Average \(average.formatted(.number.precision(.fractionLength(1))))")
                                 .appFont(.small)
                                 .foregroundStyle(.secondary)
                         }
@@ -141,13 +141,13 @@ struct StatsView: View {
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 5)) { _ in
                     AxisGridLine().foregroundStyle(Color.primary.opacity(0.08))
-                    AxisValueLabel().font(.system(size: 14)).foregroundStyle(Color(.secondaryLabel))
+                    AxisValueLabel().font(.system(size: 14)).foregroundStyle(Color(uiColor: .secondaryLabel))
                 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading) { _ in
                     AxisGridLine().foregroundStyle(Color.primary.opacity(0.08))
-                    AxisValueLabel().font(.system(size: 14)).foregroundStyle(Color(.secondaryLabel))
+                    AxisValueLabel().font(.system(size: 14)).foregroundStyle(Color(uiColor: .secondaryLabel))
                 }
             }
             .frame(height: 200)
@@ -220,7 +220,7 @@ struct StatsView: View {
                             Text("Par \(row.par)")
                                 .appFont(.small)
                             Spacer()
-                            Text(String(format: "%+.2f", row.average))
+                            Text(row.average.formatted(.number.precision(.fractionLength(2)).sign(strategy: .always())))
                                 .appFont(.small, weight: .medium, monospacedDigit: true)
                         }
                         GeometryReader { proxy in
@@ -247,8 +247,8 @@ struct StatsView: View {
         DashboardCard(title: "Putting and greens", subtitle: "Rounds with putts recorded") {
             if stats.hasPuttingData {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), spacing: 12, alignment: .leading)], spacing: 12) {
-                    figure("Putts a round", stats.averagePuttsPerRound.map { String(format: "%.1f", $0) } ?? "—", large: false)
-                    figure("Putts a hole", stats.averagePuttsPerHole.map { String(format: "%.2f", $0) } ?? "—", large: false)
+                    figure("Putts a round", stats.averagePuttsPerRound.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—", large: false)
+                    figure("Putts a hole", stats.averagePuttsPerHole.map { $0.formatted(.number.precision(.fractionLength(2))) } ?? "—", large: false)
                     figure("Greens", stats.greenInRegulationRate.map { "\(Int(($0 * 100).rounded()))%" } ?? "—", large: false)
                 }
             } else {
@@ -292,7 +292,7 @@ struct StatsView: View {
                                 .appFont(.small, weight: .medium, monospacedDigit: true)
                         }
                         HStack {
-                            Text("\(course.rounds) \(course.rounds == 1 ? "round" : "rounds") · average \(String(format: "%.1f", course.average))")
+                            Text("\(course.rounds) \(course.rounds == 1 ? "round" : "rounds") · average \(course.average.formatted(.number.precision(.fractionLength(1))))")
                                 .appFont(.small)
                                 .foregroundStyle(.secondary)
                             Spacer()
@@ -339,7 +339,7 @@ struct DashboardCard<Content: View>: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
 

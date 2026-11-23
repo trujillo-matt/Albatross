@@ -42,7 +42,7 @@ struct ScoreInputView: View {
                             .foregroundStyle(.secondary)
 
                         Circle()
-                            .fill(Color(.separator))
+                            .fill(Color(uiColor: .separator))
                             .frame(width: 4, height: 4)
 
                         Text("Par \(par)")
@@ -63,7 +63,7 @@ struct ScoreInputView: View {
                             Button { clearScore() } label: {
                                 Image(systemName: "xmark.circle.fill")
                                     .scaledFont(size: 22)
-                                    .foregroundStyle(Color(.tertiaryLabel))
+                                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
                                     .accessibilityLabel("Clear Score")
                             }
                             .offset(y: 12)
@@ -73,7 +73,7 @@ struct ScoreInputView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, 28)
                 .padding(.bottom, 24)
-                .background(Color(.systemGroupedBackground))
+                .background(Color(uiColor: .systemGroupedBackground))
                 // Tap header area to save
                 .contentShape(Rectangle())
                 .onTapGesture { commit() }
@@ -82,7 +82,7 @@ struct ScoreInputView: View {
 
                 // Number pad
                 NumberPadView(inputText: $inputText, par: par, onCommit: commit)
-                    .background(Color(.systemGroupedBackground))
+                    .background(Color(uiColor: .systemGroupedBackground))
             }
             }
             .navigationTitle("")
@@ -255,8 +255,8 @@ private struct KeyButtonStyle: ButtonStyle {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(
                     hasTint
-                        ? (color ?? Color(.secondarySystemGroupedBackground)).opacity(configuration.isPressed ? 0.5 : 0.18)
-                        : Color(.secondarySystemGroupedBackground).opacity(configuration.isPressed ? 0.5 : 1)
+                        ? (color ?? Color(uiColor: .secondarySystemGroupedBackground)).opacity(configuration.isPressed ? 0.5 : 0.18)
+                        : Color(uiColor: .secondarySystemGroupedBackground).opacity(configuration.isPressed ? 0.5 : 1)
                 )
                 .shadow(color: .black.opacity(0.06), radius: 1, y: 1)
 

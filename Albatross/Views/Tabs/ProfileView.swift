@@ -38,7 +38,7 @@ struct ProfileView: View {
                         Button(role: .destructive) { showSignOutConfirm = true } label: {
                             Text("Sign out")
                                 .appFont(.body)
-                                .foregroundStyle(Color(.systemRed))
+                                .foregroundStyle(Color(uiColor: .systemRed))
                                 .frame(maxWidth: .infinity, minHeight: 44)
                                 .contentShape(Rectangle())
                         }
@@ -58,7 +58,7 @@ struct ProfileView: View {
                 .padding(.vertical, 16)
                 .readableContentWidth()
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Profile")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -145,7 +145,7 @@ struct ProfileView: View {
                 }
                 Spacer(minLength: 8)
                 VStack(alignment: .trailing, spacing: 0) {
-                    Text(handicapIndex.map { String(format: "%.1f", $0) } ?? "—")
+                    Text(handicapIndex.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—")
                         .font(.custom(BookletStyle.pencilFontName, size: 44))
                         .foregroundStyle(BookletStyle.pencilGraphite)
                     Text(handicapIndex == nil ? "Needs 3 rounds" : "Handicap index")
@@ -187,7 +187,7 @@ struct ProfileView: View {
         }
         .frame(width: 56, height: 56)
         .clipShape(Circle())
-        .overlay(Circle().strokeBorder(ink.opacity(0.35), lineWidth: 0.5))
+        .overlay { Circle().strokeBorder(ink.opacity(0.35), lineWidth: 0.5) }
         .accessibilityHidden(true)
     }
 
@@ -224,7 +224,7 @@ struct ProfileView: View {
                             .appFont(.body)
                             .foregroundStyle(.primary)
                         Spacer()
-                        Image(systemName: "chevron.right")
+                        Image(systemName: "chevron.forward")
                             .appFont(.small, weight: .semibold)
                             .foregroundStyle(.tertiary)
                     }
@@ -234,7 +234,7 @@ struct ProfileView: View {
                 }
                 .buttonStyle(.pressFeedback)
             }
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
     }
 
@@ -275,7 +275,7 @@ struct ProfileView: View {
                 }
             }
 
-            Image(systemName: "chevron.right")
+            Image(systemName: "chevron.forward")
                 .appFont(.small, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }
@@ -293,7 +293,7 @@ struct ProfileView: View {
             }
             .buttonStyle(.pressFeedback)
         }
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func shortcutRow(title: String, detail: String?, systemImage: String) -> some View {
@@ -310,7 +310,7 @@ struct ProfileView: View {
                     .appFont(.body, monospacedDigit: true)
                     .foregroundStyle(.secondary)
             }
-            Image(systemName: "chevron.right")
+            Image(systemName: "chevron.forward")
                 .appFont(.small, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }

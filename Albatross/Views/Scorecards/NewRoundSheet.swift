@@ -30,7 +30,7 @@ struct NewRoundSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground)
+                Color(uiColor: .systemGroupedBackground)
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -111,7 +111,7 @@ struct NewRoundSheet: View {
                             manualPars = [4, 4, 3, 4, 5, 3, 4, 4, 5,
                                           4, 3, 4, 5, 4, 3, 4, 5, 4]
                         }) {
-                            Label("Search", systemImage: "chevron.left")
+                            Label("Search", systemImage: "chevron.backward")
                                 .labelStyle(.titleAndIcon)
                         }
                     }
@@ -187,24 +187,24 @@ struct NewRoundSheet: View {
                     Circle()
                         .fill(Color.accentColor.opacity(0.12))
                         .frame(width: 80, height: 80)
-                        .overlay(
+                        .overlay {
                             Image("black-browed-albatross")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 44, height: 44)
                                 .opacity(0.7)
-                        )
+                        }
                 }
 
                 // Camera badge
                 Circle()
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
                     .frame(width: 26, height: 26)
-                    .overlay(
+                    .overlay {
                         Image(systemName: "camera.fill")
                             .appFont(.small, weight: .medium)
                             .foregroundStyle(Color.accentColor)
-                    )
+                    }
                     .offset(x: 4, y: 4)
             }
         }
@@ -227,7 +227,7 @@ struct NewRoundSheet: View {
                         .appFont(.body)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
-                        .background(Color(.secondarySystemGroupedBackground))
+                        .background(Color(uiColor: .secondarySystemGroupedBackground))
                         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         .focused($manualFieldFocused)
                         .submitLabel(.done)
@@ -248,7 +248,7 @@ struct NewRoundSheet: View {
                         Divider().padding(.horizontal, 12)
                         parNineSection(title: "Back 9", range: 9..<18)
                     }
-                    .background(Color(.secondarySystemGroupedBackground))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .padding(.horizontal, 20)
                 }
@@ -296,7 +296,7 @@ struct NewRoundSheet: View {
                 ForEach(range, id: \.self) { i in
                     Text("\(i + 1)")
                         .appFont(.small)
-                        .foregroundStyle(Color(.tertiaryLabel))
+                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
                         .frame(maxWidth: .infinity)
                 }
             }

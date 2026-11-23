@@ -25,7 +25,7 @@ struct ScannedScorecardReviewView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+                Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -110,7 +110,7 @@ struct ScannedScorecardReviewView: View {
                 .appFont(.body)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(Color(uiColor: .secondarySystemGroupedBackground))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .padding(.horizontal, 20)
@@ -170,7 +170,7 @@ struct ScannedScorecardReviewView: View {
                     ForEach(range, id: \.self) { i in
                         Text("\(i + 1)")
                             .appFont(.small)
-                            .foregroundStyle(Color(.tertiaryLabel))
+                            .foregroundStyle(Color(uiColor: .tertiaryLabel))
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -193,7 +193,7 @@ struct ScannedScorecardReviewView: View {
                 }
             }
             .padding(14)
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .padding(.horizontal, 20)
@@ -207,7 +207,7 @@ struct ScannedScorecardReviewView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                     .fill(score == nil
-                          ? Color(.tertiarySystemFill)
+                          ? Color(uiColor: .tertiarySystemFill)
                           : cellBackground(score: score!, par: par))
 
                 if let score {
@@ -217,7 +217,7 @@ struct ScannedScorecardReviewView: View {
                 } else {
                     Text("—")
                         .appFont(.small, weight: .semibold)
-                        .foregroundStyle(Color(.tertiaryLabel))
+                        .foregroundStyle(Color(uiColor: .tertiaryLabel))
                 }
             }
             .frame(maxWidth: .infinity)
@@ -285,10 +285,10 @@ struct ScannedScorecardReviewView: View {
     // MARK: - Cell Colors (the same result inks as the booklet)
 
     private func cellBackground(score: Int, par: Int) -> Color {
-        score == par ? Color(.secondarySystemFill) : BookletStyle.ink(forDifference: score - par).opacity(0.9)
+        score == par ? Color(uiColor: .secondarySystemFill) : BookletStyle.ink(forDifference: score - par).opacity(0.9)
     }
 
     private func cellForeground(score: Int, par: Int) -> Color {
-        score - par == 0 ? Color(.label) : .white
+        score - par == 0 ? Color(uiColor: .label) : .white
     }
 }

@@ -198,7 +198,7 @@ struct ScorecardsView: View {
                 Spacer().frame(height: 32)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
     }
 
     private func sectionHeader(_ title: String) -> some View {

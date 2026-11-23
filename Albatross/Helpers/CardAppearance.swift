@@ -157,7 +157,7 @@ struct SwatchPicker<Value: Hashable & Identifiable>: View {
                                 swatch(value)
                                     .frame(width: 44, height: 44)
                                     .clipShape(Circle())
-                                    .overlay(Circle().strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5))
+                                    .overlay { Circle().strokeBorder(Color.primary.opacity(0.15), lineWidth: 0.5) }
                                     .overlay {
                                         if selection == value {
                                             Circle().strokeBorder(Color.accentColor, lineWidth: 2.5).padding(-4)
@@ -285,7 +285,7 @@ struct CardStyleForm: View {
         if isDefault {
             return AnyView(
                 ZStack {
-                    Color(.secondarySystemFill)
+                    Color(uiColor: .secondarySystemFill)
                     Image(systemName: "arrow.uturn.backward")
                         .font(.callout)
                         .foregroundStyle(.secondary)

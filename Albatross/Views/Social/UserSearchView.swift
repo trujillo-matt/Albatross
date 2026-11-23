@@ -11,7 +11,7 @@ struct UserSearchView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+                Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     // Search bar
@@ -34,7 +34,7 @@ struct UserSearchView: View {
                         }
                     }
                     .appListRowPadding()
-                    .background(Color(.secondarySystemGroupedBackground))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .appListRowPadding()
 
@@ -110,9 +110,9 @@ struct UserSearchView: View {
                     Divider().padding(.leading, 68)
                 }
             }
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+            .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(uiColor: .separator).opacity(0.4), lineWidth: 0.5) }
             .padding(.horizontal, 16)
         }
     }
@@ -195,7 +195,7 @@ struct FollowButton: View {
                 .padding(.vertical, 6)
                 .background(
                     isFollowing
-                        ? Color(.tertiarySystemGroupedBackground)
+                        ? Color(uiColor: .tertiarySystemGroupedBackground)
                         : Color.accentColor.opacity(0.12)
                 )
                 .clipShape(Capsule())

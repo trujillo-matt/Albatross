@@ -48,7 +48,7 @@ struct NewTournamentSheet: View {
                 ToolbarItem(placement: .albatrossConfirm) {
                     if step < 3 {
                         Button { advanceStep() } label: {
-                            Label("Next", systemImage: "chevron.right")
+                            Label("Next", systemImage: "chevron.forward")
                                 .labelStyle(.titleAndIcon)
                         }
                         .disabled(!canAdvance)
@@ -169,7 +169,7 @@ struct NewTournamentSheet: View {
                 }
             }
             .padding(12)
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 16)
             .padding(.top, 16)
@@ -177,7 +177,7 @@ struct NewTournamentSheet: View {
 
             // Invited chips
             if !invitedProfiles.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
+                ScrollView(.horizontal) {
                     HStack(spacing: 8) {
                         ForEach(invitedProfiles) { profile in
                             inviteChip(profile)
@@ -185,6 +185,7 @@ struct NewTournamentSheet: View {
                     }
                     .padding(.horizontal, 16)
                 }
+                .scrollIndicators(.hidden)
                 .clippedToHorizontalSafeArea()
                 .padding(.bottom, 12)
             }
@@ -268,7 +269,7 @@ struct NewTournamentSheet: View {
                     .padding(.bottom, 8)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
     }
 
     // MARK: - Subviews
@@ -281,7 +282,7 @@ struct NewTournamentSheet: View {
             Button(action: { invitedProfiles.removeAll { $0.id == profile.id } }) {
                 Image(systemName: "xmark.circle.fill")
                     .appFont(.small)
-                    .foregroundStyle(Color(.tertiaryLabel))
+                    .foregroundStyle(Color(uiColor: .tertiaryLabel))
                     .accessibilityLabel("Remove \(profile.displayName)")
             }
             .buttonStyle(.pressFeedback)
@@ -307,11 +308,11 @@ struct NewTournamentSheet: View {
             Circle()
                 .fill(Color.accentColor.opacity(0.2))
                 .frame(width: size, height: size)
-                .overlay(
+                .overlay {
                     Text(String(profile.displayName.prefix(1)).uppercased())
                         .font(.system(size: size * 0.4, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
-                )
+                }
         }
     }
 

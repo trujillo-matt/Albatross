@@ -49,7 +49,7 @@ struct CourseDetailView: View {
                 .padding(.bottom, 32)
             }
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
         .presentationDragIndicator(.visible)
     }
 
@@ -97,7 +97,7 @@ struct CourseDetailView: View {
         sectionCard(title: "The Course") {
             Group {
                 if let rating = courseRating {
-                    infoRow(label: "Rating", value: String(format: "%.1f", rating))
+                    infoRow(label: "Rating", value: rating.formatted(.number.precision(.fractionLength(1))))
                 }
                 if let slope = slopeRating {
                     infoRow(label: "Slope", value: "\(slope)", isLast: totalPar == nil && totalYards == nil)
@@ -159,7 +159,7 @@ struct CourseDetailView: View {
 
     private func teesCard(_ tees: [TeeOption]) -> some View {
         sectionCard(title: "Tees") {
-            ForEach(Array(tees.enumerated()), id: \.offset) { index, tee in
+            ForEach(tees.enumerated(), id: \.element) { index, tee in
                 HStack(spacing: 0) {
                     // Tee name badge
                     Text(tee.name)
@@ -175,7 +175,7 @@ struct CourseDetailView: View {
                     Spacer()
 
                     if let rating = tee.rating, let slope = tee.slope {
-                        Text(String(format: "%.1f / %d", rating, slope))
+                        Text("\(rating.formatted(.number.precision(.fractionLength(1)))) / \(slope)")
                             .appFont(.small)
                             .foregroundStyle(.tertiary)
                             .padding(.trailing, 16)
@@ -205,7 +205,7 @@ struct CourseDetailView: View {
             VStack(spacing: 0) {
                 content()
             }
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }

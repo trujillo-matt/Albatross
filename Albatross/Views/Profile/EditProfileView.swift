@@ -37,13 +37,13 @@ struct EditProfileView: View {
                                 avatarCircle(size: 88)
 
                                 Circle()
-                                    .fill(Color(.secondarySystemGroupedBackground))
+                                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
                                     .frame(width: 28, height: 28)
-                                    .overlay(
+                                    .overlay {
                                         Image(systemName: "camera.fill")
                                             .appFont(.small, weight: .medium)
                                             .foregroundStyle(Color.accentColor)
-                                    )
+                                    }
                                     .offset(x: 4, y: 4)
                             }
                         }
@@ -166,11 +166,11 @@ struct EditProfileView: View {
             Circle()
                 .fill(Color.accentColor.opacity(0.15))
                 .frame(width: size, height: size)
-                .overlay(
+                .overlay {
                     Text(initials.isEmpty ? "?" : initials)
                         .font(.system(size: size * 0.38, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
-                )
+                }
         }
     }
 

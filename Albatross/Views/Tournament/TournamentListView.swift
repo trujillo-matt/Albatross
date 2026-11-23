@@ -44,7 +44,7 @@ struct TournamentListView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 16)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Tournaments")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -126,7 +126,7 @@ struct TournamentListView: View {
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(Color(.systemFill))
+                        .background(Color(uiColor: .systemFill))
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.pressFeedback)
@@ -146,12 +146,12 @@ struct TournamentListView: View {
             }
         }
         .appListRowPadding()
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
+        .overlay {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.accentColor.opacity(0.3), lineWidth: 1)
-        )
+        }
     }
 
     // MARK: - Leaderboard
@@ -167,7 +167,9 @@ struct TournamentListView: View {
             Text("Standings")
                 .appFont(.large, weight: .medium)
                 .accessibilityAddTraits(.isHeader)
-            NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
+            NavigationLink {
+                TournamentDetailView(tournament: tournament)
+            } label: {
                 TournamentLeaderboard(tournament: tournament)
             }
             .buttonStyle(.pressFeedback)
@@ -179,7 +181,9 @@ struct TournamentListView: View {
     private var tournamentList: some View {
         VStack(spacing: 12) {
             ForEach(tournamentStore.myTournaments) { tournament in
-                NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
+                NavigationLink {
+                    TournamentDetailView(tournament: tournament)
+                } label: {
                     tournamentCard(tournament)
                 }
                 .buttonStyle(.pressFeedback)
@@ -216,13 +220,13 @@ struct TournamentListView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
-            Image(systemName: "chevron.right")
+            Image(systemName: "chevron.forward")
                 .appFont(.small, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
@@ -249,7 +253,7 @@ struct TournamentListView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     // MARK: - Helpers
@@ -299,7 +303,7 @@ struct TournamentNewsFeed: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             } else {
                 VStack(spacing: 0) {
                     ForEach(tournamentStore.news) { item in
@@ -321,7 +325,7 @@ struct TournamentNewsFeed: View {
                         if item.id != tournamentStore.news.last?.id { Divider().padding(.leading, 34) }
                     }
                 }
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }
         .task {

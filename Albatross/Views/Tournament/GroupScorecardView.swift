@@ -91,7 +91,7 @@ struct GroupScorecardView: View {
             }
             .padding(16)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Group scorecard")
         .navigationBarTitleDisplayMode(.inline)
         .task { await refresh(initial: true) }
@@ -146,18 +146,18 @@ struct GroupScorecardView: View {
         let par = pars[min(hole, 17)]
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Button { hole = max(0, hole - 1) } label: { Image(systemName: "chevron.left") }
+                Button { hole = max(0, hole - 1) } label: { Image(systemName: "chevron.backward") }
                     .disabled(hole == 0)
                 Spacer()
                 Text("Hole \(hole + 1)  ·  Par \(par)").appFont(.large, weight: .semibold)
                 Spacer()
-                Button { hole = min(17, hole + 1) } label: { Image(systemName: "chevron.right") }
+                Button { hole = min(17, hole + 1) } label: { Image(systemName: "chevron.forward") }
                     .disabled(hole == 17)
             }
 
             // Which card the next number goes to.
             VStack(spacing: 6) {
-                ForEach(Array(ordered.enumerated()), id: \.element.id) { i, c in
+                ForEach(ordered.enumerated(), id: \.element.id) { i, c in
                     Button { cardIndex = i } label: {
                         HStack {
                             Text(label(for: c)).appFont(.small)
@@ -166,7 +166,7 @@ struct GroupScorecardView: View {
                                 .appFont(.large, weight: .semibold).monospacedDigit()
                         }
                         .padding(.horizontal, 12).padding(.vertical, 10)
-                        .background(i == cardIndex ? Color.brandGreen.opacity(0.15) : Color(.secondarySystemGroupedBackground),
+                        .background(i == cardIndex ? Color.brandGreen.opacity(0.15) : Color(uiColor: .secondarySystemGroupedBackground),
                                     in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
                     .buttonStyle(.plain)
@@ -180,7 +180,7 @@ struct GroupScorecardView: View {
                     Button { enter(n, card: card) } label: {
                         Text("\(n)").appFont(.large, weight: .semibold)
                             .frame(maxWidth: .infinity).padding(.vertical, 12)
-                            .background(Color(.secondarySystemGroupedBackground),
+                            .background(Color(uiColor: .secondarySystemGroupedBackground),
                                         in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
                     .buttonStyle(.pressFeedback)
@@ -190,7 +190,7 @@ struct GroupScorecardView: View {
                 .appFont(.small)
         }
         .padding(14)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var cardsTable: some View {
@@ -203,7 +203,7 @@ struct GroupScorecardView: View {
                         Text("\((0..<18).compactMap { value(c, $0) }.reduce(0, +))")
                             .appFont(.small, weight: .semibold).monospacedDigit()
                     }
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    ScrollView(.horizontal) {
                         HStack(spacing: 4) {
                             ForEach(0..<18, id: \.self) { h in
                                 VStack(spacing: 2) {
@@ -217,9 +217,10 @@ struct GroupScorecardView: View {
                             }
                         }
                     }
+                    .scrollIndicators(.hidden)
                 }
                 .padding(12)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }
     }

@@ -35,7 +35,7 @@ struct UserProfileView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemGroupedBackground).ignoresSafeArea()
+                Color(uiColor: .systemGroupedBackground).ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -172,14 +172,14 @@ struct UserProfileView: View {
             Divider().frame(height: 32)
             statItem(label: "Best", value: bestScore.map { "\($0)" } ?? "—")
             Divider().frame(height: 32)
-            statItem(label: "Average", value: averageScore.map { String(format: "%.1f", $0) } ?? "—")
+            statItem(label: "Average", value: averageScore.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—")
             Divider().frame(height: 32)
-            statItem(label: "HCP", value: handicapIndex.map { String(format: "%.1f", $0) } ?? "—")
+            statItem(label: "HCP", value: handicapIndex.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? "—")
         }
         .padding(.vertical, 14)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(uiColor: .separator).opacity(0.4), lineWidth: 0.5) }
     }
 
     private func statItem(label: String, value: String) -> some View {
@@ -203,7 +203,7 @@ struct UserProfileView: View {
                     .appFont(.small, weight: .semibold)
             }
             .appButton(fill: Color.accentColor.opacity(0.12), foreground: Color.accentColor)
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.accentColor.opacity(0.25), lineWidth: 0.5))
+            .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.accentColor.opacity(0.25), lineWidth: 0.5) }
         }
         .buttonStyle(.pressFeedback)
     }
@@ -245,9 +245,9 @@ struct UserProfileView: View {
                     }
                 }
             }
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color(uiColor: .secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+            .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color(uiColor: .separator).opacity(0.4), lineWidth: 0.5) }
         }
     }
 

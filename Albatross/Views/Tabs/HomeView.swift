@@ -46,7 +46,7 @@ struct HomeView: View {
                 .padding(.vertical, 16)
                 .readableContentWidth()
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color(uiColor: .systemGroupedBackground))
             .refreshable { await socialStore.loadFeed() }
             .navigationTitle("Clubhouse")
             .toolbar {
@@ -104,7 +104,7 @@ struct HomeView: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
         } else {
             VStack(alignment: .leading, spacing: 12) {
@@ -129,7 +129,7 @@ struct HomeView: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
         }
     }
@@ -138,8 +138,10 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Tournaments")
             VStack(spacing: 0) {
-                ForEach(Array(tournamentStore.myTournaments.enumerated()), id: \.element.id) { index, tournament in
-                    NavigationLink(destination: TournamentDetailView(tournament: tournament)) {
+                ForEach(tournamentStore.myTournaments.enumerated(), id: \.element.id) { index, tournament in
+                    NavigationLink {
+                        TournamentDetailView(tournament: tournament)
+                    } label: {
                         tournamentRow(tournament)
                     }
                     .buttonStyle(.pressFeedback)
@@ -148,7 +150,7 @@ struct HomeView: View {
                     }
                 }
             }
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
     }
 
@@ -169,7 +171,7 @@ struct HomeView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Image(systemName: "chevron.right")
+            Image(systemName: "chevron.forward")
                 .appFont(.small, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }
@@ -206,14 +208,14 @@ struct HomeView: View {
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             } else if socialStore.friendsFeed.isEmpty {
                 Text("Your friends have not posted a round yet")
                     .appFont(.small)
                     .foregroundStyle(.secondary)
                     .padding(16)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             } else {
                 LazyVStack(spacing: 16) {
                     ForEach(socialStore.friendsFeed) { item in
@@ -321,9 +323,9 @@ struct FeedItemCard: View {
                 .padding(.horizontal, 14)
                 .padding(.bottom, 14)
         }
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5))
+        .overlay { RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color(uiColor: .separator).opacity(0.4), lineWidth: 0.5) }
     }
 
     private var holeStrip: some View {
@@ -339,9 +341,9 @@ struct FeedItemCard: View {
 
     private func holeCell(score: Int?, par: Int) -> some View {
         let bg: Color = {
-            guard let s = score else { return Color(.tertiarySystemGroupedBackground) }
+            guard let s = score else { return Color(uiColor: .tertiarySystemGroupedBackground) }
             let d = s - par
-            return d == 0 ? Color(.tertiarySystemGroupedBackground) : BookletStyle.ink(forDifference: d)
+            return d == 0 ? Color(uiColor: .tertiarySystemGroupedBackground) : BookletStyle.ink(forDifference: d)
         }()
 
         let fg: Color = {
