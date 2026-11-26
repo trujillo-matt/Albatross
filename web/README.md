@@ -33,6 +33,13 @@ A push to a branch without a `web/` folder will fail to build, which is expected
    ```
 
    Deploy `redeem-code` with JWT verification off if the browser call is rejected (`--no-verify-jwt`), since players have no session yet.
+
+   The iOS app's scorecard scanner uses a third function, `scan-scorecard`, which calls Gemini with a key held as a function secret (never in the app). It checks the caller's session itself, so only signed-in users can scan:
+
+   ```bash
+   supabase functions deploy scan-scorecard
+   supabase secrets set GEMINI_API_KEY=<key from https://aistudio.google.com/app/apikey>
+   ```
 3. Configure and run the site:
 
    ```bash

@@ -18,7 +18,7 @@ struct ScorecardParseResult {
 
 struct ScorecardParserService {
 
-    private let client = GeminiAPIClient()
+    private let client = ScorecardScanClient()
 
     // MARK: - Public API
 
