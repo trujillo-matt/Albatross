@@ -1,6 +1,6 @@
 # Albatross Tournament Web App: Plan
 
-Status: planning document. No web code has been written.
+Status: historical planning document from before the build. The web app now exists in `web/`; see `docs/DESIGN.md` and `docs/migrations/` for what was built. Some statements below are out of date.
 Source of truth for this plan: the Swift code in this repo (`Albatross/Models/Tournament.swift`, `Albatross/Store/TournamentStore.swift`, `Albatross/Views/Tournament/*`, `Albatross/Store/RoundStore.swift`, `Albatross/Models/Round.swift`).
 
 ## 0. Read this first: what I could and could not verify
