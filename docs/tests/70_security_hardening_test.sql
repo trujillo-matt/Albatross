@@ -31,3 +31,14 @@ do $$ begin
   perform t.expect_error('select count(*) from code_redeem_attempts', 'permission denied');
 end $$;
 reset role;
+
+-- 015: public standings carry sessions and each match's session
+do $$ declare v uuid; tok text; j jsonb; begin
+  v := t.new_tournament(3, 'active');
+  tok := repeat('a', 40);
+  update tournaments set public_token = tok where id = v;
+  insert into tournament_sessions (tournament_id, day_number, session_number, match_type, status) values (v, 1, 1, 'match_play', 'locked');
+  j := get_public_standings(tok);
+  perform t.assert(jsonb_array_length(j -> 'sessions') = 1, 'standings list the sessions');
+  perform t.assert(j ? 'teams' and j ? 'matchups', 'existing keys are unchanged');
+end $$;

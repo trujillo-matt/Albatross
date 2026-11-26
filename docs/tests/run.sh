@@ -9,7 +9,7 @@ psql -v ON_ERROR_STOP=1 -q -d postgres -c "drop database if exists $DB" -c "crea
 psql -d postgres -q -c "drop role if exists anon" -c "drop role if exists authenticated" 2>/dev/null || true
 for f in 00_stub_schema.sql ../migrations/001_tournament_team_side.sql ../migrations/002_tournament_rules.sql \
          ../migrations/003_player_codes.sql ../migrations/004_spectator_audit.sql \
-         05_demonstrate_bugs.sql ../migrations/005_rls_fixes.sql ../migrations/006_function_privileges.sql ../migrations/007_signup_trigger_search_path.sql ../migrations/008_sessions_callouts.sql ../migrations/009_group_scoring.sql 10_rules_test.sql 20_rls_test.sql 30_privileges_test.sql 40_signup_trigger_test.sql 50_sessions_callouts_test.sql 60_group_scoring_test.sql ../migrations/010_tournament_news.sql ../migrations/011_callout_presence.sql ../migrations/012_foursome_scoring.sql ../migrations/013_team_style_tee_times.sql ../migrations/014_security_hardening.sql 70_security_hardening_test.sql; do
+         05_demonstrate_bugs.sql ../migrations/005_rls_fixes.sql ../migrations/006_function_privileges.sql ../migrations/007_signup_trigger_search_path.sql ../migrations/008_sessions_callouts.sql ../migrations/009_group_scoring.sql 10_rules_test.sql 20_rls_test.sql 30_privileges_test.sql 40_signup_trigger_test.sql 50_sessions_callouts_test.sql 60_group_scoring_test.sql ../migrations/010_tournament_news.sql ../migrations/011_callout_presence.sql ../migrations/012_foursome_scoring.sql ../migrations/013_team_style_tee_times.sql ../migrations/014_security_hardening.sql ../migrations/015_public_standings_sessions.sql 70_security_hardening_test.sql; do
   echo "== $f"
   psql -v ON_ERROR_STOP=1 -q -d $DB -f "$f"
 done
