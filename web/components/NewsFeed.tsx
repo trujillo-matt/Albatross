@@ -6,10 +6,10 @@ import { Dot, type Tone } from "./ui";
 
 interface NewsItem { id: string; tournament_id: string; kind: string; headline: string; created_at: string }
 
-const TONE: Record<string, Tone> = { ace: "live", eagle: "live", birdie: "live", score_change: "warn", match_result: "idle" };
+const TONE: Record<string, Tone> = { ace: "live", eagle: "live", birdie: "live", score_change: "warn", match_result: "idle", lead_change: "live" };
 
 /**
- * "Tournament news": birdies and better, changed scores and finished matches, newest first.
+ * "Tournament news": birdies and better, changed scores and finished matches and lead changes, newest first.
  * The database writes the entries (migration 010); this reads them and refreshes when a new one arrives.
  */
 export default function NewsFeed({ tournamentIds, names }: { tournamentIds: string[]; names?: Record<string, string> }) {

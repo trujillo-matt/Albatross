@@ -42,3 +42,20 @@ do $$ declare v uuid; tok text; j jsonb; begin
   perform t.assert(jsonb_array_length(j -> 'sessions') = 1, 'standings list the sessions');
   perform t.assert(j ? 'teams' and j ? 'matchups', 'existing keys are unchanged');
 end $$;
+
+-- 016: lead changes in match play
+do $$ declare m record; ra uuid; rb uuid; n int; begin
+  select * into m from t.matchup('match_play', '{2}', '{4}');
+  ra := t.card(2, m.mid, to_jsonb(array_fill(null::int, array[18])), 'in_progress');
+  rb := t.card(4, m.mid, to_jsonb(array_fill(null::int, array[18])), 'in_progress');
+  update rounds set scores = (select jsonb_agg(case when i <= 8 then 3 else null end) from generate_series(1, 18) i) where id = ra;
+  perform t.assert((select count(*) from tournament_news where matchup_id = m.mid and kind = 'lead_change') = 0, 'no lead with one card');
+  update rounds set scores = (select jsonb_agg(case when i <= 3 then 4 else null end) from generate_series(1, 18) i) where id = rb;
+  perform t.assert((select count(*) from tournament_news where matchup_id = m.mid and kind = 'lead_change' and headline like '%took the lead in match 1, 3 up through 3') = 1, 'A takes the lead');
+  update rounds set scores = (select jsonb_agg(case when i <= 3 then 4 when i <= 6 then 2 else null end) from generate_series(1, 18) i) where id = rb;
+  perform t.assert((select count(*) from tournament_news where matchup_id = m.mid and kind = 'lead_change' and headline like '%all square through 6') = 1, 'back to all square');
+  update rounds set scores = (select jsonb_agg(case when i <= 3 then 4 when i <= 7 then 2 else null end) from generate_series(1, 18) i) where id = rb;
+  perform t.assert((select count(*) from tournament_news where matchup_id = m.mid and kind = 'lead_change') = 3, 'B takes the lead');
+  update rounds set scores = (select jsonb_agg(case when i <= 3 then 4 when i <= 8 then 2 else null end) from generate_series(1, 18) i) where id = rb;
+  perform t.assert((select count(*) from tournament_news where matchup_id = m.mid and kind = 'lead_change') = 3, 'extending a lead is not news');
+end $$;
