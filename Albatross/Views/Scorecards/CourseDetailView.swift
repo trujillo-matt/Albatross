@@ -94,7 +94,7 @@ struct CourseDetailView: View {
     // MARK: - Stats card
 
     private var courseStatsCard: some View {
-        sectionCard(title: "The Course") {
+        sectionCard(title: "The course") {
             Group {
                 if let rating = courseRating {
                     infoRow(label: "Rating", value: rating.formatted(.number.precision(.fractionLength(1))))
@@ -106,7 +106,7 @@ struct CourseDetailView: View {
                     infoRow(label: "Par", value: "\(par)", isLast: totalYards == nil)
                 }
                 if let yards = totalYards {
-                    infoRow(label: "Total Yards", value: yards.formatted(), isLast: true)
+                    infoRow(label: "Total yards", value: yards.formatted(), isLast: true)
                 }
             }
         }
@@ -121,7 +121,7 @@ struct CourseDetailView: View {
                     infoRow(label: "Architect", value: arc, isLast: yearBuilt == nil)
                 }
                 if let year = yearBuilt {
-                    infoRow(label: "Year Built", value: "\(year)", isLast: true)
+                    infoRow(label: "Year built", value: "\(year)", isLast: true)
                 }
             }
         }
@@ -166,7 +166,6 @@ struct CourseDetailView: View {
                         .appFont(.small, weight: .medium)
                         .foregroundStyle(.primary)
                         .frame(width: 56, alignment: .leading)
-                        .padding(.leading, 16)
 
                     Text("\(tee.totalYards.formatted()) yds")
                         .appFont(.small)
@@ -178,13 +177,12 @@ struct CourseDetailView: View {
                         Text("\(rating.formatted(.number.precision(.fractionLength(1)))) / \(slope)")
                             .appFont(.small)
                             .foregroundStyle(.tertiary)
-                            .padding(.trailing, 16)
                     }
                 }
-                .padding(.vertical, 10)
+                .appListRowPadding()
 
                 if index < tees.count - 1 {
-                    Divider().padding(.leading, 16)
+                    Divider().padding(.leading, AppSpacing.rowHorizontal)
                 }
             }
         }
@@ -226,7 +224,7 @@ struct CourseDetailView: View {
             .appListRowPadding()
 
             if !isLast {
-                Divider().padding(.leading, 16)
+                Divider().padding(.leading, AppSpacing.rowHorizontal)
             }
         }
     }

@@ -1,10 +1,10 @@
 import SwiftUI
 
 enum RoundSortOrder: String, CaseIterable {
-    case newest = "Newest First"
-    case oldest = "Oldest First"
-    case bestScore = "Best Score"
-    case worstScore = "Worst Score"
+    case newest = "Newest first"
+    case oldest = "Oldest first"
+    case bestScore = "Best score"
+    case worstScore = "Worst score"
 }
 
 /// The library: every round is a booklet on a shelf. Tapping one opens it.
@@ -185,12 +185,12 @@ struct ScorecardsView: View {
                     }
                 } else {
                     if !inProgress.isEmpty {
-                        sectionHeader("In Progress")
+                        sectionHeader("In progress")
                         shelf(inProgress)
                     }
 
                     if !completed.isEmpty {
-                        sectionHeader("Previous Rounds")
+                        sectionHeader("Previous rounds")
                         shelf(completed)
                     }
                 }
@@ -265,7 +265,7 @@ struct ScorecardsView: View {
             }
 
             VStack(spacing: 8) {
-                Text("No Rounds Yet")
+                Text("No rounds yet")
                     .appFont(.large, weight: .semibold)
 
                 Text("Tap + to start tracking your first round")
@@ -275,13 +275,9 @@ struct ScorecardsView: View {
             }
 
             Button(action: { showNewRound = true }) {
-                Label("Start New Round", systemImage: "plus.circle.fill")
+                Label("Start new round", systemImage: "plus.circle.fill")
                     .appFont(.body)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 14)
-                    .background(Color.brandGreen)
-                    .foregroundStyle(.white)
-                    .clipShape(Capsule())
+                    .appButton(fill: Color.brandGreen, foreground: .white, fullWidth: false, cornerRadius: AppSpacing.buttonHeight / 2)
             }
         }
         .padding(32)

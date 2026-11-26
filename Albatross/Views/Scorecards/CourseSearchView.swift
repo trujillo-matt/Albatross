@@ -25,7 +25,7 @@ struct CourseSearchView: View {
                     Button(action: { courseStore.searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(Color(uiColor: .tertiaryLabel))
-                            .accessibilityLabel("Clear Search")
+                            .accessibilityLabel("Clear search")
                     }
                     .buttonStyle(.pressFeedback)
                 }
@@ -51,7 +51,7 @@ struct CourseSearchView: View {
 
                             if index < courseStore.results.count - 1 {
                                 Divider()
-                                    .padding(.leading, 60)
+                                    .padding(.leading, AppSpacing.rowHorizontal + 36 + 12)
                                     .background(Color(uiColor: .secondarySystemGroupedBackground))
                             }
                         }
@@ -165,7 +165,7 @@ struct CourseSearchView: View {
 
                     if index < preloaded.count - 1 {
                         Divider()
-                            .padding(.leading, 60)
+                            .padding(.leading, AppSpacing.rowHorizontal + 36 + 12)
                             .background(Color(uiColor: .secondarySystemGroupedBackground))
                     }
                 }
