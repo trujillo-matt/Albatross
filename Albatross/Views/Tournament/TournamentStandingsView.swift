@@ -28,13 +28,13 @@ struct TournamentStandingsView: View {
                 }
 
                 // ── Per-matchup breakdown ──────────────────────────────────
-                if !current.matchups.isEmpty {
+                if current.matchups.contains(where: \.showsOnBoard) {
                     sectionHeader("Match Results")
                         .padding(.horizontal, 20)
                         .padding(.top, 28)
                         .padding(.bottom, 12)
 
-                    ForEach(current.matchups.sorted { $0.matchupNumber < $1.matchupNumber }) { matchup in
+                    ForEach(current.matchups.filter(\.showsOnBoard).sorted { $0.matchupNumber < $1.matchupNumber }) { matchup in
                         matchupResultRow(matchup)
                             .padding(.horizontal, 16)
                             .padding(.bottom, 8)
@@ -325,7 +325,7 @@ private struct StandingsShareCard: View {
 
                 // Per-match summary
                 VStack(spacing: 6) {
-                    ForEach(tournament.matchups.sorted { $0.matchupNumber < $1.matchupNumber }) { m in
+                    ForEach(tournament.matchups.filter(\.showsOnBoard).sorted { $0.matchupNumber < $1.matchupNumber }) { m in
                         let tAName = tournament.teams.first(where: { $0.id == m.teamAID })?.name ?? "A"
                         let tBName = tournament.teams.first(where: { $0.id == m.teamBID })?.name ?? "B"
                         HStack {

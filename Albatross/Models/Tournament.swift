@@ -189,6 +189,10 @@ struct TournamentMatchup: Identifiable, Codable {
 
     var isLockedIn: Bool { calledAt != nil }
 
+    /// A match is worth listing once someone is in it, or once it has a result (a forfeit has no scorecards).
+    /// Until a session's lineup is set its matches are empty slots, and the boards leave them out.
+    var showsOnBoard: Bool { !teamAPlayerIDs.isEmpty || !teamBPlayerIDs.isEmpty || status == .complete }
+
     enum CodingKeys: String, CodingKey {
         case id
         case tournamentID   = "tournament_id"

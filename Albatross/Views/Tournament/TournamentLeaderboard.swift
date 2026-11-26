@@ -94,7 +94,15 @@ struct TournamentLeaderboard: View {
     private func dayPage(_ day: TournamentDay) -> some View {
         VStack(spacing: 2) {
             dayBand(day)
-            ForEach(day.matchups) { matchup in
+            let shown = day.matchups.filter(\.showsOnBoard)
+            if shown.isEmpty {
+                Text("Lineup not set yet")
+                    .appFont(.small)
+                    .foregroundStyle(ink.opacity(0.7))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .background(paper)
+            }
+            ForEach(shown) { matchup in
                 if let rowDestination {
                     NavigationLink {
                         rowDestination(matchup)
