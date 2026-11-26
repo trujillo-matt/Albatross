@@ -210,7 +210,7 @@ struct CourseCoverView: View {
                 .blendMode(.multiply)
         } else {
             // No course logo: the bird as one flat colour, like the app icon, in the card's own ink.
-            Image("black-browed-albatross")
+            Image("albatross-mark")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()

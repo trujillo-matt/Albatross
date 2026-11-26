@@ -259,7 +259,7 @@ struct ScorecardsView: View {
                 Circle()
                     .fill(Color.accentColor.opacity(0.12))
                     .frame(width: 88, height: 88)
-                Image("black-browed-albatross")
+                Image("albatross-mark")
                     .renderingMode(.template)
                     .resizable()
                     .scaledToFit()

@@ -25,9 +25,11 @@ struct StartRoundProvider: TimelineProvider {
 private struct StartRoundSmall: View {
     var body: some View {
         VStack(spacing: 10) {
-            Image("black-browed-albatross")
+            Image("albatross-mark")
+                .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
+                .foregroundStyle(.white)
                 .frame(width: 44, height: 44)
                 .opacity(0.9)
             Text("Start Round")
@@ -48,9 +50,11 @@ private struct StartRoundSmall: View {
 private struct StartRoundMedium: View {
     var body: some View {
         HStack(spacing: 18) {
-            Image("black-browed-albatross")
+            Image("albatross-mark")
+                .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
+                .foregroundStyle(.white)
                 .frame(width: 56, height: 56)
                 .opacity(0.9)
 

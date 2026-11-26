@@ -261,10 +261,12 @@ private struct StandingsShareCard: View {
 
                 // Logo + title
                 VStack(spacing: 10) {
-                    Image("black-browed-albatross")
+                    Image("albatross-mark")
+                        .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 48, height: 48)
+                        .foregroundStyle(brandGreen)
 
                     Text("ALBATROSS")
                         .appFont(.small, weight: .semibold)

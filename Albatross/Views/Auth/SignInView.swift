@@ -30,10 +30,12 @@ struct SignInView: View {
                 VStack(spacing: 0) {
                     // ── Logo + wordmark ──────────────────────────────────
                     VStack(spacing: 16) {
-                        Image("black-browed-albatross")
+                        Image("albatross-mark")
+                            .renderingMode(.template)
                             .resizable()
                             .scaledToFit()
                             .frame(width: 68, height: 68)
+                            .foregroundStyle(.white)
 
                         Text("ALBATROSS")
                             .font(.title.weight(.semibold))

@@ -37,10 +37,12 @@ private struct ShareFooter: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image("black-browed-albatross")
+            Image("albatross-mark")
+                .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: 14, height: 14)
+                .foregroundStyle(color)
             Text("Albatross")
                 .appFont(.small)
                 .foregroundStyle(color)

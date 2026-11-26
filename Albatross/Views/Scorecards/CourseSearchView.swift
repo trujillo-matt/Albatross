@@ -102,7 +102,7 @@ struct CourseSearchView: View {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
                         .fill(Color.accentColor.opacity(0.1))
                         .frame(width: 36, height: 36)
-                    Image("black-browed-albatross")
+                    Image("albatross-mark")
                         .renderingMode(.template)
                         .resizable()
                         .scaledToFit()

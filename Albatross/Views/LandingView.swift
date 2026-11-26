@@ -21,10 +21,12 @@ struct LandingView: View {
                     .foregroundStyle(.white)
                     .tracking(2)
 
-                Image("black-browed-albatross")
+                Image("albatross-mark")
+                    .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 110, height: 110)
+                    .foregroundStyle(.white)
                     .padding(.top, 12)
 
                 Text("Est. 2026")

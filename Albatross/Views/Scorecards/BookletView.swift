@@ -1167,10 +1167,12 @@ struct ScoreMark: View {
                 let ink = BookletStyle.ink(forDifference: difference)
                 marks(for: difference, ink: ink)
                 if score == 2 && par == 5 {
-                    Image("black-browed-albatross")
+                    Image("albatross-mark")
+                        .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: side * 0.6, height: side * 0.6)
+                        .foregroundStyle(ink)
                 } else {
                     Text("\(score)")
                         // The size already follows the row, so the digit must not scale a second time.

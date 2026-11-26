@@ -188,7 +188,7 @@ struct NewRoundSheet: View {
                         .fill(Color.accentColor.opacity(0.12))
                         .frame(width: 80, height: 80)
                         .overlay {
-                            Image("black-browed-albatross")
+                            Image("albatross-mark")
                                 .renderingMode(.template)
                                 .resizable()
                                 .scaledToFit()
