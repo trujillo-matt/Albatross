@@ -16,7 +16,7 @@ import TeeTimesPanel from "@/components/TeeTimesPanel";
 import DayBoard from "@/components/DayBoard";
 import { courseForMatch, isPointsSplit, rosterWarning } from "@/lib/sessions";
 import AdminSignIn from "@/components/AdminSignIn";
-import CodeCard from "@/components/CodeCard";
+import { CodeCarousel, type IssuedCard } from "@/components/CodeCard";
 import Page from "@/components/Page";
 import { teamColor } from "@/lib/teams";
 import { CaptainBadge, TeamDot, CheckIcon, ChevronLeftIcon, Dot, MatchupStatusLabel, TournamentStatusLabel } from "@/components/ui";
@@ -158,8 +158,20 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
   const [bulk, setBulk] = useState("");
   const [busy, setBusy] = useState(false);
   const [codes, setCodes] = useState<CodeStatus[]>([]);
-  const [issued, setIssued] = useState<{ name: string; code: string }[]>([]);
   const tid = data.tournament.id;
+  // Codes are stored hashed on the server and cannot be shown again, so the new cards are kept in this browser until the admin clears them.
+  const savedKey = `albatross-issued-cards:${tid}`;
+  const [issued, setIssued] = useState<IssuedCard[]>([]);
+  const [loadedCards, setLoadedCards] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  useEffect(() => {
+    try { const raw = localStorage.getItem(savedKey); if (raw) setIssued(JSON.parse(raw) as IssuedCard[]); } catch { /* no saved cards */ }
+    setLoadedCards(true);
+  }, [savedKey]);
+  useEffect(() => {
+    if (!loadedCards) return;
+    try { if (issued.length) localStorage.setItem(savedKey, JSON.stringify(issued)); else localStorage.removeItem(savedKey); } catch { /* storage unavailable */ }
+  }, [issued, loadedCards, savedKey]);
   const [teamId, setTeamId] = useState("");
   const [removing, setRemoving] = useState<string | null>(null);
   const [removeReason, setRemoveReason] = useState("");
@@ -179,7 +191,7 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
     for (const n of names) {
       try {
         const r = await callAdminFunction<{ user_id: string; code: string }>({ action: "create_player", tournament_id: tid, display_name: n, ...(teamId ? { team_id: teamId } : {}) });
-        setIssued((x) => [...x, { name: n, code: r.code }]);
+        setIssued((x) => [...x, { userId: r.user_id, name: n, code: r.code }]);
       } catch (e) { setMsg(`${n}: ${e instanceof Error ? e.message : "failed"}`); }
     }
     setName(""); setBulk(""); setBusy(false); reload(); loadCodes();
@@ -187,12 +199,12 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
   const regen = async (userId: string, display: string) => {
     try {
       const r = await callAdminFunction<{ code: string }>({ action: "regenerate_code", tournament_id: tid, user_id: userId });
-      setIssued((x) => [...x.filter((i) => i.name !== display), { name: display, code: r.code }]);
+      setIssued((x) => [...x.filter((i) => i.userId !== userId), { userId, name: display, code: r.code }]);
       loadCodes();
     } catch (e) { setMsg(e instanceof Error ? e.message : "failed"); }
   };
   const revoke = async (userId: string) => {
-    try { await callAdminFunction({ action: "revoke_code", tournament_id: tid, user_id: userId }); loadCodes(); }
+    try { await callAdminFunction({ action: "revoke_code", tournament_id: tid, user_id: userId }); setIssued((x) => x.filter((i) => i.userId !== userId)); loadCodes(); }
     catch (e) { setMsg(e instanceof Error ? e.message : "failed"); }
   };
   const removePlayer = async (userId: string) => {
@@ -202,6 +214,7 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
     setRemoveBusy(false);
     if (error) { setMsg(error.message); return; }
     setRemoving(null); setRemoveReason("");
+    setIssued((x) => x.filter((i) => i.userId !== userId));
     reload(); loadCodes();
   };
   // Players can be added and removed after the draft starts. Only a finished tournament is locked.
@@ -212,22 +225,23 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
 
   return (
     <div className="space-y-7">
-      {warning && <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-warn ring-1 ring-hair print:hidden">{warning}</p>}
+      {warning && <p role="status" className="rounded-lg bg-paper p-3 text-sm text-warn ring-1 ring-hair print:hidden">{warning}</p>}
       {issued.length > 0 && (
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
             <div>
               <h2 className="h2">New player cards</h2>
-              <p className="muted">Codes are stored hashed, so they cannot be shown again. Print or download them now</p>
+              <p className="muted">Codes are stored hashed, so the server cannot show them again. These stay in this browser until you clear them, so print or download them first</p>
             </div>
             <div className="flex gap-2">
               <button className="btn-ghost btn-sm" onClick={() => downloadText("player-codes.csv", toCsv([["name", "code"], ...issued.map((i) => [i.name, formatCode(i.code)])]))}>Download CSV</button>
               <button className="btn btn-sm" onClick={() => window.print()}>Print cards</button>
+              {clearing
+                ? <button className="btn-ghost btn-sm" onClick={() => { setIssued([]); setClearing(false); }} onBlur={() => setClearing(false)}>Sure? Codes cannot be shown again</button>
+                : <button className="btn-ghost btn-sm" onClick={() => setClearing(true)}>Clear cards</button>}
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 print:grid-cols-2 print:gap-2">
-            {issued.map((i) => <CodeCard key={i.name} tournament={data.tournament.name} player={i.name} code={i.code} host={host} />)}
-          </div>
+          <CodeCarousel cards={issued} tournament={data.tournament.name} host={host} />
         </section>
       )}
       <div className="grid gap-4 print:hidden lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start">

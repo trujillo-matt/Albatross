@@ -48,6 +48,26 @@ export function fillTeeTimes(userIds: string[], firstLocal: string, gapMinutes: 
   return out;
 }
 
+/** Tee times for `count` groups: the first at `firstLocal`, each `gapMinutes` after the one before (local-input values). */
+export function groupTimes(firstLocal: string, gapMinutes: number, count: number): string[] {
+  if (!firstLocal || count < 1) return [];
+  const start = new Date(firstLocal).getTime();
+  return Array.from({ length: count }, (_, i) => toLocalInput(new Date(start + i * gapMinutes * 60000).toISOString()));
+}
+
+/**
+ * Moves players onto a new set of group times without losing their groups: whoever was in the nth old group goes to the
+ * nth new one, and anyone whose group no longer exists is left without a time.
+ */
+export function moveToNewTimes(values: Record<string, string>, oldTimes: string[], newTimes: string[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [uid, time] of Object.entries(values)) {
+    const at = oldTimes.indexOf(time);
+    out[uid] = time && at >= 0 ? newTimes[at] ?? "" : "";
+  }
+  return out;
+}
+
 /** A player's tee time for a session, if one is set. */
 export function teeTimeFor(teeTimes: TTeeTime[], sessionId: string, userId: string): string | null {
   return teeTimes.find((t) => t.session_id === sessionId && t.user_id === userId)?.tee_time ?? null;

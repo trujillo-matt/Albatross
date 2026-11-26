@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_TEAM_COLORS, fillTeeTimes, fromLocalInput, groupsForSession, teamColor, textOn, toLocalInput } from "./teams.ts";
+import { DEFAULT_TEAM_COLORS, fillTeeTimes, fromLocalInput, groupTimes, groupsForSession, moveToNewTimes, teamColor, textOn, toLocalInput } from "./teams.ts";
 
 test("a team with no colour gets the default for its side", () => {
   assert.equal(teamColor({ color: null, side: "A" }), DEFAULT_TEAM_COLORS.A);
@@ -44,4 +44,18 @@ test("news times read as 'x minutes ago'", () => {
   assert.equal(timeAgo("2026-11-22T09:00:00Z", now), "3 hours ago");
   assert.equal(timeAgo("2026-11-22T11:59:50Z", now), "just now");
   assert.equal(timeAgo("2026-11-21T10:00:00Z", now), "yesterday");
+});
+
+test("group times step from the first tee time", () => {
+  assert.deepEqual(groupTimes("2026-11-21T08:00", 10, 3), ["2026-11-21T08:00", "2026-11-21T08:10", "2026-11-21T08:20"]);
+  assert.deepEqual(groupTimes("", 10, 3), []);
+  assert.deepEqual(groupTimes("2026-11-21T08:00", 10, 0), []);
+});
+
+test("players keep their group when the times change", () => {
+  const values = { a: "2026-11-21T08:00", b: "2026-11-21T08:00", c: "2026-11-21T08:10", d: "" };
+  const moved = moveToNewTimes(values, ["2026-11-21T08:00", "2026-11-21T08:10"], ["2026-11-21T09:00", "2026-11-21T09:12"]);
+  assert.deepEqual(moved, { a: "2026-11-21T09:00", b: "2026-11-21T09:00", c: "2026-11-21T09:12", d: "" });
+  const fewer = moveToNewTimes(values, ["2026-11-21T08:00", "2026-11-21T08:10"], ["2026-11-21T09:00"]);
+  assert.equal(fewer.c, "");
 });

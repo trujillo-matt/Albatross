@@ -1,5 +1,7 @@
 import type { Config } from "tailwindcss";
 
+const v = (name: string) => `rgb(var(--c-${name}) / <alpha-value>)`;
+
 const config: Config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
@@ -20,11 +22,14 @@ const config: Config = {
     extend: {
       colors: {
         // The brand green is the iOS app's own (#243627). Everything else is a warm neutral.
-        brand: { DEFAULT: "#243627", hover: "#2f4733", light: "#e8efe9", accent: "#3f6b48", tint: "#9fc3a7" },
-        paper: "#f4efe4",
-        hair: "rgba(28, 25, 23, 0.10)",
-        warn: "#a16207",
-        bad: "#b91c1c",
+        // Every colour is a CSS variable (see globals.css) so dark mode swaps the whole palette in one place.
+        white: v("white"),
+        stone: Object.fromEntries([50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((n) => [n, v(`stone-${n}`)])),
+        brand: { DEFAULT: v("brand"), hover: v("brand-hover"), light: v("brand-light"), accent: v("brand-accent"), tint: v("brand-tint") },
+        paper: v("paper"),
+        hair: "rgb(var(--c-hair) / 0.10)",
+        warn: v("warn"),
+        bad: v("bad"),
       },
       fontFamily: {
         // Serif is for large titles and score numerals only. Everything else is sans.
