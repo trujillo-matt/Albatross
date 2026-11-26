@@ -117,6 +117,8 @@ struct BookletView: View {
         .toolbar { toolbarContent(round) }
         // An open booklet takes the whole screen; Back returns to the library.
         .toolbarVisibility(.hidden, for: .tabBar)
+        // While scoring, the clock and status sit along the top beside the camera and the paper keeps its full width.
+        .horizontalToolbarWhereAvailable()
         .sheet(isPresented: $showEditRound) {
             EditRoundSheet(round: round) { _ in }
         }
@@ -344,7 +346,6 @@ private struct BookletPages: View {
         switch bookletPage {
         case .cover:
             CourseCoverView(round: round, fillsSpace: true)
-                .padding(.horizontal, 12)
                 .padding(.top, insets.top + 12)
                 // Room under the cover for the hint.
                 .padding(.bottom, insets.bottom + 56)
@@ -370,7 +371,6 @@ private struct BookletPages: View {
                 .frame(width: spineEmphasis ? 2 : 1)
             paper(holes: 10...18, showsHeader: false)
         }
-        .clippedToHorizontalSafeArea()
     }
 
     private func paper(holes: ClosedRange<Int>, showsHeader: Bool) -> some View {
@@ -381,10 +381,10 @@ private struct BookletPages: View {
             holes: holes,
             round: round,
             activeHole: activeHole,
-            topInset: insets.top,
+            // The back and options buttons float over the top of a single page. Where the system reports no top inset
+            // (the Duo's outer screen), keep the banner clear of them. A spread has no room to spare.
+            topInset: isSpread ? insets.top : max(insets.top, 60),
             bottomReserve: bottomReserve,
-            // The sidebar button floats over the top corner of an open spread.
-            bannerInset: isSpread ? 56 : 0,
             opensCourse: showsHeader,
             paper: appearance.pageColor(for: round),
             ink: appearance.ink(for: round),
@@ -664,8 +664,6 @@ private struct PaperPage: View {
     let activeHole: Int
     let topInset: CGFloat
     let bottomReserve: CGFloat
-    /// Space kept clear at the sides of the banner, for the floating sidebar button.
-    let bannerInset: CGFloat
     let opensCourse: Bool
     let paper: Color
     let ink: Color
@@ -680,7 +678,6 @@ private struct PaperPage: View {
     var body: some View {
         VStack(spacing: 12) {
             banner
-                .padding(.horizontal, bannerInset)
             if holesAcross {
                 AcrossTable(round: round, holes: holes, activeHole: activeHole, ink: ink, tracks: tracks, onSelect: onSelect)
             } else {
@@ -691,7 +688,9 @@ private struct PaperPage: View {
         .padding(.top, topInset + 12)
         .padding(.bottom, bottomReserve)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(paper)
+        // The paper runs on under the vertical bar at the side of the screen, which floats over it. The table
+        // stays where it is, clear of the bar's buttons; only the paper colour reaches the edge.
+        .background { paper.ignoresSafeArea(.container, edges: .horizontal) }
         // The paper is always light, so its text and marks read the same in Dark Mode.
         .environment(\.colorScheme, .light)
         .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }

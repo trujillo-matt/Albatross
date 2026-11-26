@@ -47,6 +47,7 @@ struct ScorecardsView: View {
         NavigationStack(path: $path) {
             library
                 .navigationTitle("Scorecards")
+                .tabMenuToolbar()
                 .toolbar { toolbarContent }
                 .navigationDestination(for: RoundDestination.self) { destination in
                     destinationView(destination)
@@ -259,9 +260,11 @@ struct ScorecardsView: View {
                     .fill(Color.accentColor.opacity(0.12))
                     .frame(width: 88, height: 88)
                 Image("black-browed-albatross")
+                    .renderingMode(.template)
                     .resizable()
                     .scaledToFit()
                     .frame(width: 52, height: 52)
+                    .foregroundStyle(Color.accentColor)
             }
 
             VStack(spacing: 8) {

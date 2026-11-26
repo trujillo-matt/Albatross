@@ -60,6 +60,7 @@ struct ProfileView: View {
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Profile")
+            .tabMenuToolbar()
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button("Edit") { showEditProfile = true }

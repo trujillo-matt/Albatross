@@ -24,6 +24,7 @@ struct StatsView: View {
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Stats")
+            .tabMenuToolbar()
         }
     }
 

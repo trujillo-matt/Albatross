@@ -255,12 +255,13 @@ private struct WalletCard: View {
                         // White logo backgrounds disappear into the paper, as printed ink would.
                         .blendMode(.multiply)
                 } else {
+                    // No course logo: the bird as one flat colour, like the app icon, in the card's own ink.
                     Image("black-browed-albatross")
+                        .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 56, height: 56)
-                        .opacity(0.55)
-                        .blendMode(.multiply)
+                        .foregroundStyle(ink.opacity(0.45))
                 }
                 Spacer()
             }

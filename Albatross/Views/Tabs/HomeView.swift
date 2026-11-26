@@ -49,6 +49,7 @@ struct HomeView: View {
             .background(Color(uiColor: .systemGroupedBackground))
             .refreshable { await socialStore.loadFeed() }
             .navigationTitle("Clubhouse")
+            .tabMenuToolbar()
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showUserSearch = true }) {

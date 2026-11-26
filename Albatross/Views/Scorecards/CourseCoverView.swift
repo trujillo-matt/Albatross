@@ -209,12 +209,13 @@ struct CourseCoverView: View {
                 // White logo backgrounds disappear into the paper, as printed ink would.
                 .blendMode(.multiply)
         } else {
+            // No course logo: the bird as one flat colour, like the app icon, in the card's own ink.
             Image("black-browed-albatross")
+                .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
                 .frame(width: width * 0.3, height: width * 0.3)
-                .opacity(0.6)
-                .blendMode(.multiply)
+                .foregroundStyle(ink.opacity(0.45))
         }
     }
 

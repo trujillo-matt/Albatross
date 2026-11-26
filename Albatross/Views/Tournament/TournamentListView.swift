@@ -46,6 +46,7 @@ struct TournamentListView: View {
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Tournaments")
+            .tabMenuToolbar()
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button(action: { showNewTournament = true }) {

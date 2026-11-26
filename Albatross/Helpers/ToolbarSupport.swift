@@ -31,6 +31,18 @@ extension View {
         modifier(HorizontalSafeAreaClip())
     }
 
+    /// Keeps the toolbar in a bar along the top, with the clock and status beside the camera, instead of in the
+    /// vertical bar down the side (iOS 27.1). Used while scoring, where the paper needs the full width.
+    /// Earlier systems already have a top bar.
+    @ViewBuilder
+    func horizontalToolbarWhereAvailable() -> some View {
+        if #available(iOS 27.1, *) {
+            self.toolbarVerticalBehavior(.disabled)
+        } else {
+            self
+        }
+    }
+
     /// Presents a sheet from the trailing side when there is room (iOS 27), and as usual otherwise.
     @ViewBuilder
     func sidePlacementWhenWide(_ isWide: Bool) -> some View {

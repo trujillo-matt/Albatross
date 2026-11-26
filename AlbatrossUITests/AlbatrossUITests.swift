@@ -1,5 +1,26 @@
 import XCTest
 
+/// Opens a section of the app. A narrow screen has a tab bar; a wide one has a "Sections" menu button instead.
+/// The splash plays for a few seconds first, so this waits for whichever appears.
+@MainActor
+private func openSection(_ name: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+    let menu = app.buttons["Sections"].firstMatch
+    let tabButton = app.buttons[name].firstMatch
+    let deadline = Date().addingTimeInterval(25)
+    while !menu.exists && !tabButton.exists && Date() < deadline { Thread.sleep(forTimeInterval: 0.25) }
+    if menu.exists {
+        menu.tap()
+        let item = app.buttons[name].firstMatch
+        // The menu animates open; if the first tap landed too early, open it again once.
+        if !item.waitForExistence(timeout: 3) { menu.tap() }
+        XCTAssertTrue(item.waitForExistence(timeout: 5), "No \(name) in the sections menu", file: file, line: line)
+        item.tap()
+    } else {
+        XCTAssertTrue(tabButton.exists, "No \(name) tab or sections menu", file: file, line: line)
+        tabButton.tap()
+    }
+}
+
 /// These run against a Debug build, which skips sign-in and can seed one empty round.
 /// XCUITest cannot fold the device: set the posture in Device Hub before running.
 final class AlbatrossUITests: XCTestCase {
@@ -11,11 +32,6 @@ final class AlbatrossUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments += ["-uitest-seed-round"]
         app.launch()
-    }
-
-    /// The splash plays for a few seconds before the tabs appear.
-    private func tab(_ name: String) -> XCUIElement {
-        app.buttons[name].firstMatch
     }
 
     /// Taps a round's card. In the stack the card lifts first and "Open scorecard" opens it; on a shelf the tap opens it.
@@ -30,17 +46,15 @@ final class AlbatrossUITests: XCTestCase {
 
     @MainActor
     func testTabNavigation() throws {
-        XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
         for name in ["Clubhouse", "Stats", "Profile", "Scorecards"] {
-            tab(name).tap()
+            openSection(name, in: app)
             XCTAssertTrue(app.navigationBars[name].waitForExistence(timeout: 5), "\(name) did not appear")
         }
     }
 
     @MainActor
     func testNewRoundSheetOpensAndCancels() throws {
-        XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
-        tab("Scorecards").tap()
+        openSection("Scorecards", in: app)
         app.buttons["New Round"].firstMatch.tap()
         XCTAssertTrue(app.navigationBars["New Round"].waitForExistence(timeout: 5))
         app.buttons["Cancel"].firstMatch.tap()
@@ -49,8 +63,7 @@ final class AlbatrossUITests: XCTestCase {
 
     @MainActor
     func testEnterScoreInSeededRound() throws {
-        XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
-        tab("Scorecards").tap()
+        openSection("Scorecards", in: app)
 
         // Open the seeded booklet from its card.
         openRound(containing: "UI Test Course")
@@ -80,8 +93,7 @@ final class AlbatrossUITests: XCTestCase {
     /// Tapping a card lifts it and shows its details; Close puts it back.
     @MainActor
     func testCardLiftsAndCloses() throws {
-        XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
-        tab("Scorecards").tap()
+        openSection("Scorecards", in: app)
         let card = app.buttons.matching(NSPredicate(format: "label CONTAINS 'UI Test Course'")).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10))
         card.tap()
@@ -102,8 +114,7 @@ final class AlbatrossUITests: XCTestCase {
     /// The strip offers Triple and More, a double tap writes only one hole, and Undo takes a score back.
     @MainActor
     func testScoreEntryOptionsDoubleTapAndUndo() throws {
-        XCTAssertTrue(tab("Scorecards").waitForExistence(timeout: 20))
-        tab("Scorecards").tap()
+        openSection("Scorecards", in: app)
         openRound(containing: "UI Test Course")
         if app.staticTexts["Swipe to open"].waitForExistence(timeout: 3) {
             app.swipeLeft()
@@ -153,8 +164,7 @@ final class AlbatrossTournamentUITests: XCTestCase {
 
     @MainActor
     func testDemoTournamentOpens() throws {
-        XCTAssertTrue(app.buttons["Tournaments"].firstMatch.waitForExistence(timeout: 20))
-        app.buttons["Tournaments"].firstMatch.tap()
+        openSection("Tournaments", in: app)
 
         let card = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Reynolds Cup'")).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10), "The demo tournament is not on the shelf")
@@ -166,8 +176,7 @@ final class AlbatrossTournamentUITests: XCTestCase {
     /// Opens the live match and starts its scorecard: the booklet, not the old scorecard.
     @MainActor
     func testDemoMatchOpensBooklet() throws {
-        XCTAssertTrue(app.buttons["Tournaments"].firstMatch.waitForExistence(timeout: 20))
-        app.buttons["Tournaments"].firstMatch.tap()
+        openSection("Tournaments", in: app)
         let card = app.buttons.matching(NSPredicate(format: "label CONTAINS 'Reynolds Cup'")).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 10))
         card.tap()
@@ -204,8 +213,7 @@ final class AlbatrossSignInUITests: XCTestCase {
         continueButton.tap()
 
         // In the app without an account: the tabs are there and Profile offers sign-in.
-        XCTAssertTrue(app.buttons["Profile"].firstMatch.waitForExistence(timeout: 10), app.debugDescription)
-        app.buttons["Profile"].firstMatch.tap()
+        openSection("Profile", in: app)
         let signIn = app.buttons["Sign in to sync"].firstMatch
         XCTAssertTrue(signIn.waitForExistence(timeout: 8))
         signIn.tap()

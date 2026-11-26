@@ -103,10 +103,11 @@ struct CourseSearchView: View {
                         .fill(Color.accentColor.opacity(0.1))
                         .frame(width: 36, height: 36)
                     Image("black-browed-albatross")
+                        .renderingMode(.template)
                         .resizable()
                         .scaledToFit()
                         .frame(width: 20, height: 20)
-                        .opacity(0.6)
+                        .foregroundStyle(Color.accentColor.opacity(0.7))
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
