@@ -123,11 +123,7 @@ struct TournamentListView: View {
                 }) {
                     Text("Decline")
                         .appFont(.small)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color(uiColor: .systemFill))
-                        .clipShape(Capsule())
+                        .appButton(fill: Color(uiColor: .systemFill), foreground: .secondary, fullWidth: false, cornerRadius: AppSpacing.buttonHeight / 2)
                 }
                 .buttonStyle(.pressFeedback)
 
@@ -136,11 +132,7 @@ struct TournamentListView: View {
                 }) {
                     Text("Accept")
                         .appFont(.small, weight: .medium)
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.brandGreen)
-                        .clipShape(Capsule())
+                        .appButton(fill: Color.brandGreen, foreground: .white, fullWidth: false, cornerRadius: AppSpacing.buttonHeight / 2)
                 }
                 .buttonStyle(.pressFeedback)
             }
@@ -224,7 +216,7 @@ struct TournamentListView: View {
                 .appFont(.small, weight: .semibold)
                 .foregroundStyle(.tertiary)
         }
-        .padding(16)
+        .appListRowPadding()
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -244,10 +236,7 @@ struct TournamentListView: View {
             Button(action: { showNewTournament = true }) {
                 Text("Create a tournament")
                     .appFont(.small, weight: .medium)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .frame(minHeight: 44)
-                    .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .appButton(fill: Color.brandGreen, foreground: .white, fullWidth: false)
             }
             .buttonStyle(.pressFeedback)
         }

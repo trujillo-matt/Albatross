@@ -81,8 +81,14 @@ struct GroupScorecardView: View {
                         Text("\(unsynced.count) not saved yet")
                             .appFont(.small).foregroundStyle(.orange)
                         Spacer()
-                        Button("Retry") { Task { await flushUnsynced() } }
-                            .appFont(.small, weight: .semibold)
+                        Button {
+                            Task { await flushUnsynced() }
+                        } label: {
+                            Text("Retry")
+                                .appFont(.small, weight: .semibold)
+                                .frame(minHeight: AppSpacing.buttonHeight)
+                                .contentShape(Rectangle())
+                        }
                     }
                 }
                 if let errorMessage {
@@ -128,9 +134,7 @@ struct GroupScorecardView: View {
                 } label: {
                     Text(isBusy ? "Starting…" : "Start the group scorecards")
                         .appFont(.small, weight: .medium)
-                        .frame(maxWidth: .infinity).padding(.vertical, 14)
-                        .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .foregroundStyle(.white)
+                        .appButton(fill: Color.brandGreen, foreground: .white)
                 }
                 .buttonStyle(.pressFeedback)
                 .disabled(isBusy)
@@ -146,13 +150,21 @@ struct GroupScorecardView: View {
         let par = pars[min(hole, 17)]
         return VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Button { hole = max(0, hole - 1) } label: { Image(systemName: "chevron.backward") }
-                    .disabled(hole == 0)
+                Button { hole = max(0, hole - 1) } label: {
+                    Image(systemName: "chevron.backward")
+                        .frame(width: AppSpacing.buttonHeight, height: AppSpacing.buttonHeight)
+                        .contentShape(Rectangle())
+                }
+                .disabled(hole == 0)
                 Spacer()
                 Text("Hole \(hole + 1)  ·  Par \(par)").appFont(.large, weight: .semibold)
                 Spacer()
-                Button { hole = min(17, hole + 1) } label: { Image(systemName: "chevron.forward") }
-                    .disabled(hole == 17)
+                Button { hole = min(17, hole + 1) } label: {
+                    Image(systemName: "chevron.forward")
+                        .frame(width: AppSpacing.buttonHeight, height: AppSpacing.buttonHeight)
+                        .contentShape(Rectangle())
+                }
+                .disabled(hole == 17)
             }
 
             // Which card the next number goes to.
@@ -165,7 +177,7 @@ struct GroupScorecardView: View {
                             Text(value(c, hole).map(String.init) ?? "–")
                                 .appFont(.large, weight: .semibold).monospacedDigit()
                         }
-                        .padding(.horizontal, 12).padding(.vertical, 10)
+                        .appListRowPadding()
                         .background(i == cardIndex ? Color.brandGreen.opacity(0.15) : Color(uiColor: .secondarySystemGroupedBackground),
                                     in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
@@ -186,8 +198,12 @@ struct GroupScorecardView: View {
                     .buttonStyle(.pressFeedback)
                 }
             }
-            Button("Clear this hole") { enter(nil, card: card) }
-                .appFont(.small)
+            Button { enter(nil, card: card) } label: {
+                Text("Clear this hole")
+                    .appFont(.small)
+                    .frame(minHeight: AppSpacing.buttonHeight)
+                    .contentShape(Rectangle())
+            }
         }
         .padding(14)
         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -232,16 +248,20 @@ struct GroupScorecardView: View {
             } label: {
                 Text(isBusy ? "Submitting…" : "Finish and submit the group scorecards")
                     .appFont(.small, weight: .medium)
-                    .frame(maxWidth: .infinity).padding(.vertical, 14)
-                    .background(allFilled && unsynced.isEmpty ? Color.brandGreen : Color.gray.opacity(0.4),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .foregroundStyle(.white)
+                    .appButton(fill: allFilled && unsynced.isEmpty ? Color.brandGreen : Color.gray.opacity(0.4), foreground: .white)
             }
             .buttonStyle(.pressFeedback)
             .disabled(!allFilled || !unsynced.isEmpty || isBusy)
 
-            Button("Step down as scorer") { Task { await stepDown() } }
-                .appFont(.small).disabled(isBusy)
+            Button {
+                Task { await stepDown() }
+            } label: {
+                Text("Step down as scorer")
+                    .appFont(.small)
+                    .frame(minHeight: AppSpacing.buttonHeight)
+                    .contentShape(Rectangle())
+            }
+            .disabled(isBusy)
         }
     }
 

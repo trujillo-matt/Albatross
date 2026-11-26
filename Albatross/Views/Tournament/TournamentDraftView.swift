@@ -371,7 +371,7 @@ private struct CaptainVotePhase: View {
                         if isSubmittingVote {
                             ProgressView().tint(.white)
                         } else {
-                            Text("Submit Votes (\(selected.count)/2)")
+                            Text("Submit votes (\(selected.count)/2)")
                                 .appFont(.body, weight: .medium)
                         }
                     }
@@ -493,7 +493,7 @@ private struct SnakeDraftPhase: View {
         VStack(alignment: .leading, spacing: 0) {
             DraftPhaseBanner(
                 phase: "Phase 2",
-                title: "Snake Draft",
+                title: "Snake draft",
                 subtitle: allDrafted ? "All players have been drafted!" : "Captains take turns picking their teams."
             )
 
@@ -507,7 +507,7 @@ private struct SnakeDraftPhase: View {
             // Undrafted players — shown to the captain who is on the clock
             if !allDrafted {
                 if iAmOnClock {
-                    DraftSectionHeader(title: "Your Pick")
+                    DraftSectionHeader(title: "Your pick")
                         .padding(.horizontal, 20)
                         .padding(.bottom, 10)
 
@@ -668,8 +668,7 @@ private struct OverridePickRow: View {
                 teamButton(teamB, color: .blue)
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 8)
+        .appListRowPadding()
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }

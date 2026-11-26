@@ -184,13 +184,27 @@ struct TournamentSessionsView: View {
             if session.status == .lineup {
                 sitOutSection(session, matches: matches, tournament: t)
                 if canManage(t) {
-                    HStack {
-                        Button("Re-autofill") { run { try await tournamentStore.autofillSession(session) } }
-                            .buttonStyle(.bordered)
-                        Button("Open callouts") { run { try await tournamentStore.openCallouts(session) } }
-                            .buttonStyle(.borderedProminent)
+                    HStack(spacing: 12) {
+                        Button {
+                            run { try await tournamentStore.autofillSession(session) }
+                        } label: {
+                            Text("Re-autofill")
+                                .appFont(.body, weight: .medium)
+                                .appButton(fill: Color.accentColor.opacity(0.15), foreground: Color.accentColor)
+                        }
+                        .buttonStyle(.pressFeedback)
+
+                        Button {
+                            run { try await tournamentStore.openCallouts(session) }
+                        } label: {
+                            Text("Open callouts")
+                                .appFont(.body, weight: .medium)
+                                .appButton(fill: Color.brandGreen, foreground: .white)
+                        }
+                        .buttonStyle(.pressFeedback)
                     }
                     .disabled(isWorking)
+                    .opacity(isWorking ? 0.5 : 1)
                 }
                 Text("Tap two players on the same team to swap them. Callouts start when a captain opens them")
                     .appFont(.small)
@@ -266,8 +280,7 @@ struct TournamentSessionsView: View {
                     } label: {
                         Text(name(id, t))
                             .appFont(.body)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .frame(maxWidth: .infinity, minHeight: AppSpacing.buttonHeight)
                             .background(pickedPlayer == id ? Color.accentColor.opacity(0.25) : Color(uiColor: .tertiarySystemGroupedBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
@@ -283,8 +296,7 @@ struct TournamentSessionsView: View {
             } label: {
                 Text(unitName(units, t).isEmpty ? "TBD" : unitName(units, t))
                     .appFont(.body)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, minHeight: AppSpacing.buttonHeight)
                     .background(selected ? Color.accentColor.opacity(0.25) : Color(uiColor: .tertiarySystemGroupedBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
@@ -322,8 +334,7 @@ struct TournamentSessionsView: View {
                                 Text(player.profile?.displayName ?? "Player")
                             }
                                 .appFont(.body)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 8)
+                                .frame(maxWidth: .infinity, minHeight: AppSpacing.buttonHeight)
                                 .background(pickedPlayer == player.userID ? Color.accentColor.opacity(0.25) : Color(uiColor: .tertiarySystemGroupedBackground))
                                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
@@ -374,19 +385,30 @@ struct TournamentSessionsView: View {
                     .appFont(.small)
                     .foregroundStyle(.secondary)
             }
-            HStack {
-                Button("Call it out") {
+            let canPass = !isWorking && bothCaptainsHere(t)
+            let canCallOut = canPass && myUnit != nil && theirUnit != nil
+            HStack(spacing: 12) {
+                Button {
                     guard let mine = myUnit, let theirs = theirUnit else { return }
                     run { try await tournamentStore.makeCallout(session, myUnit: mine, theirUnit: theirs, asAdmin: false) }
+                } label: {
+                    Text("Call it out")
+                        .appFont(.body, weight: .medium)
+                        .appButton(fill: canCallOut ? Color.brandGreen : Color(uiColor: .systemFill), foreground: canCallOut ? .white : .secondary)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(myUnit == nil || theirUnit == nil || isWorking || !bothCaptainsHere(t))
+                .buttonStyle(.pressFeedback)
+                .disabled(!canCallOut)
 
-                Button("Pass") {
+                Button {
                     run { try await tournamentStore.passCallout(session, asAdmin: false) }
+                } label: {
+                    Text("Pass")
+                        .appFont(.body, weight: .medium)
+                        .appButton(fill: Color.accentColor.opacity(0.15), foreground: Color.accentColor)
+                        .opacity(canPass ? 1 : 0.5)
                 }
-                .buttonStyle(.bordered)
-                .disabled(isWorking || !bothCaptainsHere(t))
+                .buttonStyle(.pressFeedback)
+                .disabled(!canPass)
             }
         }
     }
