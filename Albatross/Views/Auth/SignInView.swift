@@ -106,20 +106,16 @@ struct SignInView: View {
 
                         // Primary action button
                         Button(action: submit) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(.white)
-                                    .frame(height: 54)
-
+                            Group {
                                 if authStore.isLoading {
                                     ProgressView()
                                         .tint(Color.brandGreen)
                                 } else {
-                                    Text(isSignUp ? "Create Account" : "Sign In")
+                                    Text(isSignUp ? "Create account" : "Sign in")
                                         .appFont(.body, weight: .semibold)
-                                        .foregroundStyle(Color.brandGreen)
                                 }
                             }
+                            .appButton(fill: Color.white, foreground: Color.brandGreen)
                         }
                         .disabled(!canSubmit || authStore.isLoading)
                         .opacity(canSubmit && !authStore.isLoading ? 1.0 : 0.5)
@@ -144,9 +140,11 @@ struct SignInView: View {
                         }
                         .appFont(.small)
                         .foregroundStyle(.white.opacity(0.6))
+                        .frame(maxWidth: .infinity, minHeight: AppSpacing.buttonHeight)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.pressFeedback)
-                    .padding(.top, 24)
+                    .padding(.top, 12)
 
                     VStack(spacing: 4) {
                         Button(action: onContinueWithoutAccount) {
