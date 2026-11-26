@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { calloutState, groupByDay, planToSessionRows, planTotals, playersPerSide, sameUnit, sessionMatchCount, sitOuts, sideOf } from "./sessions.ts";
+import { calloutState, groupByDay, planToSessionRows, planTotals, isPointsSplit, playersPerSide, rosterWarning, sameUnit, sessionMatchCount, sitOuts, sideOf } from "./sessions.ts";
 import type { TMatchup, TPlayer, TSession, TTeam } from "./types.ts";
 
 const session = (o: Partial<TSession>): TSession => ({
@@ -15,7 +15,7 @@ const match = (o: Partial<TMatchup>): TMatchup => ({
 test("players per side by format", () => {
   assert.equal(playersPerSide("match_play"), 1);
   assert.equal(playersPerSide("stroke_play"), 1);
-  for (const f of ["best_ball", "scramble", "alternate_shot"] as const) assert.equal(playersPerSide(f), 2);
+  for (const f of ["best_ball", "scramble", "alternate_shot", "shamble"] as const) assert.equal(playersPerSide(f), 2);
 });
 
 test("match count comes from the smaller roster; extras sit out", () => {
@@ -94,4 +94,36 @@ test("alternate shot is scored on one team card like scramble (lowest total wins
   const card = (n: number) => Array.from({ length: 18 }, () => n);
   assert.deepEqual(matchPoints("alternate_shot", [card(4)], [card(5)]), { a: 1, b: 0 });
   assert.deepEqual(matchPoints("alternate_shot", [card(5)], [card(5)]), { a: 0.5, b: 0.5 });
+});
+
+test("shamble is scored like best ball: lower of the two scores per hole, lowest total wins", async () => {
+  const { matchPoints } = await import("./scoring.ts");
+  const { isTeamCardFormat, cardOwners } = await import("./groupScoring.ts");
+  const card = (n: number) => Array.from({ length: 18 }, () => n);
+  // A has a 4 card and a 6 card (best 4 every hole = 72), B has two 5 cards (90)
+  assert.deepEqual(matchPoints("shamble", [card(4), card(6)], [card(5), card(5)]), { a: 1, b: 0 });
+  assert.deepEqual(matchPoints("shamble", [card(6), card(5)], [card(5), card(6)]), { a: 0.5, b: 0.5 });
+  assert.deepEqual(matchPoints("shamble", [card(5), card(5)], [card(4), card(7)]), { a: 0, b: 1 });
+  // one card per player, not one per side
+  assert.equal(isTeamCardFormat("shamble"), false);
+  const m = { match_type: "shamble", team_a_player_ids: ["a1", "a2"], team_b_player_ids: ["b1", "b2"] } as never;
+  assert.deepEqual(cardOwners(m), ["a1", "a2", "b1", "b2"]);
+});
+
+test("a roster outside 24 to 28 gets a warning, inside gets none", () => {
+  assert.equal(rosterWarning(24), null);
+  assert.equal(rosterWarning(26), null);
+  assert.equal(rosterWarning(28), null);
+  assert.match(rosterWarning(23) ?? "", /23 players.*1 more is needed/);
+  assert.match(rosterWarning(20) ?? "", /4 more are needed/);
+  assert.match(rosterWarning(30) ?? "", /30 players, 2 over the 28/);
+});
+
+test("a points split needs every match finished and level points", () => {
+  const done = (a: number, b: number) => ({ status: "complete" as const, points_team_a: a, points_team_b: b });
+  assert.equal(isPointsSplit([]), false);
+  assert.equal(isPointsSplit([done(1, 0), done(0, 1)]), true);
+  assert.equal(isPointsSplit([done(0.5, 0.5), done(1, 0), done(0, 1)]), true);
+  assert.equal(isPointsSplit([done(1, 0), done(1, 0)]), false);
+  assert.equal(isPointsSplit([done(1, 0), { status: "active" as const, points_team_a: 0, points_team_b: 0 }]), false);
 });

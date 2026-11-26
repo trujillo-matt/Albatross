@@ -7,7 +7,7 @@ export const MATCHUP_STATUS: Record<MatchupStatus, string> = {
   pending: "Pending", active: "In progress", complete: "Complete",
 };
 export const FORMAT: Record<MatchType, string> = {
-  scramble: "Scramble", best_ball: "Best ball", match_play: "Match play", stroke_play: "Stroke play", alternate_shot: "Alternate shot",
+  scramble: "Scramble", best_ball: "Best ball", match_play: "Match play", stroke_play: "Stroke play", alternate_shot: "Alternate shot", shamble: "Shamble",
 };
 export const SESSION_STATUS: Record<SessionStatus, string> = {
   pending: "Up next", lineup: "Lineup", callouts: "Callouts", locked: "Locked in", complete: "Complete",

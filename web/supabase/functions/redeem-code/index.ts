@@ -3,8 +3,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { cors, hashCode, json, randomPassword, sha256Hex } from "../_shared.ts";
 
-const MAX_FAILS = 10;           // failed attempts allowed per IP ...
-const WINDOW_MINUTES = 10;      // ... within this window
+// Failed attempts allowed per IP within the window. A group on one connection (a clubhouse, a hotel) shares an IP, so this has to
+// leave room for everyone mistyping a code a few times. It stays far too small to guess one: codes are 8 characters from 32
+// symbols (about 1.1e12), so 60 guesses per 10 minutes is a few thousand a day from one address.
+const MAX_FAILS = 60;
+const WINDOW_MINUTES = 10;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });

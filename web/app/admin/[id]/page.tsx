@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { callAdminFunction, useAdminSession } from "@/lib/useAdmin";
 import { useTournament } from "@/lib/useTournament";
 import { draftPickCount, orderedTeams } from "@/lib/draft";
-import type { RoundRow, TMatchup, TournamentData } from "@/lib/types";
+import type { RoundRow, TMatchup, TTeam, TournamentData } from "@/lib/types";
 import { FORMAT, shortDateTime } from "@/lib/labels";
 import { downloadText, toCsv } from "@/lib/csv";
 import { formatCode } from "@/lib/code";
@@ -14,7 +14,7 @@ import Standings from "@/components/Standings";
 import TeamStyle from "@/components/TeamStyle";
 import TeeTimesPanel from "@/components/TeeTimesPanel";
 import DayBoard from "@/components/DayBoard";
-import { courseForMatch } from "@/lib/sessions";
+import { courseForMatch, isPointsSplit, rosterWarning } from "@/lib/sessions";
 import AdminSignIn from "@/components/AdminSignIn";
 import CodeCard from "@/components/CodeCard";
 import Page from "@/components/Page";
@@ -160,6 +160,13 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
   const [codes, setCodes] = useState<CodeStatus[]>([]);
   const [issued, setIssued] = useState<{ name: string; code: string }[]>([]);
   const tid = data.tournament.id;
+  const [teamId, setTeamId] = useState("");
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [removeReason, setRemoveReason] = useState("");
+  const [removeBusy, setRemoveBusy] = useState(false);
+  const teams = orderedTeams(data.teams).filter((t): t is TTeam => !!t);
+  const onRoster = data.players.filter((p) => p.invite_status !== "declined");
+  const warning = rosterWarning(onRoster.filter((p) => p.invite_status === "accepted").length);
 
   const loadCodes = useCallback(async () => {
     const { data: rows } = await supabase.rpc("admin_code_status", { p_tournament: tid });
@@ -171,7 +178,7 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
     setBusy(true); setMsg(null);
     for (const n of names) {
       try {
-        const r = await callAdminFunction<{ user_id: string; code: string }>({ action: "create_player", tournament_id: tid, display_name: n });
+        const r = await callAdminFunction<{ user_id: string; code: string }>({ action: "create_player", tournament_id: tid, display_name: n, ...(teamId ? { team_id: teamId } : {}) });
         setIssued((x) => [...x, { name: n, code: r.code }]);
       } catch (e) { setMsg(`${n}: ${e instanceof Error ? e.message : "failed"}`); }
     }
@@ -188,11 +195,24 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
     try { await callAdminFunction({ action: "revoke_code", tournament_id: tid, user_id: userId }); loadCodes(); }
     catch (e) { setMsg(e instanceof Error ? e.message : "failed"); }
   };
-  const locked = data.tournament.status !== "setup";
+  const removePlayer = async (userId: string) => {
+    if (!removeReason.trim()) return;
+    setRemoveBusy(true); setMsg(null);
+    const { error } = await supabase.rpc("admin_remove_player", { p_tournament: tid, p_user: userId, p_reason: removeReason.trim() });
+    setRemoveBusy(false);
+    if (error) { setMsg(error.message); return; }
+    setRemoving(null); setRemoveReason("");
+    reload(); loadCodes();
+  };
+  // Players can be added and removed after the draft starts. Only a finished tournament is locked.
+  const status = data.tournament.status;
+  const locked = status === "complete";
+  const needsTeam = status === "active";
   const host = typeof window === "undefined" ? "" : window.location.host;
 
   return (
     <div className="space-y-7">
+      {warning && <p role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-warn ring-1 ring-hair print:hidden">{warning}</p>}
       {issued.length > 0 && (
         <section className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
@@ -216,16 +236,28 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
           <p className="muted">Each player gets an account and a login code. Put one name per line to add several</p>
           <textarea className="input" rows={4} aria-label="Player names, one per line" placeholder={"Jane Smith\nMike Jones"} value={bulk} onChange={(e) => setBulk(e.target.value)} />
           <input className="input" aria-label="A single player name" placeholder="Or a single name" value={name} onChange={(e) => setName(e.target.value)} />
-          <button className="btn w-full" disabled={busy || locked || !(name.trim() || bulk.trim())}
+          {status !== "setup" && (
+            <label className="label block">Team
+              <select className="input mt-1" value={teamId} onChange={(e) => setTeamId(e.target.value)} disabled={locked}>
+                {status === "draft" && <option value="">Undrafted pool</option>}
+                {needsTeam && <option value="">Choose a team</option>}
+                {teams.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </label>
+          )}
+          <button className="btn w-full" disabled={busy || locked || (needsTeam && !teamId) || !(name.trim() || bulk.trim())}
             onClick={() => create([...bulk.split("\n"), name].map((s) => s.trim()).filter(Boolean))}>
             {busy ? "Creating" : "Create players and codes"}
           </button>
-          {locked && <p className="muted">The roster is locked once the draft starts</p>}
+          {locked && <p className="muted">The tournament is finished, so the roster is closed</p>}
+          {status === "draft" && <p className="muted">A player added now joins the undrafted pool unless you choose a team</p>}
+          {needsTeam && <p className="muted">The draft is done: pick the team the new player joins</p>}
         </div>
         <div className="card overflow-hidden p-0">
           <ul className="rows">
-            {data.players.map((p) => {
+            {onRoster.map((p) => {
               const c = codes.find((x) => x.user_id === p.user_id);
+              const canRemove = p.invite_status === "accepted" && p.user_id !== data.tournament.creator_user_id;
               return (
                 <li key={p.id} className="row">
                   <div className="min-w-0">
@@ -238,11 +270,22 @@ function Roster({ data, reload, setMsg }: { data: TournamentData; reload: () => 
                         : <span>Signs in with email</span>}
                     </div>
                   </div>
-                  {c && (
-                    <div className="flex shrink-0 gap-2">
-                      <button className="btn-ghost btn-sm" onClick={() => regen(p.user_id, p.display_name)}>New code</button>
-                      {c.status === "active" && <button className="btn-ghost btn-sm" onClick={() => revoke(p.user_id)}>Revoke</button>}
-                    </div>
+                  <div className="flex shrink-0 flex-wrap justify-end gap-2">
+                    {c && <button className="btn-ghost btn-sm" onClick={() => regen(p.user_id, p.display_name)}>New code</button>}
+                    {c && c.status === "active" && <button className="btn-ghost btn-sm" onClick={() => revoke(p.user_id)}>Revoke</button>}
+                    {canRemove && <button className="btn-ghost btn-sm" onClick={() => { setRemoving(p.user_id); setRemoveReason(""); }}>Remove</button>}
+                  </div>
+                  {removing === p.user_id && (
+                    <form className="basis-full space-y-3 rounded-lg bg-stone-50 p-3 ring-1 ring-hair" onSubmit={(e) => { e.preventDefault(); removePlayer(p.user_id); }}>
+                      <label className="label block">Reason for removing {p.display_name}, saved to the audit log
+                        <input className="input mt-1" value={removeReason} onChange={(e) => setRemoveReason(e.target.value)} />
+                      </label>
+                      <p className="muted">A player in a match that has not finished has to be moved out of it first, with Edit matches on the Matches tab</p>
+                      <div className="flex gap-2">
+                        <button className="btn" type="submit" disabled={removeBusy || !removeReason.trim()}>Remove player</button>
+                        <button className="btn-ghost" type="button" onClick={() => setRemoving(null)}>Cancel</button>
+                      </div>
+                    </form>
                   )}
                 </li>
               );
@@ -431,13 +474,67 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [load]);
 
   const nameOf = (uid: string) => data.players.find((p) => p.user_id === uid)?.display_name ?? "Player";
-  const edit = async (r: RoundRow, hole: number) => {
-    const v = prompt(`New score for hole ${hole + 1} (leave blank to clear)`, String(r.scores[hole] ?? ""));
-    if (v === null) return;
-    const reason = prompt("Reason for this change (required, saved to the audit log)");
-    if (!reason) return;
-    const { error } = await supabase.rpc("admin_set_hole_score", { p_round: r.id, p_hole: hole + 1, p_strokes: v === "" ? null : Number(v), p_reason: reason });
-    if (error) setMsg(error.message); else load();
+  const teamName = (id: string) => data.teams.find((t) => t.id === id)?.name ?? "Team";
+  // A score edit is an inline form on the card: the new score and the reason, then Save. The database re-scores the match.
+  const [editing, setEditing] = useState<{ round: RoundRow & { matchup_id: string }; hole: number } | null>(null);
+  const [value, setValue] = useState("");
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const startEdit = (r: RoundRow & { matchup_id: string }, hole: number) => {
+    setEditing({ round: r, hole });
+    setValue(String(r.scores[hole] ?? ""));
+    setReason("");
+  };
+  const scoreOk = value === "" || (Number.isInteger(Number(value)) && Number(value) >= 1 && Number(value) <= 20);
+  const saveEdit = async () => {
+    if (!editing || !reason.trim() || !scoreOk) return;
+    setSaving(true);
+    const { error } = await supabase.rpc("admin_set_hole_score", { p_round: editing.round.id, p_hole: editing.hole + 1, p_strokes: value === "" ? null : Number(value), p_reason: reason.trim() });
+    setSaving(false);
+    if (error) { setMsg(error.message); return; }
+    setMsg(null);
+    setEditing(null);
+    load();
+    reload();
+  };
+  // An exact points split can be settled by one extra singles match: pick a player from each team.
+  const split = isPointsSplit(data.matchups);
+  const lastMatch = data.matchups.reduce<TMatchup | null>((best, m) => (!best || m.matchup_number > best.matchup_number ? m : best), null);
+  const playersOn = (teamId: string | undefined) => data.players.filter((p) => p.invite_status === "accepted" && p.team_id === teamId);
+  const [tieOpen, setTieOpen] = useState(false);
+  const [tieA, setTieA] = useState("");
+  const [tieB, setTieB] = useState("");
+  const [tieReason, setTieReason] = useState("");
+  const [tieBusy, setTieBusy] = useState(false);
+  const addTiebreak = async () => {
+    if (!tieA || !tieB || !tieReason.trim()) return;
+    setTieBusy(true);
+    const { error } = await supabase.rpc("admin_add_tiebreak", { p_tournament: data.tournament.id, p_user_a: tieA, p_user_b: tieB, p_reason: tieReason.trim() });
+    setTieBusy(false);
+    if (error) { setMsg(error.message); return; }
+    setMsg(null); setTieOpen(false); setTieA(""); setTieB(""); setTieReason("");
+    reload();
+  };
+  // A result set by hand (forfeit, no-show, rainout), or taken back to the cards. Inline form, reason required, audited.
+  const [resultForm, setResultForm] = useState<{ matchId: string; mode: "set" | "clear" } | null>(null);
+  const [rKind, setRKind] = useState("forfeit");
+  const [rOutcome, setROutcome] = useState<"a" | "b" | "half" | "none">("a");
+  const [rReason, setRReason] = useState("");
+  const [rSaving, setRSaving] = useState(false);
+  const openResultForm = (matchId: string, mode: "set" | "clear") => { setResultForm({ matchId, mode }); setRKind("forfeit"); setROutcome("a"); setRReason(""); };
+  const POINTS = { a: [1, 0], b: [0, 1], half: [0.5, 0.5], none: [0, 0] } as const;
+  const saveResult = async () => {
+    if (!resultForm || !rReason.trim()) return;
+    setRSaving(true);
+    const { error } = resultForm.mode === "set"
+      ? await supabase.rpc("admin_set_result", { p_matchup: resultForm.matchId, p_points_a: POINTS[rOutcome][0], p_points_b: POINTS[rOutcome][1], p_kind: rKind, p_reason: rReason.trim() })
+      : await supabase.rpc("admin_clear_result", { p_matchup: resultForm.matchId, p_reason: rReason.trim() });
+    setRSaving(false);
+    if (error) { setMsg(error.message); return; }
+    setMsg(null);
+    setResultForm(null);
+    load();
+    reload();
   };
   const assignScorer = async (mid: string, uid: string) => {
     const { error } = await supabase.rpc("set_scorer", { p_matchup: mid, p_scorer: uid || null });
@@ -463,6 +560,35 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
 
   return (
     <div className="space-y-4">
+      {split && lastMatch && (
+        <div className="card space-y-3">
+          <p>The points are level. A tiebreak is one extra singles match, match play, one player from each team.</p>
+          {!tieOpen && <button className="btn" onClick={() => setTieOpen(true)}>Add a tiebreak match</button>}
+          {tieOpen && (
+            <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); addTiebreak(); }}>
+              <label className="label block">{teamName(lastMatch.team_a_id)} player
+                <select className="input mt-1" value={tieA} onChange={(e) => setTieA(e.target.value)}>
+                  <option value="">Choose a player</option>
+                  {playersOn(lastMatch.team_a_id).map((p) => <option key={p.user_id} value={p.user_id}>{p.display_name}</option>)}
+                </select>
+              </label>
+              <label className="label block">{teamName(lastMatch.team_b_id)} player
+                <select className="input mt-1" value={tieB} onChange={(e) => setTieB(e.target.value)}>
+                  <option value="">Choose a player</option>
+                  {playersOn(lastMatch.team_b_id).map((p) => <option key={p.user_id} value={p.user_id}>{p.display_name}</option>)}
+                </select>
+              </label>
+              <label className="label block">Reason, saved to the audit log
+                <input className="input mt-1" value={tieReason} onChange={(e) => setTieReason(e.target.value)} />
+              </label>
+              <div className="flex gap-2">
+                <button className="btn" type="submit" disabled={tieBusy || !tieA || !tieB || !tieReason.trim()}>Add tiebreak</button>
+                <button className="btn-ghost" type="button" onClick={() => setTieOpen(false)}>Cancel</button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         <button className="btn-ghost btn-sm" onClick={exportResults}>Export results CSV</button>
         <button className="btn-ghost btn-sm" onClick={exportCards}>Export scorecards CSV</button>
@@ -472,8 +598,45 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
           <div key={m.id} className="card space-y-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="h2">Match <span className="tnum">{m.matchup_number}</span></h2>
-              <button className="btn-ghost btn-sm" onClick={() => recompute(m.id)}>Recompute result</button>
+              <div className="flex flex-wrap gap-2">
+                {m.result_override
+                  ? <button className="btn-ghost btn-sm" onClick={() => openResultForm(m.id, "clear")}>Clear set result</button>
+                  : <>
+                      <button className="btn-ghost btn-sm" onClick={() => recompute(m.id)}>Recompute result</button>
+                      <button className="btn-ghost btn-sm" onClick={() => openResultForm(m.id, "set")}>Set result</button>
+                    </>}
+              </div>
             </div>
+            {m.result_override && <p className="muted">The result was set by an admin: <span className="tnum">{m.points_team_a}</span> to <span className="tnum">{m.points_team_b}</span>. Scores do not change it</p>}
+            {resultForm?.matchId === m.id && (
+              <form className="space-y-3 rounded-lg bg-stone-50 p-3 ring-1 ring-hair" onSubmit={(e) => { e.preventDefault(); saveResult(); }}>
+                <div className="label">{resultForm.mode === "set" ? "Set the result by hand" : "Take the result back to the scorecards"}</div>
+                {resultForm.mode === "set" && (
+                  <div className="flex flex-wrap gap-3">
+                    <label className="label block">Why
+                      <select className="input mt-1" value={rKind} onChange={(e) => setRKind(e.target.value)}>
+                        <option value="forfeit">Forfeit</option><option value="no_show">No-show</option><option value="rainout">Rainout</option><option value="other">Other</option>
+                      </select>
+                    </label>
+                    <label className="label block min-w-[14rem] flex-1">Points
+                      <select className="input mt-1" value={rOutcome} onChange={(e) => setROutcome(e.target.value as "a" | "b" | "half" | "none")}>
+                        <option value="a">{teamName(m.team_a_id)} wins, 1 to 0</option>
+                        <option value="b">{teamName(m.team_b_id)} wins, 0 to 1</option>
+                        <option value="half">Halved, 0.5 each</option>
+                        <option value="none">No points for either team</option>
+                      </select>
+                    </label>
+                  </div>
+                )}
+                <label className="label block">Reason, saved to the audit log
+                  <input className="input mt-1" value={rReason} onChange={(e) => setRReason(e.target.value)} />
+                </label>
+                <div className="flex gap-2">
+                  <button className="btn" type="submit" disabled={rSaving || !rReason.trim()}>{resultForm.mode === "set" ? "Set result" : "Clear set result"}</button>
+                  <button className="btn-ghost" type="button" onClick={() => setResultForm(null)}>Cancel</button>
+                </div>
+              </form>
+            )}
             {m.status === "active" && (
               <label className="flex items-center justify-between gap-3 text-sm text-stone-600">
                 <span>Keeps score for the group</span>
@@ -493,12 +656,31 @@ function Scores({ data, setMsg, reload }: { data: TournamentData; setMsg: (m: st
                 </div>
                 <div className="grid grid-cols-9 gap-1 text-center">
                   {r.scores.map((s, i) => (
-                    <button key={i} aria-label={`Edit hole ${i + 1}`} onClick={() => edit(r, i)}
-                      className="rounded-md bg-stone-100 py-1 transition-colors duration-150 ease-out hover:bg-stone-200">
+                    <button key={i} aria-label={`Edit hole ${i + 1}`} aria-pressed={editing?.round.id === r.id && editing.hole === i} onClick={() => startEdit(r, i)}
+                      className="rounded-md bg-stone-100 py-1 transition-colors duration-150 ease-out hover:bg-stone-200 aria-pressed:bg-brand-light">
                       <div className="num text-xs text-stone-500">{i + 1}</div><div className="num">{s ?? "·"}</div>
                     </button>
                   ))}
                 </div>
+                {editing?.round.id === r.id && (
+                  <form className="space-y-3 rounded-lg bg-stone-50 p-3 ring-1 ring-hair" onSubmit={(e) => { e.preventDefault(); saveEdit(); }}>
+                    <div className="label">Hole <span className="tnum">{editing.hole + 1}</span>, {nameOf(r.user_id)}</div>
+                    <div className="flex flex-wrap gap-3">
+                      <label className="label block">New score
+                        <input className="input mt-1 w-28" type="number" inputMode="numeric" min={1} max={20} placeholder="Blank clears" value={value} onChange={(e) => setValue(e.target.value)} />
+                      </label>
+                      <label className="label block min-w-[12rem] flex-1">Reason, saved to the audit log
+                        <input className="input mt-1" value={reason} onChange={(e) => setReason(e.target.value)} />
+                      </label>
+                    </div>
+                    {!scoreOk && <p role="alert" className="text-sm text-bad">A score is a whole number from 1 to 20</p>}
+                    <p className="muted">The match result is re-scored when you save</p>
+                    <div className="flex gap-2">
+                      <button className="btn" type="submit" disabled={saving || !reason.trim() || !scoreOk}>Save change</button>
+                      <button className="btn-ghost" type="button" onClick={() => setEditing(null)}>Cancel</button>
+                    </div>
+                  </form>
+                )}
               </div>
             ))}
             {!rounds.some((r) => r.matchup_id === m.id) && <p className="muted">No scorecards started</p>}

@@ -5,6 +5,7 @@ import type { MatchType, TMatchup } from "./types";
 export const DEFAULT_PARS = [4, 4, 3, 4, 5, 3, 4, 4, 5, 4, 3, 4, 5, 4, 3, 4, 5, 4];
 
 /** Scramble and alternate shot play one ball per side, so the group has one card per side, not per player. */
+// Shamble is not here: after the team picks a drive every player plays their own ball, so each keeps a card.
 export const isTeamCardFormat = (t: MatchType) => t === "scramble" || t === "alternate_shot";
 
 type Sides = Pick<TMatchup, "match_type" | "team_a_player_ids" | "team_b_player_ids">;
@@ -62,6 +63,21 @@ export function nextEmptyCell(cards: { scores: (number | null)[] }[], hole: numb
     if (cards[c].scores[h] === null) return { hole: h, card: c };
   }
   return null;
+}
+
+/** Where a group's scorecards are kept on the device so a reload with no signal still shows them. */
+export const cardsCacheKey = (groupKey: string) => `albatross-group-cards:${groupKey}`;
+
+/** Lays the scores that have not reached the server yet over the cards, so nothing the scorer entered goes missing from view. */
+export function applyPending<T extends { id: string; scores: (number | null)[] }>(cards: T[], pending: { roundId: string; hole: number; strokes: number | null }[]): T[] {
+  if (pending.length === 0) return cards;
+  return cards.map((card) => {
+    const mine = pending.filter((p) => p.roundId === card.id);
+    if (mine.length === 0) return card;
+    const scores = [...card.scores];
+    for (const p of mine) scores[p.hole - 1] = p.strokes;
+    return { ...card, scores };
+  });
 }
 
 export const groupFilled = (cards: { scores: (number | null)[] }[]) => cards.reduce((s, c) => s + c.scores.filter((v) => v !== null).length, 0);

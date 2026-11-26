@@ -47,6 +47,8 @@ export function strokePlayPoints(a: Scores[], b: Scores[]): Points {
 export function matchPoints(type: MatchType, a: Scores[], b: Scores[]): Points {
   if (type === "match_play") return matchPlayPoints(a, b);
   if (type === "stroke_play") return strokePlayPoints(a, b);
+  // Best ball, and shamble (each player finishes the hole with their own ball after the team picks a drive), take the lower score per hole.
+  // Scramble and alternate shot arrive as one card per side, so the same rule reads that one card.
   return bestBallPoints(a, b);
 }
 

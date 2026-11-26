@@ -16,6 +16,9 @@ enum TournamentMatchType: String, Codable, CaseIterable {
     case matchPlay  = "match_play"
     case strokePlay = "stroke_play"
     case alternateShot = "alternate_shot"
+    /// Everyone tees off, the team picks the best drive, then each player finishes the hole with their own ball.
+    /// Each player keeps a card and the team scores as best ball.
+    case shamble = "shamble"
 
     var displayName: String {
         switch self {
@@ -24,6 +27,7 @@ enum TournamentMatchType: String, Codable, CaseIterable {
         case .matchPlay:  return "Match Play"
         case .strokePlay: return "Stroke Play"
         case .alternateShot: return "Alternate Shot"
+        case .shamble: return "Shamble"
         }
     }
 }
@@ -378,7 +382,7 @@ func calculateMatchPoints(
 ) -> (teamA: Double, teamB: Double) {
     switch matchType {
     case .matchPlay:            return calculateMatchPlayPoints(teamARounds: teamARounds, teamBRounds: teamBRounds)
-    case .bestBall, .scramble, .alternateShot: return calculateBestBallPoints(teamARounds: teamARounds, teamBRounds: teamBRounds)
+    case .bestBall, .scramble, .alternateShot, .shamble: return calculateBestBallPoints(teamARounds: teamARounds, teamBRounds: teamBRounds)
     case .strokePlay:           return calculateStrokePlayPoints(teamARounds: teamARounds, teamBRounds: teamBRounds)
     }
 }
@@ -400,7 +404,7 @@ extension TournamentMatchType {
     var playersPerSide: Int {
         switch self {
         case .matchPlay, .strokePlay: return 1
-        case .bestBall, .scramble, .alternateShot: return 2
+        case .bestBall, .scramble, .alternateShot, .shamble: return 2
         }
     }
 
@@ -554,7 +558,7 @@ struct LiveMatchStatus: Equatable {
         switch matchType {
         case .matchPlay:
             return LiveMatchStatus(holesPlayed: played, lead: holesWonByA - holesWonByB)
-        case .strokePlay, .bestBall, .scramble, .alternateShot:
+        case .strokePlay, .bestBall, .scramble, .alternateShot, .shamble:
             return LiveMatchStatus(holesPlayed: played, lead: strokesB - strokesA)
         }
     }

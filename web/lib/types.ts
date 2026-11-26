@@ -1,5 +1,5 @@
 export type TournamentStatus = "setup" | "draft" | "active" | "complete";
-export type MatchType = "scramble" | "best_ball" | "match_play" | "stroke_play" | "alternate_shot";
+export type MatchType = "scramble" | "best_ball" | "match_play" | "stroke_play" | "alternate_shot" | "shamble";
 export type SessionStatus = "pending" | "lineup" | "callouts" | "locked" | "complete";
 export type MatchupStatus = "pending" | "active" | "complete";
 
@@ -30,6 +30,8 @@ export interface TMatchup {
   session_id?: string | null; called_by_team_id?: string | null; called_at?: string | null;
   /** The player keeping score for the whole group, or null when each player scores their own card. */
   scorer_user_id?: string | null;
+  /** True when an admin set the result by hand (forfeit, no-show, rainout); scoring leaves it alone. Migration 019. */
+  result_override?: boolean;
 }
 export interface TSession {
   id: string; tournament_id: string; day_number: number; session_number: number; label: string | null;

@@ -166,6 +166,7 @@ export default function MatchPage() {
         {matchup.status !== "pending" && mine && loaded && !round && !matchup.scorer_user_id && (
           <div className="space-y-3">
             {(matchup.match_type === "scramble" || matchup.match_type === "alternate_shot") && <p className="muted">{matchup.match_type === "scramble" ? "Scramble" : "Alternate shot"}: your team plays one ball, so only one teammate needs to enter the team scorecard</p>}
+            {matchup.match_type === "shamble" && <p className="muted">Shamble: your team picks the best drive, then each player plays their own ball and keeps their own scorecard. The lower score of the two counts on each hole</p>}
             <button className="btn w-full" onClick={startCard}>Start scorecard</button>
           </div>
         )}

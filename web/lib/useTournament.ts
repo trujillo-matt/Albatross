@@ -7,11 +7,17 @@ export function useUserId() {
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => { setUserId(data.user?.id ?? null); setReady(true); });
+    // The saved session, not a call to the server, so the page still knows who you are with no signal. The database checks every write.
+    supabase.auth.getSession().then(({ data }) => { setUserId(data.session?.user?.id ?? null); setReady(true); });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setUserId(s?.user?.id ?? null));
     return () => sub.subscription.unsubscribe();
   }, []);
   return { userId, ready };
+}
+
+const savedKey = (id: string) => `albatross-tournament:${id}`;
+function readSaved(id: string): TournamentData | null {
+  try { return JSON.parse(localStorage.getItem(savedKey(id)) ?? "null"); } catch { return null; }
 }
 
 /** Loads one tournament with all sub-tables and refreshes on any realtime change. */
@@ -32,7 +38,13 @@ export function useTournament(id: string) {
       q("tournament_sessions").order("day_number").order("session_number"),
       q("tournament_tee_times"),   // migration 013; an older database simply has none
     ]);
-    if (t.error) { setError(t.error.message); return; }
+    if (t.error) {
+      // No signal: show the copy saved the last time this tournament loaded, so scoring can go on and queue.
+      const saved = /fetch|network|timeout|load failed/i.test(t.error.message) ? readSaved(id) : null;
+      if (saved) { setError(null); setData(saved); return; }
+      setError(t.error.message);
+      return;
+    }
     const rawPlayers = (players.data ?? []) as Omit<TPlayer, "display_name">[];
     const ids = rawPlayers.map((p) => p.user_id);
     const profs = ids.length
@@ -40,7 +52,7 @@ export function useTournament(id: string) {
       : { data: [] as { id: string; display_name: string }[] };
     const names = new Map((profs.data ?? []).map((p) => [p.id, p.display_name]));
     setError(null);
-    setData({
+    const loaded: TournamentData = {
       tournament: t.data,
       courses: courses.data ?? [],
       players: rawPlayers.map((p) => ({ ...p, display_name: names.get(p.user_id) ?? "Player" })),
@@ -49,7 +61,9 @@ export function useTournament(id: string) {
       votes: votes.data ?? [],
       sessions: sessions.data ?? [],
       teeTimes: teeTimes.data ?? [],
-    });
+    };
+    setData(loaded);
+    try { localStorage.setItem(savedKey(id), JSON.stringify(loaded)); } catch { /* storage unavailable */ }
   }, [id]);
 
   useEffect(() => {

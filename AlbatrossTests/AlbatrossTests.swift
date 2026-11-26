@@ -63,3 +63,29 @@ struct ObservableStoreTests {
         #expect(store.results.isEmpty)                       // clearing the field clears the results at once
     }
 }
+
+struct ShambleFormatTests {
+
+    @Test func shambleIsAPairsFormatWithACardPerPlayer() {
+        #expect(TournamentMatchType.shamble.playersPerSide == 2)
+        #expect(TournamentMatchType.shamble.displayName == "Shamble")
+        #expect(TournamentMatchType.shamble.sideDescription == "Pairs")
+    }
+
+    @Test func theDatabaseValueDecodes() throws {
+        let decoded = try JSONDecoder().decode([TournamentMatchType].self, from: Data(#"["shamble","best_ball"]"#.utf8))
+        #expect(decoded == [.shamble, .bestBall])
+    }
+
+    @Test func shambleLiveStatusCountsStrokesLikeBestBall() {
+        func round(_ strokes: Int) -> Round {
+            var round = Round(courseName: "Test")
+            round.scores = Array(repeating: strokes, count: 18).map { Optional($0) }
+            return round
+        }
+        // A's best score each hole is 4, B's is 5: A leads by 18 strokes over 18 holes.
+        let status = LiveMatchStatus.from(teamARounds: [round(4), round(6)], teamBRounds: [round(5), round(5)], matchType: .shamble)
+        #expect(status.holesPlayed == 18)
+        #expect(status.lead == 18)
+    }
+}

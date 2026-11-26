@@ -1,11 +1,12 @@
 // POST { action, tournament_id, ... } with the admin's normal session token.
-//   create_player     { display_name }  -> { user_id, code }
+//   create_player     { display_name, team_id? }  -> { user_id, code }   (after the draft starts a team is needed; during the draft it is optional)
 //   regenerate_code   { user_id }       -> { code }
 //   revoke_code       { user_id }       -> { ok: true }
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { cors, generateCode, hashCode, json, randomPassword } from "../_shared.ts";
 
-const CODE_TTL_DAYS = Number(Deno.env.get("CODE_TTL_DAYS") ?? "14");
+// A code lasts about two months: long enough for a trip planned well ahead. A CODE_TTL_DAYS secret on the project overrides this.
+const CODE_TTL_DAYS = Number(Deno.env.get("CODE_TTL_DAYS") ?? "60");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -21,7 +22,7 @@ Deno.serve(async (req) => {
   const me = who.user?.id;
   if (!me) return json({ error: "Sign in as an admin." }, 401);
 
-  let body: { action?: string; tournament_id?: string; display_name?: string; user_id?: string };
+  let body: { action?: string; tournament_id?: string; display_name?: string; user_id?: string; team_id?: string };
   try { body = await req.json(); } catch { return json({ error: "Invalid request" }, 400); }
   const tid = body.tournament_id;
   if (!tid) return json({ error: "tournament_id required" }, 400);
@@ -52,7 +53,19 @@ Deno.serve(async (req) => {
     if (body.action === "create_player") {
       const name = (body.display_name ?? "").trim();
       if (!name) return json({ error: "display_name required" }, 400);
-      if (t.status !== "setup") return json({ error: "The roster is locked once the draft starts." }, 409);
+      if (t.status === "complete") return json({ error: "The tournament is finished." }, 409);
+
+      // After the draft starts the new player joins a team (during the draft they may also join the undrafted pool).
+      let teamId: string | null = null;
+      if (t.status !== "setup") {
+        if (body.team_id) {
+          const { data: team } = await admin.from("tournament_teams").select("id").eq("id", body.team_id).eq("tournament_id", tid).maybeSingle();
+          if (!team) return json({ error: "That team is not in this tournament." }, 400);
+          teamId = team.id;
+        } else if (t.status === "active") {
+          return json({ error: "Choose a team for the new player." }, 400);
+        }
+      }
 
       const created = await admin.auth.admin.createUser({
         email: `${crypto.randomUUID()}@players.albatross.invalid`,
@@ -64,7 +77,7 @@ Deno.serve(async (req) => {
       try {
         const p = await admin.from("profiles").upsert({ id: userId, display_name: name, is_managed: true, managed_by: me });
         if (p.error) throw new Error(p.error.message);
-        const tp = await admin.from("tournament_players").insert({ tournament_id: tid, user_id: userId, invite_status: "accepted", is_admin: false });
+        const tp = await admin.from("tournament_players").insert({ tournament_id: tid, user_id: userId, invite_status: "accepted", is_admin: false, team_id: teamId });
         if (tp.error) throw new Error(tp.error.message);
         return json({ user_id: userId, code: await issueCode(userId) });
       } catch (e) {

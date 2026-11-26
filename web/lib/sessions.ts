@@ -1,9 +1,28 @@
 import type { MatchType, SessionStatus, TMatchup, TPlayer, TSession, TTeam, TournamentData } from "./types";
 import { orderedTeams } from "./draft.ts";
 
-/** Players on each side of one match: singles formats 1, pairs formats 2. Mirrors players_per_side() in migration 008. */
+/** Players on each side of one match: singles formats 1, pairs formats 2 (best ball, scramble, alternate shot, shamble). Mirrors players_per_side() in migrations 008 and 017. */
 export function playersPerSide(type: MatchType): number {
   return type === "match_play" || type === "stroke_play" ? 1 : 2;
+}
+
+/** True when every match is finished and both teams have the same points, so a tiebreak match can settle it. */
+export function isPointsSplit(matchups: Pick<TMatchup, "status" | "points_team_a" | "points_team_b">[]): boolean {
+  if (matchups.length === 0 || matchups.some((m) => m.status !== "complete")) return false;
+  const a = matchups.reduce((sum, m) => sum + (m.points_team_a ?? 0), 0);
+  const b = matchups.reduce((sum, m) => sum + (m.points_team_b ?? 0), 0);
+  return a === b;
+}
+
+/** A full field for the trip. Outside this the admin sees a warning; nothing is blocked. */
+export const ROSTER_MIN = 24;
+export const ROSTER_MAX = 28;
+
+/** A sentence for the admin when the roster is outside the expected field, otherwise null. */
+export function rosterWarning(count: number): string | null {
+  if (count < ROSTER_MIN) return `The roster has ${count} players. A full field is ${ROSTER_MIN} to ${ROSTER_MAX}, so ${ROSTER_MIN - count} more ${ROSTER_MIN - count === 1 ? "is" : "are"} needed`;
+  if (count > ROSTER_MAX) return `The roster has ${count} players, ${count - ROSTER_MAX} over the ${ROSTER_MAX} a full field allows`;
+  return null;
 }
 
 /** Matches a session makes from the rosters: floor(smaller team / players per side). Extras sit out. */

@@ -2,9 +2,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import type { RoundRow, TMatchup, TournamentData } from "@/lib/types";
-import { enqueue, flush, pendingCount } from "@/lib/scoreQueue";
+import { enqueue, flush, pendingCount, pendingScores } from "@/lib/scoreQueue";
 import { findCourse, loadCourses } from "@/lib/courses";
-import { cardTotal, DEFAULT_PARS, foursomeOf, groupComplete, groupFilled, groupHasAllCards, isTeamCardFormat, matchOf, nextEmptyCell, orderCards, sideOf } from "@/lib/groupScoring";
+import { applyPending, cardsCacheKey, cardTotal, DEFAULT_PARS, foursomeOf, groupComplete, groupFilled, groupHasAllCards, isTeamCardFormat, matchOf, nextEmptyCell, orderCards, sideOf } from "@/lib/groupScoring";
 import { CaptainBadge, CheckIcon, Dot } from "./ui";
 
 interface Props {
@@ -31,6 +31,8 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
   const iAmScorer = scorerId === me;
   const [cards, setCards] = useState<RoundRow[]>([]);
   const [loaded, setLoaded] = useState(false);
+  /** True while the cards on screen are the copy saved on this device, because the server could not be reached. */
+  const [offline, setOffline] = useState(false);
   const [hole, setHole] = useState(0);
   const [active, setActive] = useState(0);
   const [pending, setPending] = useState(0);
@@ -46,12 +48,36 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
   const sub = (uid: string) => { const m = matchFor(uid); return isTeamCardFormat(matchup.match_type)
     ? (sideOf(m, uid) === "A" ? m.team_a_player_ids : m.team_b_player_ids).map(nameOf).join(", ") : teamOf(uid); };
 
+  // The scorecards are kept on this device too, so a reload with no signal still shows them and scoring can go on.
+  const saveCards = useCallback((list: RoundRow[]) => {
+    try { localStorage.setItem(cardsCacheKey(groupKey), JSON.stringify(list)); } catch { /* storage unavailable */ }
+  }, [groupKey]);
+  const savedCards = useCallback((): RoundRow[] => {
+    try { return JSON.parse(localStorage.getItem(cardsCacheKey(groupKey)) ?? "[]"); } catch { return []; }
+  }, [groupKey]);
+
   const load = useCallback(async () => {
-    const { data: rs } = await supabase.from("rounds").select("*").in("matchup_id", groupKey.split(","));
-    setCards(orderCards(group, (rs as RoundRow[]) ?? []));
+    const { data: rs, error } = await supabase.from("rounds").select("*").in("matchup_id", groupKey.split(","));
+    if (error || !rs) {
+      const saved = savedCards();
+      if (saved.length) { setCards(applyPending(saved, pendingScores())); setOffline(true); }
+      setLoaded(true);
+      return;
+    }
+    const fresh = orderCards(group, rs as RoundRow[]);
+    saveCards(fresh);
+    setOffline(false);
+    // Scores entered here that have not reached the server yet stay on screen.
+    setCards(applyPending(fresh, pendingScores()));
     setLoaded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupKey]);
+
+  // Show the saved copy straight away; the fetch below replaces it when the server answers.
+  useEffect(() => {
+    const saved = savedCards();
+    if (saved.length) setCards(applyPending(saved, pendingScores()));
+  }, [groupKey, savedCards]);
 
   // Cards for everyone watching or scoring; the scorer's own screen refreshes on every action, watchers poll.
   useEffect(() => {
@@ -107,6 +133,7 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
     const before = card.scores[hole];
     const next = cards.map((c, i) => i === active ? { ...c, scores: c.scores.map((v, h) => (h === hole ? strokes : v)) } : c);
     setCards(next);
+    saveCards(next);
     enqueue({ roundId: card.id, hole: hole + 1, strokes });
     setPending(pendingCount());
     flush().then(() => setPending(pendingCount()));
@@ -152,7 +179,7 @@ export default function GroupScoring({ data, matchup, me, courseName, courseId, 
     <div className="card space-y-3">
       <div className="flex items-center justify-between gap-3">
         <h2 className="h2">Scorecards</h2>
-        {iAmScorer && !done && <span className="inline-flex items-center gap-2 text-sm text-stone-600"><Dot tone={pending ? "warn" : "live"} />{pending ? `${pending} unsynced` : "Synced"}</span>}
+        {iAmScorer && !done && <span className="inline-flex items-center gap-2 text-sm text-stone-600"><Dot tone={pending ? "warn" : "live"} />{pending ? `${pending} unsynced` : offline ? "Offline, showing saved cards" : "Synced"}</span>}
       </div>
       <div className="-mx-4 overflow-x-auto px-4">
         <table className="w-full min-w-[34rem] border-collapse text-center text-sm">

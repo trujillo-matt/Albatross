@@ -78,3 +78,15 @@ test("foursome: one scorer owns the cards of both matches", () => {
   const all = [1, 2].map((n) => single(n, "match_play", "s1", `a${n}`, `b${n}`));
   assert.deepEqual(cardOwners(foursomeOf(all[0], all)), ["a1", "b1", "a2", "b2"]);
 });
+
+import { applyPending, cardsCacheKey } from "./groupScoring.ts";
+test("pending scores are laid over cached or fetched cards, last write per hole last", () => {
+  const cards = [{ id: "r1", scores: Array<number | null>(18).fill(null) }, { id: "r2", scores: Array<number | null>(18).fill(4) }];
+  const out = applyPending(cards, [{ roundId: "r1", hole: 1, strokes: 5 }, { roundId: "r1", hole: 3, strokes: null }, { roundId: "r2", hole: 18, strokes: 7 }, { roundId: "other", hole: 2, strokes: 9 }]);
+  assert.equal(out[0].scores[0], 5);
+  assert.equal(out[0].scores[2], null);
+  assert.equal(out[1].scores[17], 7);
+  assert.equal(cards[0].scores[0], null);                       // the input is not changed
+  assert.equal(applyPending(cards, []), cards);                  // nothing pending: same array back
+  assert.equal(cardsCacheKey("a,b"), "albatross-group-cards:a,b");
+});
