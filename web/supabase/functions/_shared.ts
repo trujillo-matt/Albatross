@@ -1,4 +1,4 @@
-// Shared helpers for the edge functions. Deploy with: supabase functions deploy redeem-code admin-players
+// Shared helpers for the edge functions. Deploy with: supabase functions deploy redeem-code admin-players scan-scorecard
 export const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
