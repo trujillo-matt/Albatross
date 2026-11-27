@@ -11,6 +11,38 @@ private enum BookletPage: Int, CaseIterable, Identifiable {
     var id: Int { rawValue }
 }
 
+/// How a page moves as the pager scrolls. `value` is -1 when the page has just left to the left, 0 when it is showing,
+/// and 1 when it is waiting on the right. Plain numbers, so the scroll transition's closure stays simple.
+private nonisolated struct PageTurn {
+    let angle: Double
+    let offset: CGFloat
+    let opacity: Double
+    let perspective: CGFloat
+
+    init(isCover: Bool, isFront: Bool, value: Double, width: CGFloat, reduceMotion: Bool) {
+        if isCover {
+            // The scroll carries the cover off to the left; the offset holds it in place while it turns on its spine.
+            let opened = max(0, -value)
+            angle = reduceMotion ? 0 : opened * -100
+            offset = opened * width
+            opacity = reduceMotion ? 1 - opened : (opened < 0.6 ? 1 : max(0, 1 - (opened - 0.6) / 0.4))
+            perspective = 0.45
+        } else if isFront && value > 0 {
+            // Arriving from the right: stay put, under the cover.
+            angle = 0
+            offset = -value * width
+            opacity = 1
+            perspective = 0.5
+        } else {
+            // Reduce Motion keeps the page change but drops the tilt.
+            angle = reduceMotion ? 0 : value * -22
+            offset = 0
+            opacity = 1 - abs(value) * 0.3
+            perspective = 0.5
+        }
+    }
+}
+
 /// A round as a paper scorecard booklet.
 /// At compact width it shows one full-screen page at a time (cover, front nine, back nine).
 /// At regular width it opens flat as a two-page spread.
@@ -301,36 +333,46 @@ private struct BookletPages: View {
 
     @Environment(CardAppearance.self) private var appearance
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The width of one page, so the page transitions can hold a page in place.
+    @State private var pageWidth: CGFloat = 400
 
     var body: some View {
         if isSpread {
             spread
         } else {
             pager
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { pageWidth = $0 }
         }
+    }
+
+    /// One page of the pager, with its turn. The cover is on top and swings open on its spine while the first page waits
+    /// underneath, as a booklet opens. The other pages turn as before. Reduce Motion drops the swing for a fade.
+    private func pagerPage(_ bookletPage: BookletPage, reduceMotion: Bool, pageWidth: CGFloat) -> some View {
+        let isCover = bookletPage == .cover
+        let isFront = bookletPage == .front
+        let layer: Double = isCover ? 2 : (isFront ? 1 : 0)
+        return pageContent(bookletPage)
+            .containerRelativeFrame([.horizontal, .vertical])
+            .id(bookletPage)
+            .zIndex(layer)
+            .scrollTransition(axis: .horizontal) { view, phase in
+                let turn = PageTurn(isCover: isCover, isFront: isFront, value: phase.value, width: pageWidth, reduceMotion: reduceMotion)
+                return view
+                    .rotation3DEffect(.degrees(turn.angle), axis: (x: 0, y: 1, z: 0), anchor: .leading, perspective: turn.perspective)
+                    .offset(x: turn.offset)
+                    .opacity(turn.opacity)
+            }
     }
 
     /// One page at a time. Paging gives the flip between cover and interior pages.
     private var pager: some View {
         // The transition closure runs off the main actor, so it gets its own copy of the setting.
         let reduceMotion = self.reduceMotion
+        let pageWidth = self.pageWidth
         return ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
                 ForEach(BookletPage.allCases) { bookletPage in
-                    pageContent(bookletPage)
-                        .containerRelativeFrame([.horizontal, .vertical])
-                        .id(bookletPage)
-                        .scrollTransition(axis: .horizontal) { view, phase in
-                            // Reduce Motion keeps the page change but drops the tilt.
-                            view
-                                .rotation3DEffect(
-                                    .degrees(reduceMotion ? 0 : phase.value * -22),
-                                    axis: (x: 0, y: 1, z: 0),
-                                    anchor: .leading,
-                                    perspective: 0.5
-                                )
-                                .opacity(1 - abs(phase.value) * 0.3)
-                        }
+                    pagerPage(bookletPage, reduceMotion: reduceMotion, pageWidth: pageWidth)
                 }
             }
             .scrollTargetLayout()
@@ -350,14 +392,7 @@ private struct BookletPages: View {
         case .cover:
             CourseCoverView(round: round, fillsSpace: true)
                 .padding(.top, insets.top + 12)
-                // Room under the cover for the hint.
-                .padding(.bottom, insets.bottom + 56)
-                .overlay(alignment: .bottom) {
-                    Label("Swipe to open", systemImage: "chevron.backward.2")
-                        .appFont(.small)
-                        .foregroundStyle(.secondary)
-                        .padding(.bottom, insets.bottom + 18)
-                }
+                .padding(.bottom, insets.bottom + 12)
         case .front:
             paper(holes: 1...9, showsHeader: true)
         case .back:

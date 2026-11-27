@@ -15,6 +15,7 @@ struct WalletStackView: View {
     var onDelete: (Round) -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     /// How much of each card shows above the next one. Grows with the text size.
     @ScaledMetric(relativeTo: .headline) private var peek: CGFloat = 76
@@ -27,8 +28,17 @@ struct WalletStackView: View {
     private var cardHeight: CGFloat { width / 1.586 }
     private let panelGap: CGFloat = 12
 
+    /// On a wide screen the lifted card opens like a booklet: the card on the left, what is under it on the right.
+    private var opensBesideCard: Bool { horizontalSizeClass == .regular }
+    private var halfWidth: CGFloat { (width - panelGap) / 2 }
+    /// How far each half sits from the centre line.
+    private var halfShift: CGFloat { (halfWidth + panelGap) / 2 }
+    private var liftedCardHeight: CGFloat { opensBesideCard ? halfWidth / 1.586 : cardHeight }
+
     private var collapsedHeight: CGFloat { CGFloat(max(rounds.count - 1, 0)) * peek + cardHeight }
-    private var expandedHeight: CGFloat { cardHeight + panelGap + panelHeight }
+    private var expandedHeight: CGFloat {
+        opensBesideCard ? max(liftedCardHeight, panelHeight) : cardHeight + panelGap + panelHeight
+    }
     private var expandedRound: Round? { rounds.first { $0.id == expandedID } }
 
     var body: some View {
@@ -43,8 +53,9 @@ struct WalletStackView: View {
                     onOpen: { onOpen(round) },
                     onEdit: { onEdit(round) },
                     onDelete: { roundToDelete = round })
+                .frame(width: opensBesideCard ? halfWidth : nil)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { panelHeight = $0 }
-                .offset(y: cardHeight + panelGap)
+                .offset(x: opensBesideCard ? halfShift : 0, y: opensBesideCard ? 0 : cardHeight + panelGap)
                 .transition(.opacity.combined(with: .offset(y: 40)))
                 .zIndex(200)
             }
@@ -80,9 +91,11 @@ struct WalletStackView: View {
         let collapsedY = CGFloat(index) * peek
         let y = someoneIsExpanded ? (isExpanded ? 0 : expandedHeight + 80) : collapsedY
 
-        WalletCard(round: round, height: cardHeight, peek: peek)
+        let besideDetails = isExpanded && opensBesideCard
+        WalletCard(round: round, height: besideDetails ? liftedCardHeight : cardHeight, peek: peek)
+            .frame(width: besideDetails ? halfWidth : nil)
             .matchedTransitionSource(id: round.id, in: namespace)
-            .offset(y: y)
+            .offset(x: besideDetails ? -halfShift : 0, y: y)
             .opacity(someoneIsExpanded && !isExpanded ? 0 : 1)
             .zIndex(isExpanded ? 100 : Double(index))
             .overlay(alignment: .top) {
@@ -95,7 +108,7 @@ struct WalletStackView: View {
                     }
                 } label: {
                     Color.clear
-                        .frame(height: (isLast || isExpanded) ? cardHeight : peek)
+                        .frame(height: isExpanded ? (besideDetails ? liftedCardHeight : cardHeight) : (isLast ? cardHeight : peek))
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.pressFeedback)

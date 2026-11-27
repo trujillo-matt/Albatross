@@ -116,10 +116,12 @@ struct CourseCoverView: View {
         GeometryReader { proxy in
             let width = proxy.size.width
             let corner = width * 0.07
-            // Open in the booklet, the cover follows the screen: its corners are concentric with the display's, on the Duo's
-            // inner and outer screens alike. On the shelf it keeps a booklet's square spine side and rounded fore-edge.
+            // Open in the booklet, the cover keeps a straight spine edge and its fore-edge corners follow the screen's curve,
+            // on the Duo's inner and outer screens alike. On the shelf the fore-edge is rounded by a fixed amount.
             let shape: AnyShape = fillsSpace
-                ? AnyShape(ConcentricRectangle(corners: .concentric(minimum: 12), isUniform: true))
+                ? AnyShape(ConcentricRectangle(
+                    topLeadingCorner: .fixed(0), topTrailingCorner: .concentric(minimum: 12),
+                    bottomLeadingCorner: .fixed(0), bottomTrailingCorner: .concentric(minimum: 12)))
                 : AnyShape(UnevenRoundedRectangle(
                     topLeadingRadius: width * 0.012,
                     bottomLeadingRadius: width * 0.012,
@@ -160,7 +162,7 @@ struct CourseCoverView: View {
             EmptyView()
         case .rule:
             if fillsSpace {
-                ConcentricRectangle(corners: .concentric(minimum: 4), isUniform: true)
+                ConcentricRectangle(topLeadingCorner: .fixed(0), topTrailingCorner: .concentric(minimum: 4), bottomLeadingCorner: .fixed(0), bottomTrailingCorner: .concentric(minimum: 4))
                     .stroke(ink.opacity(0.55), lineWidth: max(0.5, width * 0.004))
                     .padding(inset)
             } else {
@@ -171,10 +173,10 @@ struct CourseCoverView: View {
         case .doubleRule:
             ZStack {
                 if fillsSpace {
-                    ConcentricRectangle(corners: .concentric(minimum: 4), isUniform: true)
+                    ConcentricRectangle(topLeadingCorner: .fixed(0), topTrailingCorner: .concentric(minimum: 4), bottomLeadingCorner: .fixed(0), bottomTrailingCorner: .concentric(minimum: 4))
                         .stroke(ink.opacity(0.6), lineWidth: max(0.5, width * 0.005))
                         .padding(inset)
-                    ConcentricRectangle(corners: .concentric(minimum: 2), isUniform: true)
+                    ConcentricRectangle(topLeadingCorner: .fixed(0), topTrailingCorner: .concentric(minimum: 2), bottomLeadingCorner: .fixed(0), bottomTrailingCorner: .concentric(minimum: 2))
                         .stroke(ink.opacity(0.4), lineWidth: max(0.5, width * 0.003))
                         .padding(inset + width * 0.022)
                 } else {
