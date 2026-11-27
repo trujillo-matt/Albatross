@@ -13,8 +13,8 @@ import WidgetKit
 //   This target      → Signing & Capabilities → App Groups → group.TrujSoft.Albatross
 
 struct StartRoundIntent: AppIntent {
-    static var title: LocalizedStringResource = "Start Round"
-    static var openAppWhenRun: Bool = true
+    static let title: LocalizedStringResource = "Start Round"
+    static let openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {
         let defaults = UserDefaults(suiteName: "group.TrujSoft.Albatross")

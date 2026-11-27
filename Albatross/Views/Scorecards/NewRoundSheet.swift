@@ -1,4 +1,5 @@
 import SwiftUI
+import OSLog
 import PhotosUI
 
 struct NewRoundSheet: View {
@@ -137,7 +138,7 @@ struct NewRoundSheet: View {
                             do {
                                 parseResult = try await parser.parse(images: images)
                             } catch {
-                                print("🏌️ Parse failed: \(error)")
+                                Log.app.error("🏌️ Parse failed: \(error)")
                                 // API failed — open review sheet with blank fields so user can enter manually
                                 parseResult = ScorecardParseResult(courseName: nil, pars: nil, playerRows: [])
                             }

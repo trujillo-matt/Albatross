@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import Supabase
 import SwiftUI
 
@@ -105,7 +106,7 @@ final class TournamentStore {
                 return results.sorted { $0.createdAt > $1.createdAt }
             }
         } catch {
-            print("TournamentStore: loadMyTournaments failed — \(error)")
+            Log.app.error("TournamentStore: loadMyTournaments failed — \(error)")
         }
     }
 
@@ -144,7 +145,7 @@ final class TournamentStore {
             }
             pendingInvites = invites
         } catch {
-            print("TournamentStore: loadPendingInvites failed — \(error)")
+            Log.app.error("TournamentStore: loadPendingInvites failed — \(error)")
         }
     }
 
@@ -269,7 +270,7 @@ final class TournamentStore {
             myTournaments[idx] = hydrated
             if activeTournament?.id == tournamentID { activeTournament = hydrated }
         } catch {
-            print("TournamentStore: reload failed — \(error)")
+            Log.app.error("TournamentStore: reload failed — \(error)")
         }
     }
 
@@ -668,8 +669,14 @@ final class TournamentStore {
                 .value
             await NewsAlerts.shared.process(news, tournaments: myTournaments, liveStatus: liveStatus)
         } catch {
-            print("TournamentStore: news failed — \(error)")
+            Log.app.error("TournamentStore: news failed — \(error)")
         }
+    }
+
+    /// What a background wake does: make sure the tournaments are loaded, then look for news. New items become alerts.
+    func refreshNewsInBackground() async {
+        if myTournaments.isEmpty { await loadMyTournaments() }
+        await loadNews()
     }
 
     /// Checks for news every 15 seconds for as long as the app runs, whichever screen is showing, so an alert does not
@@ -780,7 +787,7 @@ final class TournamentStore {
                 .value
             return rows
         } catch {
-            print("TournamentStore: fetchGroupCards failed — \(error)")
+            Log.app.error("TournamentStore: fetchGroupCards failed — \(error)")
             return []
         }
     }
@@ -879,7 +886,7 @@ final class TournamentStore {
                 )
             }
         } catch {
-            print("TournamentStore: fetchRoundsForMatchup failed — \(error)")
+            Log.app.error("TournamentStore: fetchRoundsForMatchup failed — \(error)")
             return []
         }
     }
@@ -957,6 +964,7 @@ final class TournamentStore {
                 matchType: matchup.matchType)
         }
         liveStatus = statuses
+        TournamentMatchActivityManager.shared.sync(tournament: tournament, liveStatus: statuses, userID: authStore?.currentProfile?.id)
     }
 
     // MARK: - Standings
@@ -1038,7 +1046,7 @@ final class TournamentStore {
                 .execute()
                 .value
         } catch {
-            print("TournamentStore: reloadCaptainVotes failed — \(error)")
+            Log.app.error("TournamentStore: reloadCaptainVotes failed — \(error)")
         }
     }
 
@@ -1046,7 +1054,7 @@ final class TournamentStore {
         do {
             draftPlayers = try await loadPlayers(tournamentID: tournamentID)
         } catch {
-            print("TournamentStore: reloadDraftPlayers failed — \(error)")
+            Log.app.error("TournamentStore: reloadDraftPlayers failed — \(error)")
         }
     }
 

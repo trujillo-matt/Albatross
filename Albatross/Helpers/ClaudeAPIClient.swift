@@ -1,4 +1,5 @@
 import UIKit
+import OSLog
 
 struct GeminiAPIClient {
 
@@ -14,7 +15,7 @@ struct GeminiAPIClient {
 
     /// Sends 1 or 2 scorecard images to Gemini and returns the raw JSON string.
     func analyze(images: [UIImage]) async throws -> String {
-        print("🏌️ Starting Gemini API call with \(images.count) image(s)")
+        Log.app.info("🏌️ Starting Gemini API call with \(images.count) image(s)")
         // Build the "parts" array: one inline_data block per image, then the text prompt
         var parts: [[String: Any]] = []
 
@@ -47,7 +48,7 @@ struct GeminiAPIClient {
         guard let http = response as? HTTPURLResponse,
               (200...299).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? "no body"
-            print("🏌️ HTTP error \((response as? HTTPURLResponse)?.statusCode ?? -1): \(body)")
+            Log.app.error("🏌️ HTTP error \((response as? HTTPURLResponse)?.statusCode ?? -1): \(body)")
             throw GeminiError.httpError(body)
         }
 
@@ -58,10 +59,10 @@ struct GeminiAPIClient {
            let content    = first["content"] as? [String: Any],
            let parts      = content["parts"] as? [[String: Any]],
            let text       = parts.first?["text"] as? String {
-            print("🏌️ Gemini responded successfully (\(text.count) chars)")
+            Log.app.info("🏌️ Gemini responded successfully (\(text.count) chars)")
             return text
         }
-        print("🏌️ Could not unwrap response: \(String(data: data, encoding: .utf8) ?? "nil")")
+        Log.app.error("🏌️ Could not unwrap response: \(String(data: data, encoding: .utf8) ?? "nil")")
         throw GeminiError.unexpectedResponse
     }
 

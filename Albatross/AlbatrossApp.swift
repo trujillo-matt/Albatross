@@ -15,7 +15,9 @@ struct AlbatrossApp: App {
     @State private var socialStore      = SocialStore()
     @State private var tournamentStore  = TournamentStore()
     @State private var appearance       = CardAppearance()
+    @State private var weatherStore     = WeatherForecastStore()
 
+    @Environment(\.scenePhase) private var scenePhase
     @State private var appState: AppState = .loading
     #if DEBUG
     @State private var hasAppliedDebugArguments = false
@@ -90,15 +92,12 @@ struct AlbatrossApp: App {
             .environment(courseStore)
             .environment(socialStore)
             .environment(tournamentStore)
+            .environment(weatherStore)
             .environment(appearance)
             // The chosen ink tints controls and highlights across the app.
             .tint(appearance.tint)
             .onAppear {
-                // Wire stores together so RoundStore can check auth state
-                roundStore.authStore = authStore
-                authStore.roundStore = roundStore
-                socialStore.authStore = authStore
-                tournamentStore.authStore = authStore
+                wireStores()
                 NewsAlerts.shared.install()
                 tournamentStore.startWatchingNews()
                 #if DEBUG
@@ -195,6 +194,27 @@ struct AlbatrossApp: App {
                 selectedTab = 1
                 pendingNewRound = true
             }
+            // Leaving the app asks iOS for a news check later, so alerts can arrive while it is closed.
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .background { NewsAlerts.shared.scheduleBackgroundRefresh() }
+            }
         }
+        .backgroundTask(.appRefresh(NewsAlerts.refreshIdentifier)) {
+            await MainActor.run {
+                wireStores()
+                NewsAlerts.shared.install()
+                NewsAlerts.shared.scheduleBackgroundRefresh()
+            }
+            await tournamentStore.refreshNewsInBackground()
+            await weatherStore.alertAboutRain(tournaments: tournamentStore.myTournaments, courses: courseStore.allCourses)
+        }
+    }
+
+    /// Stores that need each other, joined. Also done when iOS wakes the app in the background, before any screen exists.
+    private func wireStores() {
+        roundStore.authStore = authStore
+        authStore.roundStore = roundStore
+        socialStore.authStore = authStore
+        tournamentStore.authStore = authStore
     }
 }

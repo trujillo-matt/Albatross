@@ -1,4 +1,5 @@
 import SwiftUI
+import OSLog
 
 /// Creates (or reuses) a Round for the current user tied to a tournament matchup,
 /// presents the booklet scorecard, then on finish records the matchup round and — if all
@@ -114,7 +115,7 @@ struct TournamentScorecardWrapperView: View {
                 )
             }
         } catch {
-            print("TournamentScorecardWrapper: handleFinish error — \(error)")
+            Log.app.error("TournamentScorecardWrapper: handleFinish error — \(error)")
         }
 
         navigateToSummary = true

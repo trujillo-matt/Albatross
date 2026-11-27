@@ -277,7 +277,8 @@ struct BookletView: View {
     private func pulseSpine() {
         guard !reduceMotion else { return }
         withAnimation(.easeOut(duration: 0.3)) { spineEmphasis = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+        Task {
+            try? await Task.sleep(for: .seconds(0.6))
             withAnimation(.easeIn(duration: 0.4)) { spineEmphasis = false }
         }
     }

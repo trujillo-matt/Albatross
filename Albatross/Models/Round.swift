@@ -1,11 +1,11 @@
 import Foundation
 
-enum RoundStatus: String, Codable {
+nonisolated enum RoundStatus: String, Codable {
     case inProgress = "in_progress"
     case completed = "completed"
 }
 
-struct Round: Identifiable, Codable {
+nonisolated struct Round: Identifiable, Codable {
     var id: UUID
     var courseName: String
     var date: Date

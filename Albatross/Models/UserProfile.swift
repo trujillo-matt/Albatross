@@ -1,6 +1,6 @@
 import Foundation
 
-struct UserProfile: Codable, Equatable, Identifiable {
+nonisolated struct UserProfile: Codable, Equatable, Identifiable {
     var id: UUID
     var displayName: String
     var username: String?

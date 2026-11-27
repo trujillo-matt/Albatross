@@ -1,4 +1,6 @@
+import AuthenticationServices
 import Foundation
+import OSLog
 import Supabase
 import SwiftUI
 
@@ -60,6 +62,43 @@ final class AuthStore {
         }
     }
 
+    // MARK: - Sign in with Apple
+
+    /// Finishes a Sign in with Apple. `nonce` is the raw value whose SHA-256 went into the request. Apple gives the name only
+    /// the first time, so it is saved to the profile then.
+    func signInWithApple(authorization: ASAuthorization, nonce: String) async {
+        errorMessage = nil
+        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let tokenData = credential.identityToken,
+              let idToken = String(data: tokenData, encoding: .utf8) else {
+            errorMessage = "Apple did not send a sign-in token. Try again."
+            return
+        }
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            let session = try await supabase.auth.signInWithIdToken(
+                credentials: OpenIDConnectCredentials(provider: .apple, idToken: idToken, nonce: nonce))
+            let appleName = credential.fullName.map { PersonNameComponentsFormatter().string(from: $0) }?.trimmingCharacters(in: .whitespaces) ?? ""
+            await fetchOrCreateProfile(userID: session.user.id, fallbackName: appleName.isEmpty ? (session.user.email ?? "Golfer") : appleName)
+            if !appleName.isEmpty, let profile = currentProfile, profile.displayName.isEmpty || profile.displayName == session.user.email {
+                await updateProfile(displayName: appleName, username: profile.username ?? "")
+            }
+            isSignedIn = true
+            await migrateLocalRoundsIfNeeded()
+            await roundStore?.syncFromCloud()
+        } catch {
+            errorMessage = friendlyError(error)
+        }
+    }
+
+    /// Turns an Apple sign-in failure into words. Cancelling is not an error.
+    func appleSignInFailed(_ error: Error) {
+        guard let failure = error as? ASAuthorizationError, failure.code != .canceled else { return }
+        errorMessage = "Sign in with Apple is not available right now."
+        Log.app.error("AuthStore: Sign in with Apple failed — \(error)")
+    }
+
     // MARK: - Sign up
 
     func signUp(email: String, password: String, firstName: String, username: String) async {
@@ -81,7 +120,7 @@ final class AuthStore {
             let user = response.user
 
             // Give the trigger a moment to create the profile row, then fetch/create it
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+            try? await Task.sleep(for: .milliseconds(500))
             await fetchOrCreateProfile(userID: user.id, fallbackName: firstName, fallbackUsername: username)
             isSignedIn = true
             await migrateLocalRoundsIfNeeded()
@@ -115,10 +154,10 @@ final class AuthStore {
                 .execute()
                 .value
             currentProfile = profile
-            print("AuthStore: fetchProfile success — '\(profile.displayName)', @\(profile.username ?? "nil")")
+            Log.app.info("AuthStore: fetchProfile success — '\(profile.displayName)', @\(profile.username ?? "nil")")
             return
         } catch {
-            print("AuthStore: fetchProfile failed, will upsert — \(error)")
+            Log.app.error("AuthStore: fetchProfile failed, will upsert — \(error)")
         }
 
         // Row doesn't exist (or fetch failed) — upsert a new one
@@ -143,9 +182,9 @@ final class AuthStore {
                 .execute()
                 .value
             currentProfile = profile
-            print("AuthStore: profile upserted — '\(profile.displayName)'")
+            Log.app.info("AuthStore: profile upserted — '\(profile.displayName)'")
         } catch {
-            print("AuthStore: profile upsert also failed — \(error)")
+            Log.app.error("AuthStore: profile upsert also failed — \(error)")
         }
     }
 
@@ -164,7 +203,7 @@ final class AuthStore {
         } else if let session = try? await supabase.auth.session {
             userID = session.user.id
         } else {
-            print("AuthStore: updateProfile — no user ID available")
+            Log.app.error("AuthStore: updateProfile — no user ID available")
             return
         }
 
@@ -194,9 +233,9 @@ final class AuthStore {
                 .execute()
                 .value
             currentProfile = updated
-            print("AuthStore: updateProfile success — '\(updated.displayName)'")
+            Log.app.info("AuthStore: updateProfile success — '\(updated.displayName)'")
         } catch {
-            print("AuthStore: updateProfile error — \(error)")
+            Log.app.error("AuthStore: updateProfile error — \(error)")
             errorMessage = "Failed to save profile. Please try again."
         }
     }

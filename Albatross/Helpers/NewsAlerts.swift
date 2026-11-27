@@ -1,3 +1,5 @@
+import BackgroundTasks
+import OSLog
 import Foundation
 import Supabase
 import UIKit
@@ -19,6 +21,17 @@ final class NewsAlerts: NSObject, UNUserNotificationCenterDelegate {
     private var askedForPushThisLaunch = false
 
     private var isEnabled: Bool { UserDefaults.standard.object(forKey: Self.enabledKey) as? Bool ?? true }
+
+    /// The background refresh that checks for news while the app is closed. Listed in Info.plist.
+    nonisolated static let refreshIdentifier = "TrujSoft.Albatross.newsRefresh"
+
+    /// Asks iOS to wake the app for a news check. iOS picks the moment, usually a few minutes to a few hours later:
+    /// sooner for apps that are opened often, and not at all in Low Power Mode or when background refresh is off.
+    func scheduleBackgroundRefresh() {
+        let request = BGAppRefreshTaskRequest(identifier: Self.refreshIdentifier)
+        request.earliestBeginDate = Date(timeIntervalSinceNow: 5 * 60)
+        try? BGTaskScheduler.shared.submit(request)
+    }
 
     /// Lets a banner show while the app is on screen, the way a score alert does.
     func install() {
@@ -73,7 +86,8 @@ final class NewsAlerts: NSObject, UNUserNotificationCenterDelegate {
     private func hasPermission() async -> Bool {
         let center = UNUserNotificationCenter.current()
         var status = await center.notificationSettings().authorizationStatus
-        if status == .notDetermined {
+        // The permission prompt needs someone looking at the screen.
+        if status == .notDetermined, UIApplication.shared.applicationState == .active {
             _ = try? await center.requestAuthorization(options: [.alert, .sound])
             status = await center.notificationSettings().authorizationStatus
         }
@@ -113,7 +127,7 @@ final class PushRegistration {
             lastSynced = key
             isRegistered = enabled
         } catch {
-            print("PushRegistration: could not save the device token — \(error)")
+            Log.app.error("PushRegistration: could not save the device token — \(error)")
         }
     }
 }
@@ -126,6 +140,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
-        print("Push registration failed — \(error)")
+        Log.app.error("Push registration failed — \(error)")
     }
 }

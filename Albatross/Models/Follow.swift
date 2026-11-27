@@ -1,6 +1,6 @@
 import Foundation
 
-struct Follow: Codable {
+nonisolated struct Follow: Codable {
     var followerID: UUID
     var followingID: UUID
     var createdAt: Date

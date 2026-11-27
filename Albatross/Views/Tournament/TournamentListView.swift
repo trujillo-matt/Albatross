@@ -1,4 +1,5 @@
 import SwiftUI
+import WeatherKit
 
 struct TournamentListView: View {
     @Environment(TournamentStore.self) private var tournamentStore
@@ -92,6 +93,7 @@ struct TournamentListView: View {
     @ViewBuilder private var newsColumn: some View {
         if let featured = featuredTournament {
             TournamentInfoCard(tournament: featured)
+            TournamentForecastSection(tournament: featured)
         }
         if !tournamentStore.myTournaments.isEmpty {
             TournamentNewsFeed()
@@ -315,28 +317,12 @@ struct TournamentNewsFeed: View {
                     .padding(16)
                     .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             } else {
+                let stories = tournamentStore.news.map {
+                    ($0, NewsStoryWriter.story(for: $0, in: tournamentStore.myTournaments, liveStatus: tournamentStore.liveStatus))
+                }
                 VStack(spacing: 0) {
-                    ForEach(tournamentStore.news) { item in
-                        HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Circle()
-                                .fill(item.kind == "score_change" ? Color.orange : (item.kind == "match_result" ? Color.secondary : Color.brandGreen))
-                                .frame(width: 8, height: 8)
-                            VStack(alignment: .leading, spacing: 2) {
-                                let story = NewsStoryWriter.story(for: item, in: tournamentStore.myTournaments, liveStatus: tournamentStore.liveStatus)
-                                Text(story.title)
-                                    .appFont(.small, weight: .semibold)
-                                Text(story.body)
-                                    .appFont(.small)
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                Text(item.createdAt.formatted(.relative(presentation: .named)))
-                                    .appFont(.small)
-                                    .foregroundStyle(.tertiary)
-                            }
-                            Spacer(minLength: 0)
-                        }
-                        .appListRowPadding()
-                        .accessibilityElement(children: .combine)
+                    ForEach(stories, id: \.0.id) { item, story in
+                        NewsRow(item: item, story: story)
                         if item.id != tournamentStore.news.last?.id { Divider().padding(.leading, 34) }
                     }
                 }
@@ -347,6 +333,34 @@ struct TournamentNewsFeed: View {
     }
 }
 
+
+/// One line of news: a dot for the kind, the headline, the sentence under it and when it happened.
+private struct NewsRow: View {
+    let item: TournamentNewsItem
+    let story: NewsStory
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Circle()
+                .fill(item.kind == "score_change" ? Color.orange : (item.kind == "match_result" ? Color.secondary : Color.brandGreen))
+                .frame(width: 8, height: 8)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(story.title)
+                    .appFont(.small, weight: .semibold)
+                Text(story.body)
+                    .appFont(.small)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text(item.createdAt.formatted(.relative(presentation: .named)))
+                    .appFont(.small)
+                    .foregroundStyle(.tertiary)
+            }
+            Spacer(minLength: 0)
+        }
+        .appListRowPadding()
+        .accessibilityElement(children: .combine)
+    }
+}
 
 /// What the tournament is: where it is played, in what format, and what it takes to win.
 struct TournamentInfoCard: View {
@@ -396,5 +410,93 @@ struct TournamentInfoCard: View {
         }
         .appListRowPadding()
         .accessibilityElement(children: .combine)
+    }
+}
+
+
+/// The forecast for each round day, from Apple Weather. Left out when there is nothing to show, which includes a build
+/// without the WeatherKit capability.
+struct TournamentForecastSection: View {
+    let tournament: Tournament
+    @Environment(WeatherForecastStore.self) private var weather
+    @Environment(CourseStore.self) private var courseStore
+
+    var body: some View {
+        Group {
+            if weather.status == .ready, !weather.forecasts.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Forecast")
+                        .appFont(.large, weight: .medium)
+                        .accessibilityAddTraits(.isHeader)
+                    VStack(spacing: 0) {
+                        ForEach(weather.forecasts) { forecast in
+                            ForecastRow(forecast: forecast)
+                        }
+                    }
+                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    if let attribution = weather.attribution {
+                        WeatherAttributionView(attribution: attribution)
+                    }
+                }
+            }
+        }
+        .task(id: tournament.teeTimes.count) {
+            await weather.load(for: tournament, courses: courseStore.allCourses)
+        }
+    }
+}
+
+private struct ForecastRow: View {
+    let forecast: RoundForecast
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: forecast.symbolName)
+                .symbolRenderingMode(.multicolor)
+                .font(.title3)
+                .frame(width: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Day \(forecast.dayNumber), \(forecast.date.formatted(.dateTime.weekday(.wide)))")
+                    .appFont(.small, weight: .semibold)
+                Text("\(forecast.condition) at \(forecast.courseName)")
+                    .appFont(.small)
+                    .foregroundStyle(.secondary)
+                if forecast.isRainLikely {
+                    Text("Rain likely: \(forecast.rainChance.formatted(.percent.precision(.fractionLength(0)))) chance")
+                        .appFont(.small, weight: .medium)
+                        .foregroundStyle(.orange)
+                }
+            }
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(forecast.high.formatted(.measurement(width: .narrow, usage: .weather))) / \(forecast.low.formatted(.measurement(width: .narrow, usage: .weather)))")
+                    .appFont(.small, monospacedDigit: true)
+                Text("Wind \(forecast.windSpeed.formatted(.measurement(width: .abbreviated, usage: .general)))")
+                    .appFont(.small, monospacedDigit: true)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .appListRowPadding()
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Apple requires its Weather mark and a link to the data sources wherever its forecasts appear.
+private struct WeatherAttributionView: View {
+    let attribution: WeatherAttribution
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 8) {
+            AsyncImage(url: colorScheme == .dark ? attribution.combinedMarkDarkURL : attribution.combinedMarkLightURL) { image in
+                image.resizable().scaledToFit()
+            } placeholder: {
+                Text(attribution.serviceName)
+            }
+            .frame(height: 14)
+            Link("Data sources", destination: attribution.legalPageURL)
+                .appFont(.small)
+        }
+        .padding(.horizontal, 4)
     }
 }

@@ -1,4 +1,5 @@
 import SwiftUI
+import OSLog
 import Photos
 
 /// A finished round, ready to share: a preview of the image, a choice of style, the numbers behind it,
@@ -57,7 +58,7 @@ struct RoundSummaryView: View {
         .navigationTitle("Share")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { toolbarContent }
-        .overlay { savedConfirmationOverlay }
+        .overlay { SavedConfirmation(isShowing: showSavedConfirmation) }
         .sheet(isPresented: $showShareSheet) {
             ActivityViewController(activityItems: shareItems)
         }
@@ -135,127 +136,18 @@ struct RoundSummaryView: View {
 
     private var controls: some View {
         VStack(spacing: 20) {
-            templatePicker
-            numbers
-            actions
+            ShareTemplatePicker(selection: $selectedTemplate)
+            RoundNumbersGrid(round: round, tracksPuttsAndGreens: appearance.tracksPuttsAndGreens)
+            ShareActions(isRendering: isRendering, onShare: { Task { await handleShare() } }, onSave: { Task { await handleSaveToPhotos() } })
         }
     }
 
-    private var templatePicker: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Style")
-                .appFont(.small)
-                .foregroundStyle(.secondary)
-            HStack(spacing: 8) {
-                ForEach(ShareTemplate.allCases) { template in
-                    Button { selectedTemplate = template } label: {
-                        VStack(spacing: 6) {
-                            Image(systemName: template.iconName)
-                                .appFont(.large)
-                            Text(template.label)
-                                .appFont(.small, weight: .medium)
-                        }
-                        .foregroundStyle(selectedTemplate == template ? Color.accentColor : Color.secondary)
-                        .frame(maxWidth: .infinity, minHeight: 64)
-                        .background(
-                            selectedTemplate == template ? Color.accentColor.opacity(0.14) : Color(uiColor: .secondarySystemGroupedBackground),
-                            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .strokeBorder(selectedTemplate == template ? Color.brandGreen : Color.clear, lineWidth: 1.5)}
-                    }
-                    .buttonStyle(.pressFeedback)
-                    .accessibilityLabel(template.label)
-                    .accessibilityAddTraits(selectedTemplate == template ? .isSelected : [])
-                }
-            }
-        }
-    }
 
-    /// The figures behind the image. Putts and greens appear once the round has them.
-    private var numbers: some View {
-        let greens = round.greens()
-        var items: [(String, String)] = [
-            ("Score", "\(round.totalScore)"),
-            ("To par", toParText),
-            ("Out", round.frontNineTotal > 0 ? "\(round.frontNineTotal)" : "—"),
-            ("In", round.backNineTotal > 0 ? "\(round.backNineTotal)" : "—")
-        ]
-        if appearance.tracksPuttsAndGreens {
-            if let putts = round.totalPutts { items.append(("Putts", "\(putts)")) }
-            if greens.known > 0 { items.append(("Greens", "\(greens.hit)/\(greens.known)")) }
-        }
-        return LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 0)], spacing: 16) {
-            ForEach(items, id: \.0) { item in
-                VStack(spacing: 2) {
-                    Text(item.1)
-                        .appFont(.large, weight: .semibold)
-                        .monospacedDigit()
-                    Text(item.0)
-                        .appFont(.small)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .accessibilityElement(children: .combine)
-            }
-        }
-        .padding(.vertical, 16)
-        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
 
-    private var toParText: String {
-        let played = zip(round.scores, round.effectivePars).reduce(0) { $0 + ($1.0 == nil ? 0 : $1.1) }
-        let difference = round.totalScore - played
-        if difference == 0 { return "E" }
-        return difference > 0 ? "+\(difference)" : "−\(abs(difference))"
-    }
 
-    private var actions: some View {
-        VStack(spacing: 12) {
-            Button { Task { await handleShare() } } label: {
-                HStack(spacing: 8) {
-                    if isRendering {
-                        ProgressView().tint(.white)
-                    } else {
-                        Image(systemName: "square.and.arrow.up")
-                    }
-                    Text(isRendering ? "Preparing" : "Share")
-                        .appFont(.body, weight: .semibold)
-                }
-                .frame(maxWidth: .infinity, minHeight: 52)
-                .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                .foregroundStyle(.white)
-            }
-            .disabled(isRendering)
-
-            Button { Task { await handleSaveToPhotos() } } label: {
-                Label("Save to Photos", systemImage: "photo.badge.arrow.down")
-                    .appFont(.body)
-                    .frame(maxWidth: .infinity, minHeight: 52)
-                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .foregroundStyle(.primary)
-            }
-            .disabled(isRendering)
-        }
-    }
 
     // MARK: - Confirmation overlay
 
-    @ViewBuilder
-    private var savedConfirmationOverlay: some View {
-        if showSavedConfirmation {
-            VStack {
-                Spacer()
-                Label("Saved to Photos", systemImage: "checkmark.circle.fill")
-                    .appFont(.small, weight: .medium)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                    .background(.regularMaterial, in: Capsule())
-                    .padding(.bottom, 40)
-                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
-            }
-        }
-    }
 
     // MARK: - Render
 
@@ -303,11 +195,10 @@ struct RoundSummaryView: View {
                 PHAssetChangeRequest.creationRequestForAsset(from: image)
             }
             withAnimation(.easeOut(duration: 0.25)) { showSavedConfirmation = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                withAnimation(.easeIn(duration: 0.25)) { showSavedConfirmation = false }
-            }
+            try? await Task.sleep(for: .seconds(2.5))
+            withAnimation(.easeIn(duration: 0.25)) { showSavedConfirmation = false }
         } catch {
-            print("RoundSummaryView: failed to save photo — \(error)")
+            Log.app.error("RoundSummaryView: failed to save photo — \(error)")
         }
     }
 }
@@ -386,4 +277,147 @@ struct ActivityViewController: UIViewControllerRepresentable {
     }
     .environment(RoundStore())
     .environment(CardAppearance())
+}
+
+// MARK: - Sections
+
+/// The three looks the image can take, as a row of buttons.
+private struct ShareTemplatePicker: View {
+    @Binding var selection: ShareTemplate
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Style")
+                .appFont(.small)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                ForEach(ShareTemplate.allCases) { template in
+                    Button { selection = template } label: {
+                        VStack(spacing: 6) {
+                            Image(systemName: template.iconName)
+                                .appFont(.large)
+                            Text(template.label)
+                                .appFont(.small, weight: .medium)
+                        }
+                        .foregroundStyle(selection == template ? Color.accentColor : Color.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 64)
+                        .background(
+                            selection == template ? Color.accentColor.opacity(0.14) : Color(uiColor: .secondarySystemGroupedBackground),
+                            in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(selection == template ? Color.brandGreen : Color.clear, lineWidth: 1.5)
+                        }
+                    }
+                    .buttonStyle(.pressFeedback)
+                    .accessibilityLabel(template.label)
+                    .accessibilityAddTraits(selection == template ? .isSelected : [])
+                }
+            }
+        }
+    }
+}
+
+/// The figures behind the image. Putts and greens appear once the round has them.
+private struct RoundNumbersGrid: View {
+    let round: Round
+    let tracksPuttsAndGreens: Bool
+
+    private var toParText: String {
+        let played = zip(round.scores, round.effectivePars).reduce(0) { $0 + ($1.0 == nil ? 0 : $1.1) }
+        let difference = round.totalScore - played
+        if difference == 0 { return "E" }
+        return difference > 0 ? "+\(difference)" : "−\(abs(difference))"
+    }
+
+    private var items: [(String, String)] {
+        let greens = round.greens()
+        var items: [(String, String)] = [
+            ("Score", "\(round.totalScore)"),
+            ("To par", toParText),
+            ("Out", round.frontNineTotal > 0 ? "\(round.frontNineTotal)" : "—"),
+            ("In", round.backNineTotal > 0 ? "\(round.backNineTotal)" : "—")
+        ]
+        if tracksPuttsAndGreens {
+            if let putts = round.totalPutts { items.append(("Putts", "\(putts)")) }
+            if greens.known > 0 { items.append(("Greens", "\(greens.hit)/\(greens.known)")) }
+        }
+        return items
+    }
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 0)], spacing: 16) {
+            ForEach(items, id: \.0) { item in
+                VStack(spacing: 2) {
+                    Text(item.1)
+                        .appFont(.large, weight: .semibold)
+                        .monospacedDigit()
+                    Text(item.0)
+                        .appFont(.small)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityElement(children: .combine)
+            }
+        }
+        .padding(.vertical, 16)
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+/// Share, and save to Photos.
+private struct ShareActions: View {
+    let isRendering: Bool
+    let onShare: () -> Void
+    let onSave: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Button(action: onShare) {
+                HStack(spacing: 8) {
+                    if isRendering {
+                        ProgressView().tint(.white)
+                    } else {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                    Text(isRendering ? "Preparing" : "Share")
+                        .appFont(.body, weight: .semibold)
+                }
+                .frame(maxWidth: .infinity, minHeight: 52)
+                .background(Color.brandGreen, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .foregroundStyle(.white)
+            }
+            .disabled(isRendering)
+
+            Button(action: onSave) {
+                Label("Save to Photos", systemImage: "photo.badge.arrow.down")
+                    .appFont(.body)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .foregroundStyle(.primary)
+            }
+            .disabled(isRendering)
+        }
+    }
+}
+
+/// "Saved to Photos", shown briefly after saving.
+private struct SavedConfirmation: View {
+    let isShowing: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        if isShowing {
+            VStack {
+                Spacer()
+                Label("Saved to Photos", systemImage: "checkmark.circle.fill")
+                    .appFont(.small, weight: .medium)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(.regularMaterial, in: Capsule())
+                    .padding(.bottom, 40)
+                    .transition(reduceMotion ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+    }
 }

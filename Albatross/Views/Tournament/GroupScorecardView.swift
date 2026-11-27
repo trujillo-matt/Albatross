@@ -104,7 +104,7 @@ struct GroupScorecardView: View {
         .task(id: iAmScorer) {
             // Poll for everyone but the active scorer, whose screen is the source of truth.
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 10_000_000_000)
+                try? await Task.sleep(for: .seconds(10))
                 if !iAmScorer || allSubmitted { await refresh(initial: false) }
             }
         }
@@ -155,6 +155,7 @@ struct GroupScorecardView: View {
                         .frame(width: AppSpacing.buttonHeight, height: AppSpacing.buttonHeight)
                         .contentShape(Rectangle())
                 }
+                .accessibilityLabel("Previous hole")
                 .disabled(hole == 0)
                 Spacer()
                 Text("Hole \(hole + 1)  ·  Par \(par)").appFont(.large, weight: .semibold)
@@ -164,6 +165,7 @@ struct GroupScorecardView: View {
                         .frame(width: AppSpacing.buttonHeight, height: AppSpacing.buttonHeight)
                         .contentShape(Rectangle())
                 }
+                .accessibilityLabel("Next hole")
                 .disabled(hole == 17)
             }
 

@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import Supabase
 import SwiftUI
 
@@ -127,7 +128,7 @@ final class RoundStore {
         do {
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         } catch {
-            print("RoundStore: failed to create logos dir — \(error)")
+            Log.app.error("RoundStore: failed to create logos dir — \(error)")
             return nil
         }
         let filename = "\(roundID.uuidString).jpg"
@@ -136,7 +137,7 @@ final class RoundStore {
         do {
             try data.write(to: url, options: .atomic)
         } catch {
-            print("RoundStore: failed to write logo — \(error)")
+            Log.app.error("RoundStore: failed to write logo — \(error)")
             return nil
         }
         return filename
@@ -159,7 +160,7 @@ final class RoundStore {
             let data = try JSONEncoder().encode(rounds)
             try data.write(to: saveURL, options: .atomic)
         } catch {
-            print("RoundStore: failed to save — \(error)")
+            Log.app.error("RoundStore: failed to save — \(error)")
         }
     }
 
@@ -169,7 +170,7 @@ final class RoundStore {
             let data = try Data(contentsOf: saveURL)
             rounds = try JSONDecoder().decode([Round].self, from: data)
         } catch {
-            print("RoundStore: failed to load — \(error)")
+            Log.app.error("RoundStore: failed to load — \(error)")
         }
     }
 
@@ -184,7 +185,7 @@ final class RoundStore {
                 .upsert(row)
                 .execute()
         } catch {
-            print("RoundStore: syncToCloud failed — \(error)")
+            Log.app.error("RoundStore: syncToCloud failed — \(error)")
         }
     }
 
@@ -197,7 +198,7 @@ final class RoundStore {
                 .eq("id", value: id.uuidString)
                 .execute()
         } catch {
-            print("RoundStore: deleteFromCloud failed — \(error)")
+            Log.app.error("RoundStore: deleteFromCloud failed — \(error)")
         }
     }
 
@@ -223,7 +224,7 @@ final class RoundStore {
                 save()
             }
         } catch {
-            print("RoundStore: syncFromCloud failed — \(error)")
+            Log.app.error("RoundStore: syncFromCloud failed — \(error)")
         }
     }
 }

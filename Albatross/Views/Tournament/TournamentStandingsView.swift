@@ -34,7 +34,7 @@ struct TournamentStandingsView: View {
                         .padding(.top, 28)
                         .padding(.bottom, 12)
 
-                    ForEach(current.matchups.filter(\.showsOnBoard).sorted { $0.matchupNumber < $1.matchupNumber }) { matchup in
+                    ForEach(current.boardMatchups) { matchup in
                         matchupResultRow(matchup)
                             .padding(.horizontal, 16)
                             .padding(.bottom, 8)
@@ -325,7 +325,7 @@ private struct StandingsShareCard: View {
 
                 // Per-match summary
                 VStack(spacing: 6) {
-                    ForEach(tournament.matchups.filter(\.showsOnBoard).sorted { $0.matchupNumber < $1.matchupNumber }) { m in
+                    ForEach(tournament.boardMatchups) { m in
                         let tAName = tournament.teams.first(where: { $0.id == m.teamAID })?.name ?? "A"
                         let tBName = tournament.teams.first(where: { $0.id == m.teamBID })?.name ?? "B"
                         HStack {

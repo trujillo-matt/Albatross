@@ -122,7 +122,7 @@ struct UserSearchView: View {
     private func scheduleSearch(_ newQuery: String) {
         searchTask?.cancel()
         searchTask = Task {
-            try? await Task.sleep(nanoseconds: 300_000_000) // 300ms debounce
+            try? await Task.sleep(for: .milliseconds(300)) // debounce
             guard !Task.isCancelled else { return }
             await socialStore.searchUsers(query: newQuery)
         }

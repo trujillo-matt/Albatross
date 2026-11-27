@@ -1,6 +1,6 @@
 import Foundation
 
-struct TeeOption: Codable, Hashable {
+nonisolated struct TeeOption: Codable, Hashable {
     var name: String        // e.g. "Gold", "Teal", "Blue", "White", "Black", "Green"
     var totalYards: Int
     var rating: Double?
@@ -8,7 +8,7 @@ struct TeeOption: Codable, Hashable {
     var gender: String?     // "Men" or "Women"
 }
 
-struct CourseHole: Codable, Hashable {
+nonisolated struct CourseHole: Codable, Hashable {
     var number: Int
     var par: Int
     var handicap: Int
@@ -17,7 +17,7 @@ struct CourseHole: Codable, Hashable {
     var teeYardages: [String: Int]?
 }
 
-struct Course: Codable, Identifiable, Hashable {
+nonisolated struct Course: Codable, Identifiable, Hashable {
     var id: String
     var name: String
     var shortName: String?

@@ -77,7 +77,8 @@ struct ScannedScorecardReviewView: View {
                             if confirmedScore != nil,
                                nextHole <= 18,
                                editedScores[nextHole - 1] == nil {
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                                Task {
+                                    try? await Task.sleep(for: .seconds(0.45))
                                     editingHole = nextHole
                                 }
                             }

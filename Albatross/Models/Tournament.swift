@@ -3,14 +3,14 @@ import SwiftUI
 
 // MARK: - Enums
 
-enum TournamentStatus: String, Codable {
+nonisolated enum TournamentStatus: String, Codable {
     case setup    = "setup"
     case draft    = "draft"
     case active   = "active"
     case complete = "complete"
 }
 
-enum TournamentMatchType: String, Codable, CaseIterable {
+nonisolated enum TournamentMatchType: String, Codable, CaseIterable {
     case scramble   = "scramble"
     case bestBall   = "best_ball"
     case matchPlay  = "match_play"
@@ -32,20 +32,20 @@ enum TournamentMatchType: String, Codable, CaseIterable {
     }
 }
 
-enum InviteStatus: String, Codable {
+nonisolated enum InviteStatus: String, Codable {
     case pending  = "pending"
     case accepted = "accepted"
     case declined = "declined"
 }
 
-enum MatchupStatus: String, Codable {
+nonisolated enum MatchupStatus: String, Codable {
     case pending  = "pending"
     case active   = "active"
     case complete = "complete"
 }
 
 /// Where a session is: a lineup is auto-filled, captains call out matchups, then the matches lock.
-enum SessionStatus: String, Codable {
+nonisolated enum SessionStatus: String, Codable {
     case pending  = "pending"
     case lineup   = "lineup"
     case callouts = "callouts"
@@ -63,7 +63,7 @@ enum SessionStatus: String, Codable {
     }
 }
 
-enum MatchResult: String, Codable {
+nonisolated enum MatchResult: String, Codable {
     case teamAWin = "team_a_win"
     case teamBWin = "team_b_win"
     case tie      = "tie"
@@ -71,7 +71,7 @@ enum MatchResult: String, Codable {
 
 // MARK: - Tournament Course
 
-struct TournamentCourse: Identifiable, Codable {
+nonisolated struct TournamentCourse: Identifiable, Codable {
     var id: UUID
     var tournamentID: UUID
     var courseName: String
@@ -89,7 +89,7 @@ struct TournamentCourse: Identifiable, Codable {
 
 // MARK: - TournamentPlayer
 
-struct TournamentPlayer: Identifiable, Codable {
+nonisolated struct TournamentPlayer: Identifiable, Codable {
     var id: UUID
     var tournamentID: UUID
     var userID: UUID
@@ -114,7 +114,7 @@ struct TournamentPlayer: Identifiable, Codable {
 
 // MARK: - TournamentTeam
 
-struct TournamentTeam: Identifiable, Codable {
+nonisolated struct TournamentTeam: Identifiable, Codable {
     var id: UUID
     var tournamentID: UUID
     var name: String
@@ -132,7 +132,7 @@ struct TournamentTeam: Identifiable, Codable {
 }
 
 /// When a player tees off in one session. Players with the same time play together. Set by an admin on the website.
-struct TournamentTeeTime: Identifiable, Codable, Equatable {
+nonisolated struct TournamentTeeTime: Identifiable, Codable, Equatable {
     var sessionID: UUID
     var tournamentID: UUID
     var userID: UUID
@@ -150,7 +150,7 @@ struct TournamentTeeTime: Identifiable, Codable, Equatable {
 
 // MARK: - CaptainVote
 
-struct TournamentCaptainVote: Identifiable, Codable {
+nonisolated struct TournamentCaptainVote: Identifiable, Codable {
     var id: UUID
     var tournamentID: UUID
     var voterUserID: UUID
@@ -166,7 +166,7 @@ struct TournamentCaptainVote: Identifiable, Codable {
 
 // MARK: - TournamentMatchup
 
-struct TournamentMatchup: Identifiable, Codable {
+nonisolated struct TournamentMatchup: Identifiable, Codable {
     var id: UUID
     var tournamentID: UUID
     var matchupNumber: Int
@@ -217,7 +217,7 @@ struct TournamentMatchup: Identifiable, Codable {
 
 /// One block of play inside a day (for example the morning scramble). It has one format; its
 /// match count comes from the rosters when the tournament starts.
-struct TournamentSession: Identifiable, Codable {
+nonisolated struct TournamentSession: Identifiable, Codable {
     var id: UUID
     var tournamentID: UUID
     var dayNumber: Int
@@ -251,7 +251,7 @@ struct TournamentSession: Identifiable, Codable {
 
 // MARK: - TournamentMatchupRound
 
-struct TournamentMatchupRound: Identifiable, Codable {
+nonisolated struct TournamentMatchupRound: Identifiable, Codable {
     var id: UUID
     var matchupID: UUID
     var roundID: UUID
@@ -267,7 +267,7 @@ struct TournamentMatchupRound: Identifiable, Codable {
 
 // MARK: - Tournament (root)
 
-struct Tournament: Identifiable, Codable {
+nonisolated struct Tournament: Identifiable, Codable {
     var id: UUID
     var name: String
     var creatorUserID: UUID
@@ -288,12 +288,14 @@ struct Tournament: Identifiable, Codable {
         teams.contains { $0.captainUserID == userID }
     }
     var matchups: [TournamentMatchup] = []
+    /// The matches the boards show: those with a lineup or a result, in match order.
+    var boardMatchups: [TournamentMatchup] { matchups.filter(\.showsOnBoard).sorted { $0.matchupNumber < $1.matchupNumber } }
     var sessions: [TournamentSession] = []
     var teeTimes: [TournamentTeeTime] = []
 
     /// Colour of the first (team A) or second (team B) team, with the same defaults as the website.
-    var teamAColor: Color { Color(hex: teams.first?.color) ?? .teamDefaultA }
-    var teamBColor: Color { Color(hex: teams.dropFirst().first?.color) ?? .teamDefaultB }
+    @MainActor var teamAColor: Color { Color(hex: teams.first?.color) ?? .teamDefaultA }
+    @MainActor var teamBColor: Color { Color(hex: teams.dropFirst().first?.color) ?? .teamDefaultB }
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -569,7 +571,7 @@ struct LiveMatchStatus: Equatable {
 }
 
 /// One line of tournament news: a birdie, a changed score, a finished match. Written by the database.
-struct TournamentNewsItem: Identifiable, Codable, Equatable {
+nonisolated struct TournamentNewsItem: Identifiable, Codable, Equatable {
     var id: UUID
     var tournamentID: UUID
     var kind: String
@@ -590,7 +592,7 @@ struct TournamentNewsItem: Identifiable, Codable, Equatable {
 }
 
 /// Whether a team's captain is on the callouts page right now.
-struct CaptainPresence: Codable {
+nonisolated struct CaptainPresence: Codable {
     var teamID: UUID
     var present: Bool
 

@@ -6,7 +6,7 @@
 import ActivityKit
 import Foundation
 
-struct AlbatrossLiveActivity: ActivityAttributes {
+nonisolated struct AlbatrossLiveActivity: ActivityAttributes {
 
     // MARK: - ContentState (dynamic — updates with each score entry)
 

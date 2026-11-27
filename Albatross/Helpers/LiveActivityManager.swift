@@ -1,4 +1,5 @@
 import ActivityKit
+import OSLog
 import Foundation
 
 @MainActor
@@ -20,13 +21,14 @@ final class LiveActivityManager {
                 return
             } else {
                 // Different round — end the old one first
-                Task { await existing.end(ActivityContent(state: existing.content.state, staleDate: nil), dismissalPolicy: .immediate) }
+                let handle = ActivityHandle(activity: existing)
+                Task { await Self.end(handle, with: existing.content.state, policy: .immediate) }
                 activity = nil
             }
         }
 
         guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            print("LiveActivityManager: Live Activities not enabled on this device")
+            Log.app.error("LiveActivityManager: Live Activities not enabled on this device")
             return
         }
 
@@ -43,9 +45,9 @@ final class LiveActivityManager {
                 pushType: nil
             )
             activity = newActivity
-            print("LiveActivityManager: Started — \(newActivity.id)")
+            Log.app.info("LiveActivityManager: Started — \(newActivity.id)")
         } catch {
-            print("LiveActivityManager: Failed to start — \(error)")
+            Log.app.error("LiveActivityManager: Failed to start — \(error)")
         }
     }
 
@@ -54,25 +56,22 @@ final class LiveActivityManager {
             endActivity(for: round)
             return
         }
-        guard activity != nil else {
+        guard let activity else {
             startActivity(for: round)
             return
         }
         let state = contentState(for: round)
-        Task {
-            await activity?.update(.init(state: state, staleDate: nil))
-        }
+        let handle = ActivityHandle(activity: activity)
+        Task { await Self.update(handle, to: state) }
     }
 
     func endActivity(for round: Round) {
         guard let activity else { return }
         let finalState = contentState(for: round)
+        let handle = ActivityHandle(activity: activity)
         Task {
             // Keep final score visible for 60 seconds after finishing
-            await activity.end(
-                .init(state: finalState, staleDate: nil),
-                dismissalPolicy: .after(.now + 60)
-            )
+            await Self.end(handle, with: finalState, policy: .after(.now + 60))
             self.activity = nil
         }
     }
@@ -81,16 +80,25 @@ final class LiveActivityManager {
     func endActivityImmediately(for round: Round) {
         guard let activity, activity.attributes.roundID == round.id else { return }
         let finalState = contentState(for: round)
+        let handle = ActivityHandle(activity: activity)
         Task {
-            await activity.end(
-                ActivityContent(state: finalState, staleDate: nil),
-                dismissalPolicy: .immediate
-            )
+            await Self.end(handle, with: finalState, policy: .immediate)
             self.activity = nil
         }
     }
 
     // MARK: - Helpers
+
+    /// The Activity is only ever used from the main actor here; the box lets it cross into the async calls.
+    private nonisolated struct ActivityHandle: @unchecked Sendable { let activity: Activity<AlbatrossLiveActivity> }
+
+    private nonisolated static func update(_ handle: ActivityHandle, to state: AlbatrossLiveActivity.ContentState) async {
+        await handle.activity.update(.init(state: state, staleDate: nil))
+    }
+
+    private nonisolated static func end(_ handle: ActivityHandle, with state: AlbatrossLiveActivity.ContentState, policy: ActivityUIDismissalPolicy) async {
+        await handle.activity.end(.init(state: state, staleDate: nil), dismissalPolicy: policy)
+    }
 
     private func contentState(for round: Round) -> AlbatrossLiveActivity.ContentState {
         let pars = round.effectivePars

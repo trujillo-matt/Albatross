@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import Observation
 
 @MainActor
@@ -83,20 +84,20 @@ final class CourseStore {
         do {
             try JSONEncoder().encode(custom).write(to: Self.customCoursesURL, options: .atomic)
         } catch {
-            print("CourseStore: failed to save custom courses — \(error)")
+            Log.app.error("CourseStore: failed to save custom courses — \(error)")
         }
     }
 
     private func loadBundle() {
         guard let url = Bundle.main.url(forResource: "courses", withExtension: "json") else {
-            print("CourseStore: courses.json not found in bundle")
+            Log.app.error("CourseStore: courses.json not found in bundle")
             return
         }
         do {
             let data = try Data(contentsOf: url)
             allCourses = try JSONDecoder().decode([Course].self, from: data)
         } catch {
-            print("CourseStore: failed to decode courses.json — \(error)")
+            Log.app.error("CourseStore: failed to decode courses.json — \(error)")
         }
     }
 }

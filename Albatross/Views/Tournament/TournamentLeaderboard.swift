@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The tournament board, set out like a broadcast singles board: a title band, the two teams with
 /// their running points, then each day's matches, the leading side of a live match filled in its team colour.
-struct TournamentLeaderboard: View {
+struct TournamentLeaderboard<Destination: View>: View {
     @Environment(TournamentStore.self) private var tournamentStore
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -14,7 +14,12 @@ struct TournamentLeaderboard: View {
 
     let tournament: Tournament
     /// When set, each match row opens this destination. The Tournaments tab leaves it nil and opens the whole tournament.
-    var rowDestination: ((TournamentMatchup) -> AnyView)? = nil
+    private let rowDestination: ((TournamentMatchup) -> Destination)?
+
+    init(tournament: Tournament, @ViewBuilder rowDestination: @escaping (TournamentMatchup) -> Destination) {
+        self.tournament = tournament
+        self.rowDestination = rowDestination
+    }
 
     /// Each team's own colour; a team with none set keeps the default for its side (green and oxblood).
     private var teamAColor: Color { tournament.teamAColor }
@@ -371,5 +376,13 @@ struct TournamentLeaderboard: View {
             }
         }
         return label
+    }
+}
+
+extension TournamentLeaderboard where Destination == EmptyView {
+    /// A board whose rows do not open anything.
+    init(tournament: Tournament) {
+        self.tournament = tournament
+        self.rowDestination = nil
     }
 }

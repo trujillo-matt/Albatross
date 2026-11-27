@@ -142,13 +142,13 @@ struct StatsView: View {
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 5)) { _ in
                     AxisGridLine().foregroundStyle(Color.primary.opacity(0.08))
-                    AxisValueLabel().font(.system(size: 14)).foregroundStyle(Color(uiColor: .secondaryLabel))
+                    AxisValueLabel().font(.subheadline).foregroundStyle(Color(uiColor: .secondaryLabel))
                 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading) { _ in
                     AxisGridLine().foregroundStyle(Color.primary.opacity(0.08))
-                    AxisValueLabel().font(.system(size: 14)).foregroundStyle(Color(uiColor: .secondaryLabel))
+                    AxisValueLabel().font(.subheadline).foregroundStyle(Color(uiColor: .secondaryLabel))
                 }
             }
             .frame(height: 200)

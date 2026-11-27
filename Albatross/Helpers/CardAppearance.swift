@@ -137,12 +137,12 @@ final class CardAppearance {
 }
 
 /// A row of swatches for choosing paper or ink.
-struct SwatchPicker<Value: Hashable & Identifiable>: View {
+struct SwatchPicker<Value: Hashable & Identifiable, Swatch: View>: View {
     let title: String
     let values: [Value]
     @Binding var selection: Value
     let label: (Value) -> String
-    let swatch: (Value) -> AnyView
+    @ViewBuilder let swatch: (Value) -> Swatch
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -281,17 +281,18 @@ struct CardStyleForm: View {
     }
 
     /// A solid swatch, a two-tone one for "Club", or a ring for "Default".
-    private func swatch(_ color: Color?, club: [Color], isDefault: Bool) -> AnyView {
+    @ViewBuilder private func swatch(_ color: Color?, club: [Color], isDefault: Bool) -> some View {
         if isDefault {
-            return AnyView(
-                ZStack {
-                    Color(uiColor: .secondarySystemFill)
-                    Image(systemName: "arrow.uturn.backward")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                })
+            ZStack {
+                Color(uiColor: .secondarySystemFill)
+                Image(systemName: "arrow.uturn.backward")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+        } else if let color {
+            color
+        } else {
+            LinearGradient(colors: club, startPoint: .topLeading, endPoint: .bottomTrailing)
         }
-        if let color { return AnyView(color) }
-        return AnyView(LinearGradient(colors: club, startPoint: .topLeading, endPoint: .bottomTrailing))
     }
 }

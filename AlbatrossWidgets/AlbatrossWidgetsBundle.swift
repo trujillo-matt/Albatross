@@ -5,6 +5,7 @@ import SwiftUI
 struct AlbatrossWidgetBundle: WidgetBundle {
     var body: some Widget {
         AlbatrossLiveActivityWidget()
+        TournamentMatchLiveActivityWidget()
         StartRoundWidget()
     }
 }

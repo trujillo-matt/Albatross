@@ -1,4 +1,5 @@
 import UIKit
+import OSLog
 
 // MARK: - Result Types
 
@@ -66,7 +67,7 @@ struct ScorecardParserService {
 
     private func decode(_ text: String) -> ScorecardParseResult {
         // Log the raw response so you can see it in the Xcode console
-        print("🏌️ Gemini raw response:\n\(text)")
+        Log.app.info("🏌️ Gemini raw response:\n\(text)")
 
         // Extract the JSON object — strip markdown fences or any preamble text.
         // Use end.lowerBound (NOT end.upperBound) to avoid a crash when `}` is
@@ -78,12 +79,12 @@ struct ScorecardParserService {
             cleaned = String(cleaned[start.lowerBound...end.lowerBound])
         }
 
-        print("🏌️ Extracted JSON:\n\(cleaned)")
+        Log.app.info("🏌️ Extracted JSON:\n\(cleaned)")
 
         guard let data    = cleaned.data(using: .utf8),
               let decoded = try? JSONDecoder().decode(ScorecardJSON.self, from: data)
         else {
-            print("🏌️ JSON decode failed — returning empty result")
+            Log.app.error("🏌️ JSON decode failed — returning empty result")
             return ScorecardParseResult(courseName: nil, pars: nil, playerRows: [])
         }
 
@@ -93,7 +94,7 @@ struct ScorecardParserService {
             return ScorecardPlayerRow(label: p.name, scores: Array(scores.prefix(18)))
         }
 
-        print("🏌️ Parsed \(rows.count) player row(s), courseName: \(decoded.courseName ?? "nil")")
+        Log.app.info("🏌️ Parsed \(rows.count) player row(s), courseName: \(decoded.courseName ?? "nil")")
 
         return ScorecardParseResult(
             courseName: decoded.courseName,

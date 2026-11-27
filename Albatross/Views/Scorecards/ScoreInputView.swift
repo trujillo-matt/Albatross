@@ -215,7 +215,8 @@ private struct NumberPadView: View {
         if let v = Int(candidate), v >= 1, v <= 20 {
             inputText = candidate
             if candidate.count == 2 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                Task {
+                    try? await Task.sleep(for: .seconds(0.15))
                     onCommit()
                 }
             }

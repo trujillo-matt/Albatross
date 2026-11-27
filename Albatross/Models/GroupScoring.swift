@@ -4,7 +4,7 @@ import Foundation
 
 /// One scorecard in a group that a single person is scoring: one per player, or one per side in scramble and
 /// alternate shot. Read from the `rounds` table; only the fields the group screens need.
-struct GroupCard: Identifiable, Codable {
+nonisolated struct GroupCard: Identifiable, Codable {
     var id: UUID
     var ownerID: UUID
     var scores: [Int?]

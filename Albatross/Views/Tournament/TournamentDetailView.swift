@@ -450,7 +450,7 @@ private struct TournamentActiveSection: View {
 
             // The board: team points and every match, each row opening its match
             TournamentLeaderboard(tournament: tournament) { matchup in
-                AnyView(TournamentMatchupView(tournament: tournament, matchup: matchup))
+                TournamentMatchupView(tournament: tournament, matchup: matchup)
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)
@@ -697,6 +697,10 @@ struct TeeTimeCard: View {
 
     @State private var showAll = false
 
+    private var sessionsWithTeeTimes: [TournamentSession] {
+        tournament.sortedSessions.filter { s in tournament.teeTimes.contains { $0.sessionID == s.id } }
+    }
+
     /// The session the player should look at: the one in play, else the first with tee times.
     private var session: TournamentSession? {
         let withTimes = tournament.sortedSessions.filter { s in tournament.teeTimes.contains { $0.sessionID == s.id } }
@@ -738,7 +742,7 @@ struct TeeTimeCard: View {
                 }
                 DisclosureGroup("Everyone's tee times", isExpanded: $showAll) {
                     VStack(alignment: .leading, spacing: 8) {
-                        ForEach(tournament.sortedSessions.filter { s in tournament.teeTimes.contains { $0.sessionID == s.id } }) { s in
+                        ForEach(sessionsWithTeeTimes) { s in
                             Text("Day \(s.dayNumber), \(s.title)")
                                 .appFont(.small, weight: .semibold)
                                 .padding(.top, 4)

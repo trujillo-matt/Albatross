@@ -19,8 +19,12 @@ export interface PushResult { ok: boolean; status: number; reason?: string; gone
 export async function sendAlert(
   token: string, jwt: string, bundleId: string,
   alert: { title: string; body: string }, data: Record<string, string>, collapseId: string,
+  options: { timeSensitive?: boolean } = {},
 ): Promise<PushResult> {
-  const payload = JSON.stringify({ aps: { alert, sound: "default", "thread-id": data.tournament_id }, ...data });
+  const aps: Record<string, unknown> = { alert, sound: "default", "thread-id": data.tournament_id };
+  // Time sensitive alerts can break through a Focus. The app needs the entitlement; without it iOS shows a normal alert.
+  if (options.timeSensitive) aps["interruption-level"] = "time-sensitive";
+  const payload = JSON.stringify({ aps, ...data });
   let last: PushResult = { ok: false, status: 0 };
   for (const host of ["api.push.apple.com", "api.sandbox.push.apple.com"]) {
     const res = await fetch(`https://${host}/3/device/${token}`, {
@@ -38,4 +42,42 @@ export async function sendAlert(
     if (reason !== "BadDeviceToken") break;
   }
   return last;
+}
+
+/**
+ * Updates (or ends) a Live Activity. The content state's keys must match the app's ActivityAttributes.ContentState,
+ * which ActivityKit decodes with a plain JSONDecoder. Tokens come from the activity's pushTokenUpdates.
+ */
+export async function sendLiveActivity(
+  token: string, jwt: string, bundleId: string,
+  state: Record<string, unknown>, event: "update" | "end",
+): Promise<PushResult> {
+  const now = Math.floor(Date.now() / 1000);
+  const aps: Record<string, unknown> = { timestamp: now, event, "content-state": state };
+  // Leave the final standing on the lock screen for a minute.
+  if (event === "end") aps["dismissal-date"] = now + 60;
+  const payload = JSON.stringify({ aps });
+  let last: PushResult = { ok: false, status: 0 };
+  for (const host of ["api.push.apple.com", "api.sandbox.push.apple.com"]) {
+    const res = await fetch(`https://${host}/3/device/${token}`, {
+      method: "POST",
+      headers: {
+        authorization: `bearer ${jwt}`, "apns-topic": `${bundleId}.push-type.liveactivity`,
+        "apns-push-type": "liveactivity", "apns-priority": "10",
+      },
+      body: payload,
+    });
+    if (res.ok) return { ok: true, status: res.status };
+    const reason = (await res.json().catch(() => ({})))?.reason as string | undefined;
+    last = { ok: false, status: res.status, reason, gone: res.status === 410 || reason === "Unregistered" || reason === "BadDeviceToken" && host.includes("sandbox") };
+    if (reason !== "BadDeviceToken") break;
+  }
+  return last;
+}
+
+/** The APNs settings every sender needs, or null when the secrets are not set yet. */
+export function apnsConfig(): { keyP8: string; keyId: string; teamId: string; bundleId: string } | null {
+  const keyP8 = Deno.env.get("APNS_KEY_P8"), keyId = Deno.env.get("APNS_KEY_ID"), teamId = Deno.env.get("APNS_TEAM_ID");
+  if (!keyP8 || !keyId || !teamId) return null;
+  return { keyP8, keyId, teamId, bundleId: Deno.env.get("APNS_BUNDLE_ID") ?? "TrujSoft.Albatross" };
 }

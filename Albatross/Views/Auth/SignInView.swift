@@ -1,3 +1,5 @@
+import AuthenticationServices
+import CryptoKit
 import SwiftUI
 
 struct SignInView: View {
@@ -12,6 +14,8 @@ struct SignInView: View {
     @State private var username = ""
     @State private var email = ""
     @State private var password = ""
+    /// The unhashed value behind the nonce sent to Apple, kept until Apple answers.
+    @State private var appleNonce = ""
 
     private var canSubmit: Bool {
         let baseValid = !email.isEmpty && password.count >= 6
@@ -48,6 +52,35 @@ struct SignInView: View {
                     }
                     .padding(.top, 72)
                     .padding(.bottom, 48)
+
+                    // ── Sign in with Apple ───────────────────────────────
+                    VStack(spacing: 16) {
+                        SignInWithAppleButton(isSignUp ? .signUp : .signIn) { request in
+                            appleNonce = Self.randomNonce()
+                            request.requestedScopes = [.fullName, .email]
+                            request.nonce = Self.sha256(appleNonce)
+                        } onCompletion: { result in
+                            switch result {
+                            case .success(let authorization):
+                                Task { await authStore.signInWithApple(authorization: authorization, nonce: appleNonce) }
+                            case .failure(let error):
+                                authStore.appleSignInFailed(error)
+                            }
+                        }
+                        .signInWithAppleButtonStyle(.white)
+                        .frame(height: AppSpacing.buttonHeight)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                        HStack(spacing: 12) {
+                            Rectangle().fill(.white.opacity(0.2)).frame(height: 1)
+                            Text("or")
+                                .appFont(.small)
+                                .foregroundStyle(.white.opacity(0.6))
+                            Rectangle().fill(.white.opacity(0.2)).frame(height: 1)
+                        }
+                    }
+                    .padding(.horizontal, 32)
+                    .padding(.bottom, 20)
 
                     // ── Form fields ──────────────────────────────────────
                     VStack(spacing: 12) {
@@ -220,6 +253,18 @@ struct SignInView: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
         }
+    }
+
+    // MARK: - Apple nonce
+
+    /// A random string for the sign-in request. Apple puts its SHA-256 in the token, and the server checks the original.
+    private static func randomNonce(length: Int = 32) -> String {
+        let characters = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        return String((0..<length).map { _ in characters[Int.random(in: 0..<characters.count)] })
+    }
+
+    private static func sha256(_ input: String) -> String {
+        SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
     }
 
     // MARK: - Submit

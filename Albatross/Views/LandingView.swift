@@ -51,7 +51,8 @@ struct LandingView: View {
             withAnimation(.easeOut(duration: 0.5).delay(0.4)) {
                 taglineOpacity = 1
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+            Task {
+                try? await Task.sleep(for: .seconds(2.2))
                 withAnimation(.easeIn(duration: 0.4)) {
                     isShowing = false
                 }

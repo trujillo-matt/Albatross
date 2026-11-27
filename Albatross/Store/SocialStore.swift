@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 import Observation
 import Supabase
 
@@ -70,7 +71,7 @@ final class SocialStore {
 
             following = profiles.sorted { ($0.displayName) < ($1.displayName) }
         } catch {
-            print("SocialStore: loadFollowing failed — \(error)")
+            Log.app.error("SocialStore: loadFollowing failed — \(error)")
         }
     }
 
@@ -99,7 +100,7 @@ final class SocialStore {
 
             followers = profiles.sorted { $0.displayName < $1.displayName }
         } catch {
-            print("SocialStore: loadFollowers failed — \(error)")
+            Log.app.error("SocialStore: loadFollowers failed — \(error)")
         }
     }
 
@@ -190,7 +191,7 @@ final class SocialStore {
                 return FeedItem(profile: profile, round: round)
             }
         } catch {
-            print("SocialStore: loadFeed failed — \(error)")
+            Log.app.error("SocialStore: loadFeed failed — \(error)")
         }
     }
 
@@ -212,7 +213,7 @@ final class SocialStore {
             await loadFollowing()
             await loadFeed()
         } catch {
-            print("SocialStore: follow failed — \(error)")
+            Log.app.error("SocialStore: follow failed — \(error)")
         }
     }
 
@@ -229,7 +230,7 @@ final class SocialStore {
             following.removeAll { $0.id == userID }
             friendsFeed.removeAll { $0.profile.id == userID }
         } catch {
-            print("SocialStore: unfollow failed — \(error)")
+            Log.app.error("SocialStore: unfollow failed — \(error)")
         }
     }
 
@@ -256,7 +257,7 @@ final class SocialStore {
                 .value
             searchResults = results
         } catch {
-            print("SocialStore: searchUsers failed — \(error)")
+            Log.app.error("SocialStore: searchUsers failed — \(error)")
             searchResults = []
         }
     }
@@ -310,7 +311,7 @@ final class SocialStore {
                 )
             }
         } catch {
-            print("SocialStore: loadRounds(for:) failed — \(error)")
+            Log.app.error("SocialStore: loadRounds(for:) failed — \(error)")
             return []
         }
     }
