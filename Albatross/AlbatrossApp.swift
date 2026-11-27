@@ -120,6 +120,10 @@ struct AlbatrossApp: App {
                             }
                         }
                     }
+                    // -demo-weather shows a sample forecast under the tournament info.
+                    if CommandLine.arguments.contains("-demo-weather"), let tournament = tournamentStore.myTournaments.first {
+                        weatherStore.seedDemo(for: tournament)
+                    }
                     // -demo-rounds fills the library so stacked cards can be seen.
                     if CommandLine.arguments.contains("-demo-rounds") {
                         roundStore.installDemoRounds()

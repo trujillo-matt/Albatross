@@ -434,9 +434,9 @@ struct TournamentForecastSection: View {
                         }
                     }
                     .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    if let attribution = weather.attribution {
-                        WeatherAttributionView(attribution: attribution)
-                    }
+                    // Apple requires its mark and a link to the data sources wherever its forecasts appear, so this is
+                    // always shown with them, whether or not the mark itself could be fetched.
+                    WeatherAttributionView(attribution: weather.attribution)
                 }
             }
         }
@@ -448,6 +448,12 @@ struct TournamentForecastSection: View {
 
 private struct ForecastRow: View {
     let forecast: RoundForecast
+
+    /// Whole degrees in the viewer's own unit; WeatherKit's values carry many decimals.
+    private static let temperature = Measurement<UnitTemperature>.FormatStyle(
+        width: .narrow, usage: .weather, numberFormatStyle: .number.precision(.fractionLength(0)))
+    private static let speed = Measurement<UnitSpeed>.FormatStyle(
+        width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(0)))
 
     var body: some View {
         HStack(spacing: 12) {
@@ -469,9 +475,9 @@ private struct ForecastRow: View {
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 2) {
-                Text("\(forecast.high.formatted(.measurement(width: .narrow, usage: .weather))) / \(forecast.low.formatted(.measurement(width: .narrow, usage: .weather)))")
+                Text("\(forecast.high.formatted(Self.temperature)) / \(forecast.low.formatted(Self.temperature))")
                     .appFont(.small, monospacedDigit: true)
-                Text("Wind \(forecast.windSpeed.formatted(.measurement(width: .abbreviated, usage: .general)))")
+                Text("Wind \(forecast.windSpeed.formatted(Self.speed))")
                     .appFont(.small, monospacedDigit: true)
                     .foregroundStyle(.secondary)
             }
@@ -482,21 +488,34 @@ private struct ForecastRow: View {
 }
 
 /// Apple requires its Weather mark and a link to the data sources wherever its forecasts appear.
+/// If the mark cannot be loaded the words "Apple Weather" stand in for it; the link always works.
 private struct WeatherAttributionView: View {
-    let attribution: WeatherAttribution
+    let attribution: WeatherAttribution?
     @Environment(\.colorScheme) private var colorScheme
+
+    /// Apple's own page on where the data comes from, used when WeatherKit has not supplied the link.
+    private static let fallbackLegalPage = URL(string: "https://weatherkit.apple.com/legal-attribution.html")!
 
     var body: some View {
         HStack(spacing: 8) {
-            AsyncImage(url: colorScheme == .dark ? attribution.combinedMarkDarkURL : attribution.combinedMarkLightURL) { image in
-                image.resizable().scaledToFit()
-            } placeholder: {
-                Text(attribution.serviceName)
-            }
-            .frame(height: 14)
-            Link("Data sources", destination: attribution.legalPageURL)
+            mark
+                .frame(height: 14)
+                .accessibilityLabel("Apple Weather")
+            Link("Data sources", destination: attribution?.legalPageURL ?? Self.fallbackLegalPage)
                 .appFont(.small)
         }
         .padding(.horizontal, 4)
+    }
+
+    @ViewBuilder private var mark: some View {
+        if let attribution {
+            AsyncImage(url: colorScheme == .dark ? attribution.combinedMarkDarkURL : attribution.combinedMarkLightURL) { image in
+                image.resizable().scaledToFit()
+            } placeholder: {
+                Text("Apple Weather").appFont(.small, weight: .medium)
+            }
+        } else {
+            Text("Apple Weather").appFont(.small, weight: .medium)
+        }
     }
 }

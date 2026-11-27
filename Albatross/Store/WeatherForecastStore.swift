@@ -64,10 +64,41 @@ final class WeatherForecastStore {
         coordinateCache = (defaults.dictionary(forKey: cacheKey) as? [String: [Double]]) ?? [:]
     }
 
+    #if DEBUG
+    @ObservationIgnored private var isShowingDemo = false
+
+    /// Sample weather for the tournament demo, so the forecast screen can be seen without WeatherKit. Launch with `-demo-weather`.
+    func seedDemo(for tournament: Tournament) {
+        isShowingDemo = true
+        func day(_ session: TournamentSession, _ condition: String, _ symbol: String, high: Double, low: Double, rain: Double, wind: Double, hoursAhead: Double) -> RoundForecast {
+            RoundForecast(
+                id: session.id, sessionTitle: session.title, dayNumber: session.dayNumber, courseName: session.courseName ?? "the course",
+                date: Date().addingTimeInterval(hoursAhead * 3600), condition: condition, symbolName: symbol,
+                high: Measurement(value: high, unit: .fahrenheit), low: Measurement(value: low, unit: .fahrenheit),
+                rainChance: rain, windSpeed: Measurement(value: wind, unit: .milesPerHour))
+        }
+        let sessions = tournament.sortedSessions
+        let samples: [(String, String, Double, Double, Double, Double)] = [
+            ("Mostly sunny", "sun.max.fill", 74, 52, 0.05, 6),
+            ("Rain", "cloud.rain.fill", 61, 49, 0.70, 14),
+            ("Partly cloudy", "cloud.sun.fill", 68, 47, 0.15, 9)
+        ]
+        forecasts = sessions.prefix(samples.count).enumerated().map { index, session in
+            let sample = samples[index]
+            return day(session, sample.0, sample.1, high: sample.2, low: sample.3, rain: sample.4, wind: sample.5, hoursAhead: Double(index + 1) * 24)
+        }
+        status = .ready
+    }
+    #endif
+
     /// Looks up the forecast for every session of the tournament that has a tee time within the forecast window.
     func load(for tournament: Tournament, courses: [Course]) async {
+        #if DEBUG
+        if isShowingDemo { return }
+        #endif
         status = .loading
         var result: [RoundForecast] = []
+        if attribution == nil { attribution = try? await WeatherService.shared.attribution }
         do {
             for session in tournament.sortedSessions {
                 guard let courseName = session.courseName, !courseName.isEmpty,
@@ -85,7 +116,6 @@ final class WeatherForecastStore {
                     rainChance: day.precipitationChance, windSpeed: day.wind.speed))
             }
             forecasts = result
-            if attribution == nil { attribution = try? await WeatherService.shared.attribution }
             status = .ready
         } catch {
             Log.app.error("WeatherForecastStore: forecast unavailable — \(error)")
