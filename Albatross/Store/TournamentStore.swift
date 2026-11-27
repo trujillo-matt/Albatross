@@ -45,6 +45,15 @@ final class TournamentStore {
         news = items
     }
 
+    /// Adds one fresh item the way the cloud would and sends it through the alert path. Launch with `-demo-news-alert`.
+    func postDemoNewsAlert(_ item: TournamentNewsItem) async {
+        // The demo feed counts as already seen, so only the new item alerts.
+        NewsAlerts.shared.forgetSeen()
+        await NewsAlerts.shared.process(news, tournaments: myTournaments, liveStatus: liveStatus)
+        news.insert(item, at: 0)
+        await NewsAlerts.shared.process(news, tournaments: myTournaments, liveStatus: liveStatus)
+    }
+
     /// True while the tournament demo data is showing. Loads that would replace it with cloud results are skipped.
     @ObservationIgnored private(set) var isShowingDemo = false
 
@@ -657,10 +666,25 @@ final class TournamentStore {
                 .limit(20)
                 .execute()
                 .value
+            await NewsAlerts.shared.process(news, tournaments: myTournaments, liveStatus: liveStatus)
         } catch {
             print("TournamentStore: news failed — \(error)")
         }
     }
+
+    /// Checks for news every 15 seconds for as long as the app runs, whichever screen is showing, so an alert does not
+    /// depend on the news feed being open. Calling it again does nothing.
+    func startWatchingNews() {
+        guard newsWatcher == nil else { return }
+        newsWatcher = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.loadNews()
+                await PushRegistration.shared.sync()
+                try? await Task.sleep(for: .seconds(15))
+            }
+        }
+    }
+    @ObservationIgnored private var newsWatcher: Task<Void, Never>? = nil
 
     // MARK: - Callout presence
 

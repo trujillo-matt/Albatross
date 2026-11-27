@@ -575,11 +575,17 @@ struct TournamentNewsItem: Identifiable, Codable, Equatable {
     var kind: String
     var headline: String
     var createdAt: Date
+    /// Who and where, so the story can name the match and the opponent. Nil on items written before these were read.
+    var matchupID: UUID? = nil
+    var playerUserID: UUID? = nil
+    var hole: Int? = nil
 
     enum CodingKeys: String, CodingKey {
-        case id, kind, headline
+        case id, kind, headline, hole
         case tournamentID = "tournament_id"
         case createdAt    = "created_at"
+        case matchupID    = "matchup_id"
+        case playerUserID = "player_user_id"
     }
 }
 

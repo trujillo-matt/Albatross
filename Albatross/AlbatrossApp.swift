@@ -8,6 +8,7 @@ enum AppState {
 
 @main
 struct AlbatrossApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @State private var authStore        = AuthStore()
     @State private var roundStore       = RoundStore()
     @State private var courseStore      = CourseStore()
@@ -98,6 +99,8 @@ struct AlbatrossApp: App {
                 authStore.roundStore = roundStore
                 socialStore.authStore = authStore
                 tournamentStore.authStore = authStore
+                NewsAlerts.shared.install()
+                tournamentStore.startWatchingNews()
                 #if DEBUG
                 // The screen can appear more than once; the launch arguments are applied only the first time.
                 if !hasAppliedDebugArguments {
@@ -108,6 +111,15 @@ struct AlbatrossApp: App {
                         authStore.seedDemoProfile(TournamentDemo.me)
                         tournamentStore.installDemoTournament(large: wantsLargeDemo)
                         socialStore.installDemoFriends()
+                    }
+                    // -demo-news-alert sends one fresh birdie through the phone alert path a few seconds after launch.
+                    if CommandLine.arguments.contains("-demo-news-alert") {
+                        Task {
+                            try? await Task.sleep(for: .seconds(8))
+                            if let item = TournamentDemo.freshNewsItem(for: tournamentStore.myTournaments) {
+                                await tournamentStore.postDemoNewsAlert(item)
+                            }
+                        }
                     }
                     // -demo-rounds fills the library so stacked cards can be seen.
                     if CommandLine.arguments.contains("-demo-rounds") {

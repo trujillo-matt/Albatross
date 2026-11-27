@@ -163,26 +163,47 @@ enum TournamentDemo {
         return byMatchup
     }
 
-    /// The feed: birdies from those cards, a corrected score, and the finished matches, newest first.
+    /// The feed: birdies, a corrected score and finished matches, newest first. Players who are not in this tournament are skipped,
+    /// so the same list serves the small and the large demo.
     static func makeNews(for tournament: Tournament, cards: [UUID: [GroupCard]]) -> [TournamentNewsItem] {
-        func name(_ id: UUID) -> String { tournament.playerPool.first(where: { $0.userID == id })?.profile?.displayName ?? "A player" }
-        var items: [TournamentNewsItem] = []
-        func add(_ kind: String, _ headline: String, minutesAgo: Int) {
-            items.append(TournamentNewsItem(id: UUID(), tournamentID: tournament.id, kind: kind, headline: headline,
-                                            createdAt: Date().addingTimeInterval(TimeInterval(-60 * minutesAgo))))
-        }
-        // The most recent hole of each live foursome comes first.
-        add("birdie", "Alex Kim made a birdie on hole 4", minutesAgo: 2)
-        add("score_change", "Score changed: Ivy Tan, hole 6, 4 to 3", minutesAgo: 5)
-        add("birdie", "Ivy Tan made a birdie on hole 7", minutesAgo: 6)
-        add("eagle", "Jordan Park made an eagle on hole 5", minutesAgo: 9)
-        add("match_result", "Team Matt won match 18", minutesAgo: 14)
-        add("birdie", "Matt Trujillo made a birdie on hole 4", minutesAgo: 17)
-        add("match_result", "Team Alex won match 14", minutesAgo: 31)
-        add("birdie", "Maya Lopez made a birdie on hole 1", minutesAgo: 44)
-        add("ace", "Uma Reid made a hole in one on hole 3", minutesAgo: 58)
         _ = cards
+        var items: [TournamentNewsItem] = []
+        func add(_ kind: String, _ player: String, hole: Int, minutesAgo: Int, headline: String) {
+            guard let userID = tournament.playerPool.first(where: { $0.profile?.displayName == player })?.userID else { return }
+            let matchups = tournament.matchups.filter { $0.teamAPlayerIDs.contains(userID) || $0.teamBPlayerIDs.contains(userID) }
+            let matchup = matchups.first { $0.result == nil } ?? matchups.last
+            items.append(TournamentNewsItem(
+                id: UUID(), tournamentID: tournament.id, kind: kind, headline: headline,
+                createdAt: Date().addingTimeInterval(TimeInterval(-60 * minutesAgo)),
+                matchupID: matchup?.id, playerUserID: userID, hole: hole))
+        }
+        func addResult(_ matchup: TournamentMatchup, minutesAgo: Int) {
+            items.append(TournamentNewsItem(
+                id: UUID(), tournamentID: tournament.id, kind: "match_result", headline: "Match \(matchup.matchupNumber) finished",
+                createdAt: Date().addingTimeInterval(TimeInterval(-60 * minutesAgo)), matchupID: matchup.id))
+        }
+        let finished = tournament.matchups.filter { $0.result != nil }.sorted { $0.matchupNumber > $1.matchupNumber }
+        add("birdie", "Alex Kim", hole: 4, minutesAgo: 2, headline: "Alex Kim made a birdie on hole 4")
+        add("score_change", "Ivy Tan", hole: 6, minutesAgo: 5, headline: "Score changed: Ivy Tan, hole 6, 4 to 3")
+        add("score_change", "Sam Rhodes", hole: 3, minutesAgo: 5, headline: "Score changed: Sam Rhodes, hole 3, 5 to 4")
+        add("birdie", "Ivy Tan", hole: 7, minutesAgo: 6, headline: "Ivy Tan made a birdie on hole 7")
+        add("eagle", "Jordan Park", hole: 5, minutesAgo: 9, headline: "Jordan Park made an eagle on hole 5")
+        if let first = finished.first { addResult(first, minutesAgo: 14) }
+        add("birdie", "Matt Trujillo", hole: 4, minutesAgo: 17, headline: "Matt Trujillo made a birdie on hole 4")
+        if finished.count > 1 { addResult(finished[1], minutesAgo: 31) }
+        add("birdie", "Maya Lopez", hole: 1, minutesAgo: 44, headline: "Maya Lopez made a birdie on hole 1")
+        add("ace", "Uma Reid", hole: 3, minutesAgo: 58, headline: "Uma Reid made a hole in one on hole 3")
         return items
+    }
+
+    /// One new birdie for the player's live match, used to try the phone alert with `-demo-news-alert`.
+    static func freshNewsItem(for tournaments: [Tournament]) -> TournamentNewsItem? {
+        guard let tournament = tournaments.first,
+              let matchup = tournament.matchups.first(where: { $0.result == nil && $0.teamAPlayerIDs.contains(me.id) }),
+              let hole = liveStatuses(for: tournament)[matchup.id].map({ $0.holesPlayed + 1 }) else { return nil }
+        return TournamentNewsItem(
+            id: UUID(), tournamentID: tournament.id, kind: "birdie", headline: "Matt Trujillo made a birdie on hole \(hole)",
+            createdAt: Date(), matchupID: matchup.id, playerUserID: me.id, hole: hole)
     }
 
     /// Where the live matches stand, by match number.
@@ -271,11 +292,12 @@ extension TournamentStore {
         let tournament = large ? TournamentDemo.makeLargeTournament() : TournamentDemo.makeTournament()
         seedForDemo([tournament])
         seedLiveForDemo(TournamentDemo.liveStatuses(for: tournament))
+        var cards: [UUID: [GroupCard]] = [:]
         if large {
-            let cards = TournamentDemo.makeGroupCards(for: tournament)
+            cards = TournamentDemo.makeGroupCards(for: tournament)
             seedGroupCardsForDemo(cards)
-            seedNewsForDemo(TournamentDemo.makeNews(for: tournament, cards: cards))
         }
+        seedNewsForDemo(TournamentDemo.makeNews(for: tournament, cards: cards))
     }
 }
 

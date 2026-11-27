@@ -5,6 +5,7 @@ struct TournamentListView: View {
     @Environment(AuthStore.self) private var authStore
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var showNewTournament = false
     @State private var tournamentToDelete: Tournament? = nil
     @State private var showDeleteAlert = false
@@ -16,33 +17,23 @@ struct TournamentListView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    if !tournamentStore.pendingInvites.isEmpty {
-                        pendingInvitesSection
+            Group {
+                if horizontalSizeClass == .regular {
+                    // Wide screens: the news and tournament info on the left, the leaderboard on the right.
+                    // Each side scrolls on its own, so a long board does not push the news away.
+                    HStack(alignment: .top, spacing: 0) {
+                        ScrollView { VStack(alignment: .leading, spacing: 28) { newsColumn }.padding(16) }
+                        ScrollView { VStack(alignment: .leading, spacing: 28) { standingsColumn }.padding(16) }
                     }
-
-                    if let featured = featuredTournament {
-                        leaderboardSection(featured)
-                    }
-
-                    if !tournamentStore.myTournaments.isEmpty {
-                        TournamentNewsFeed()
-                    }
-
-                    if tournamentStore.myTournaments.isEmpty && tournamentStore.pendingInvites.isEmpty {
-                        emptyTournamentState
-                    } else if !tournamentStore.myTournaments.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("All tournaments")
-                                .appFont(.large, weight: .medium)
-                                .accessibilityAddTraits(.isHeader)
-                            tournamentList
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 28) {
+                            standingsColumn
+                            newsColumn
                         }
+                        .padding(16)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 16)
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("Tournaments")
@@ -80,6 +71,35 @@ struct TournamentListView: View {
                     await tournamentStore.refreshLive(for: id)
                     try? await Task.sleep(for: .seconds(10))
                 }
+            }
+        }
+    }
+
+    // MARK: - Columns
+
+    @ViewBuilder private var standingsColumn: some View {
+        if !tournamentStore.pendingInvites.isEmpty {
+            pendingInvitesSection
+        }
+        if let featured = featuredTournament {
+            leaderboardSection(featured)
+        }
+        if tournamentStore.myTournaments.isEmpty && tournamentStore.pendingInvites.isEmpty {
+            emptyTournamentState
+        }
+    }
+
+    @ViewBuilder private var newsColumn: some View {
+        if let featured = featuredTournament {
+            TournamentInfoCard(tournament: featured)
+        }
+        if !tournamentStore.myTournaments.isEmpty {
+            TournamentNewsFeed()
+            VStack(alignment: .leading, spacing: 12) {
+                Text("All tournaments")
+                    .appFont(.large, weight: .medium)
+                    .accessibilityAddTraits(.isHeader)
+                tournamentList
             }
         }
     }
@@ -302,11 +322,16 @@ struct TournamentNewsFeed: View {
                                 .fill(item.kind == "score_change" ? Color.orange : (item.kind == "match_result" ? Color.secondary : Color.brandGreen))
                                 .frame(width: 8, height: 8)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(item.headline)
-                                    .appFont(.small)
-                                Text(item.createdAt.formatted(.relative(presentation: .named)))
+                                let story = NewsStoryWriter.story(for: item, in: tournamentStore.myTournaments, liveStatus: tournamentStore.liveStatus)
+                                Text(story.title)
+                                    .appFont(.small, weight: .semibold)
+                                Text(story.body)
                                     .appFont(.small)
                                     .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                Text(item.createdAt.formatted(.relative(presentation: .named)))
+                                    .appFont(.small)
+                                    .foregroundStyle(.tertiary)
                             }
                             Spacer(minLength: 0)
                         }
@@ -318,11 +343,58 @@ struct TournamentNewsFeed: View {
                 .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
         }
-        .task {
-            while !Task.isCancelled {
-                await tournamentStore.loadNews()
-                try? await Task.sleep(for: .seconds(15))
+        .task { await tournamentStore.loadNews() }
+    }
+}
+
+
+/// What the tournament is: where it is played, in what format, and what it takes to win.
+struct TournamentInfoCard: View {
+    let tournament: Tournament
+
+    private var courses: String {
+        var names = tournament.sessions.sorted { ($0.dayNumber, $0.sessionNumber) < ($1.dayNumber, $1.sessionNumber) }.compactMap(\.courseName)
+        if names.isEmpty { names = tournament.courses.map(\.courseName) }
+        return names.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }.formatted(.list(type: .and))
+    }
+
+    private var formats: String {
+        var types = tournament.sessions.map(\.matchType)
+        if types.isEmpty { types = [tournament.matchType] }
+        return types.reduce(into: [TournamentMatchType]()) { if !$0.contains($1) { $0.append($1) } }
+            .map(\.displayName).formatted(.list(type: .and))
+    }
+
+    private var teams: String {
+        tournament.teams.map(\.name).formatted(.list(type: .and))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Tournament info")
+                .appFont(.large, weight: .medium)
+                .accessibilityAddTraits(.isHeader)
+            VStack(spacing: 0) {
+                row("Format", formats)
+                row("Courses", courses)
+                row("Teams", teams)
+                row("To win", "\(tournament.pointsToWin.formatted(.number.precision(.fractionLength(0...1)))) points")
             }
+            .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
+    }
+
+    private func row(_ title: String, _ value: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(title)
+                .appFont(.small)
+                .foregroundStyle(.secondary)
+                .frame(width: 64, alignment: .leading)
+            Text(value)
+                .appFont(.small)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .appListRowPadding()
+        .accessibilityElement(children: .combine)
     }
 }

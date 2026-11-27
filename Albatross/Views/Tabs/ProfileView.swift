@@ -343,10 +343,25 @@ struct ProfileView: View {
 struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
+    @AppStorage(NewsAlerts.enabledKey) private var newsAlertsEnabled = true
 
     var body: some View {
         NavigationStack {
             List {
+                Section {
+                    Toggle(isOn: $newsAlertsEnabled) {
+                        Label("Tournament alerts", systemImage: "bell")
+                            .appFont(.body)
+                    }
+                    .onChange(of: newsAlertsEnabled) { Task { await PushRegistration.shared.sync() } }
+                } header: {
+                    Text("Notifications")
+                        .appFont(.small)
+                } footer: {
+                    Text("Birdies, eagles, corrected scores and finished matches, as they happen.")
+                        .appFont(.small)
+                }
+
                 Section {
                     HStack {
                         Label("Dark Mode", systemImage: "moon.fill")
