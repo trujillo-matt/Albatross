@@ -17,28 +17,19 @@ private nonisolated struct PageTurn {
     let angle: Double
     let offset: CGFloat
     let opacity: Double
-    let perspective: CGFloat
+    let perspective: CGFloat = 0.5
 
-    init(isCover: Bool, isFront: Bool, value: Double, width: CGFloat, reduceMotion: Bool) {
-        if isCover {
-            // The scroll carries the cover off to the left; the offset holds it in place while it turns on its spine.
-            let opened = max(0, -value)
-            angle = reduceMotion ? 0 : opened * -100
-            offset = opened * width
-            opacity = reduceMotion ? 1 - opened : (opened < 0.6 ? 1 : max(0, 1 - (opened - 0.6) / 0.4))
-            perspective = 0.45
-        } else if isFront && value > 0 {
-            // Arriving from the right: stay put, under the cover.
+    init(isFront: Bool, value: Double, width: CGFloat, reduceMotion: Bool) {
+        if isFront && value > 0 {
+            // Arriving from the right: stay put, under the cover as it opens.
             angle = 0
             offset = -value * width
             opacity = 1
-            perspective = 0.5
         } else {
             // Reduce Motion keeps the page change but drops the tilt.
             angle = reduceMotion ? 0 : value * -22
             offset = 0
             opacity = 1 - abs(value) * 0.3
-            perspective = 0.5
         }
     }
 }
@@ -335,6 +326,8 @@ private struct BookletPages: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The width of one page, so the page transitions can hold a page in place.
     @State private var pageWidth: CGFloat = 400
+    /// How far the pager has scrolled, which is how far the cover has opened.
+    @State private var scrollOffset: CGFloat = 0
 
     var body: some View {
         if isSpread {
@@ -345,45 +338,61 @@ private struct BookletPages: View {
         }
     }
 
-    /// One page of the pager, with its turn. The cover is on top and swings open on its spine while the first page waits
-    /// underneath, as a booklet opens. The other pages turn as before. Reduce Motion drops the swing for a fade.
-    private func pagerPage(_ bookletPage: BookletPage, reduceMotion: Bool, pageWidth: CGFloat) -> some View {
-        let isCover = bookletPage == .cover
-        let isFront = bookletPage == .front
-        let layer: Double = isCover ? 2 : (isFront ? 1 : 0)
-        return pageContent(bookletPage)
-            .containerRelativeFrame([.horizontal, .vertical])
-            .id(bookletPage)
-            .zIndex(layer)
-            .scrollTransition(axis: .horizontal) { view, phase in
-                let turn = PageTurn(isCover: isCover, isFront: isFront, value: phase.value, width: pageWidth, reduceMotion: reduceMotion)
-                return view
-                    .rotation3DEffect(.degrees(turn.angle), axis: (x: 0, y: 1, z: 0), anchor: .leading, perspective: turn.perspective)
-                    .offset(x: turn.offset)
-                    .opacity(turn.opacity)
-            }
-    }
-
-    /// One page at a time. Paging gives the flip between cover and interior pages.
+    /// One page at a time, with the cover drawn above. Paging gives the flip between the cover and the interior pages.
     private var pager: some View {
         // The transition closure runs off the main actor, so it gets its own copy of the setting.
         let reduceMotion = self.reduceMotion
         let pageWidth = self.pageWidth
-        return ScrollView(.horizontal) {
-            LazyHStack(spacing: 0) {
-                ForEach(BookletPage.allCases) { bookletPage in
-                    pagerPage(bookletPage, reduceMotion: reduceMotion, pageWidth: pageWidth)
+        return ZStack {
+            ScrollView(.horizontal) {
+                LazyHStack(spacing: 0) {
+                    ForEach(BookletPage.allCases) { bookletPage in
+                        pagerPage(bookletPage, reduceMotion: reduceMotion, pageWidth: pageWidth)
+                    }
                 }
+                .scrollTargetLayout()
             }
-            .scrollTargetLayout()
+            .scrollTargetBehavior(.paging)
+            .scrollPosition(id: $page)
+            .scrollIndicators(.hidden)
+            .onScrollGeometryChange(for: CGFloat.self) { $0.contentOffset.x } action: { _, offset in scrollOffset = offset }
+
+            coverLayer(progress: scrollOffset / max(pageWidth, 1), reduceMotion: reduceMotion)
         }
-        .scrollTargetBehavior(.paging)
-        .scrollPosition(id: $page)
-        .scrollIndicators(.hidden)
         .clippedToHorizontalSafeArea()
         .accessibilityAction(named: "Open scorecard") { withAnimation { page = .front } }
         .accessibilityAction(named: "Next page") { turnPage(by: 1) }
         .accessibilityAction(named: "Previous page") { turnPage(by: -1) }
+    }
+
+    /// One page of the pager. The cover's slot is empty: the cover itself is drawn above the pager so that it is always on
+    /// top while it opens. The first page holds still under it; the others turn as before.
+    private func pagerPage(_ bookletPage: BookletPage, reduceMotion: Bool, pageWidth: CGFloat) -> some View {
+        let isCover = bookletPage == .cover
+        let isFront = bookletPage == .front
+        return Group {
+            if isCover { Color.clear } else { pageContent(bookletPage) }
+        }
+        .containerRelativeFrame([.horizontal, .vertical])
+        .id(bookletPage)
+        .scrollTransition(axis: .horizontal) { view, phase in
+            let turn = PageTurn(isFront: isFront, value: phase.value, width: pageWidth, reduceMotion: reduceMotion)
+            return view
+                .rotation3DEffect(.degrees(turn.angle), axis: (x: 0, y: 1, z: 0), anchor: .leading, perspective: turn.perspective)
+                .offset(x: turn.offset)
+                .opacity(turn.opacity)
+        }
+    }
+
+    /// The cover, on top of the pager. It swings open on its spine as the pager scrolls to the first page, and swings
+    /// shut as it scrolls back. Reduce Motion drops the swing for a fade.
+    private func coverLayer(progress: CGFloat, reduceMotion: Bool) -> some View {
+        let opened = Double(min(max(progress, 0), 1))
+        return pageContent(.cover)
+            .containerRelativeFrame([.horizontal, .vertical])
+            .rotation3DEffect(.degrees(reduceMotion ? 0 : opened * -100), axis: (x: 0, y: 1, z: 0), anchor: .leading, perspective: 0.45)
+            .opacity(reduceMotion ? 1 - opened : (opened < 0.6 ? 1 : max(0, 1 - (opened - 0.6) / 0.4)))
+            .allowsHitTesting(false)
     }
 
     @ViewBuilder
