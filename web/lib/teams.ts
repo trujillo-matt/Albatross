@@ -48,6 +48,23 @@ export function fillTeeTimes(userIds: string[], firstLocal: string, gapMinutes: 
   return out;
 }
 
+/**
+ * One tee time per match, in match order: everyone in a match (both sides) plays together, each group `gapMinutes` after the one before.
+ * Players in no match get no time. Pure, so it can be tested.
+ */
+export function fillByMatch(
+  matchups: { matchup_number: number; team_a_player_ids: string[]; team_b_player_ids: string[] }[],
+  firstLocal: string, gapMinutes: number,
+): { values: Record<string, string>; times: string[] } {
+  const ordered = [...matchups]
+    .filter((m) => m.team_a_player_ids.length + m.team_b_player_ids.length > 0)
+    .sort((a, b) => a.matchup_number - b.matchup_number);
+  const times = groupTimes(firstLocal, gapMinutes, ordered.length);
+  const values: Record<string, string> = {};
+  ordered.forEach((m, i) => [...m.team_a_player_ids, ...m.team_b_player_ids].forEach((id) => { values[id] = times[i]; }));
+  return { values, times };
+}
+
 /** Tee times for `count` groups: the first at `firstLocal`, each `gapMinutes` after the one before (local-input values). */
 export function groupTimes(firstLocal: string, gapMinutes: number, count: number): string[] {
   if (!firstLocal || count < 1) return [];

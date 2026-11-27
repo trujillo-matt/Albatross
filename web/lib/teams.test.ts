@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_TEAM_COLORS, fillTeeTimes, fromLocalInput, groupTimes, groupsForSession, moveToNewTimes, teamColor, textOn, toLocalInput } from "./teams.ts";
+import { DEFAULT_TEAM_COLORS, fillByMatch, fillTeeTimes, fromLocalInput, groupTimes, groupsForSession, moveToNewTimes, teamColor, textOn, toLocalInput } from "./teams.ts";
 
 test("a team with no colour gets the default for its side", () => {
   assert.equal(teamColor({ color: null, side: "A" }), DEFAULT_TEAM_COLORS.A);
@@ -18,6 +18,15 @@ test("tee times fill in groups of four, ten minutes apart", () => {
   assert.equal(got.d, "2026-11-21T08:00");
   assert.equal(got.e, "2026-11-21T08:10");
   assert.equal(got.f, "2026-11-21T08:10");
+});
+test("fill by match puts both sides of each match in one group, in match order", () => {
+  const got = fillByMatch([
+    { matchup_number: 2, team_a_player_ids: ["c", "d"], team_b_player_ids: ["g", "h"] },
+    { matchup_number: 1, team_a_player_ids: ["a", "b"], team_b_player_ids: ["e", "f"] },
+  ], "2026-11-21T08:00", 10);
+  assert.deepEqual(got.times, ["2026-11-21T08:00", "2026-11-21T08:10"]);
+  for (const id of ["a", "b", "e", "f"]) assert.equal(got.values[id], "2026-11-21T08:00");
+  for (const id of ["c", "d", "g", "h"]) assert.equal(got.values[id], "2026-11-21T08:10");
 });
 test("local input values round trip", () => {
   const iso = fromLocalInput("2026-11-21T08:10");

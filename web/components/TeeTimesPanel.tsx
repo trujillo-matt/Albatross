@@ -2,7 +2,7 @@
 import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { FORMAT } from "@/lib/labels";
-import { fillTeeTimes, fromLocalInput, groupTimes, moveToNewTimes, teeTimeFor, toLocalInput } from "@/lib/teams";
+import { fillByMatch, fromLocalInput, groupTimes, moveToNewTimes, teeTimeFor, toLocalInput } from "@/lib/teams";
 import type { TSession, TournamentData } from "@/lib/types";
 
 /** Admin: tee time groups for each session. Set the times, then drag names into the groups. Players with the same time play together. */
@@ -60,11 +60,12 @@ function SessionTimes({ session, data, reload }: { session: TSession; data: Tour
     setValues((v) => moveToNewTimes(v, groups, next));
     setGroups(next);
   };
-  // Shortcut: fill every group in list order, so each group is a team's players together.
+  // Shortcut: one group per match from the call outs, both sides together. Anyone not in a match is left without a time.
+  const sessionMatchups = data.matchups.filter((m) => m.session_id === session.id);
   const autoFill = () => {
-    const filled = fillTeeTimes(players.map((p) => p.user_id), first, gap, perGroup);
-    setValues((v) => ({ ...v, ...filled }));
-    setGroups([...new Set(Object.values(filled))].sort());
+    const { values: filled, times } = fillByMatch(sessionMatchups, first, gap);
+    setValues((v) => Object.fromEntries(Object.keys(v).map((uid) => [uid, filled[uid] ?? ""])));
+    setGroups(times);
   };
   const addGroup = () => {
     const last = groups[groups.length - 1] ?? first;
@@ -106,7 +107,7 @@ function SessionTimes({ session, data, reload }: { session: TSession; data: Tour
           <input className="input mt-1 w-24" type="number" min={1} max={8} value={perGroup} onChange={(e) => setPerGroup(Math.max(1, Number(e.target.value) || 1))} />
         </label>
         <button className="btn" type="button" disabled={!first} onClick={setTimes}>Set group times</button>
-        <button className="btn-ghost" type="button" disabled={!first} onClick={autoFill}>Fill in by team</button>
+        <button className="btn-ghost" type="button" disabled={!first || sessionMatchups.length === 0} title={sessionMatchups.length === 0 ? "No matches have been called for this session yet" : undefined} onClick={autoFill}>Fill in by match</button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start">
