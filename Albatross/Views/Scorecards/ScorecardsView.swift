@@ -214,7 +214,9 @@ struct ScorecardsView: View {
 
     /// A row of covers that scrolls sideways and settles on one at a time.
     private func shelf(_ rounds: [Round]) -> some View {
-        ScrollView(.horizontal) {
+        // The transition closure runs off the main actor, so it gets its own copy of the setting.
+        let reduceMotion = self.reduceMotion
+        return ScrollView(.horizontal) {
             LazyHStack(alignment: .bottom, spacing: 16) {
                 ForEach(rounds) { round in
                     NavigationLink(value: RoundDestination.booklet(round.id, opensNextHole: false)) {

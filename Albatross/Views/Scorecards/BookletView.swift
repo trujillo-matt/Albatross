@@ -312,7 +312,9 @@ private struct BookletPages: View {
 
     /// One page at a time. Paging gives the flip between cover and interior pages.
     private var pager: some View {
-        ScrollView(.horizontal) {
+        // The transition closure runs off the main actor, so it gets its own copy of the setting.
+        let reduceMotion = self.reduceMotion
+        return ScrollView(.horizontal) {
             LazyHStack(spacing: 0) {
                 ForEach(BookletPage.allCases) { bookletPage in
                     pageContent(bookletPage)

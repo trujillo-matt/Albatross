@@ -1,7 +1,6 @@
 #!/bin/sh
-# Xcode Cloud runs this after cloning. Cloud builds use a paid account, so the app is signed with the paid
-# entitlements (push, Sign in with Apple, WeatherKit, Time Sensitive Notifications) instead of the free-account set.
+# Xcode Cloud runs this after cloning. The project signs with the paid entitlements by default (push, Sign in with Apple,
+# WeatherKit, Time Sensitive Notifications), which is what cloud builds need. Nothing to change; this only checks it.
 set -e
 cd "$CI_PRIMARY_REPOSITORY_PATH"
-sed -i '' 's#ENTITLEMENTS_FILE = Albatross/Albatross.entitlements;#ENTITLEMENTS_FILE = Config/Albatross.paid.entitlements;#' Albatross.xcodeproj/project.pbxproj
-grep -c "Config/Albatross.paid.entitlements" Albatross.xcodeproj/project.pbxproj
+grep -q "ENTITLEMENTS_FILE = Config/Albatross.paid.entitlements;" Albatross.xcodeproj/project.pbxproj || { echo "Albatross is not set to the paid entitlements"; exit 1; }

@@ -5,17 +5,18 @@ A free personal team can install on your own phone for 7 days at a time and noth
 
 ## Two entitlement sets
 
-`Albatross.xcodeproj` signs the app with `ENTITLEMENTS_FILE`:
+`Albatross.xcodeproj` signs the app with `ENTITLEMENTS_FILE` (Albatross target, Build Settings, Debug and Release):
 
-| Setting | File | For |
-| --- | --- | --- |
-| `Albatross/Albatross.entitlements` (default) | App Groups only | free personal team, device builds today |
-| `Config/Albatross.paid.entitlements` | App Groups, Push, Sign in with Apple, WeatherKit, Time Sensitive Notifications | paid program |
+| File | For |
+| --- | --- |
+| `Config/Albatross.paid.entitlements` (the default now) | App Groups, Push, Sign in with Apple, WeatherKit, Time Sensitive Notifications. Needs the paid program. |
+| `Albatross/Albatross.entitlements` | App Groups only. Use it to build on a free personal team. |
 
-After joining, change `ENTITLEMENTS_FILE` in the Albatross target's build settings (Debug and Release) to the paid file, then in
-Signing & Capabilities check that Push Notifications, Sign in with Apple, WeatherKit and Time Sensitive Notifications show up.
-`ci_scripts/ci_post_clone.sh` makes the same switch for Xcode Cloud builds. Before an App Store or TestFlight archive,
-`aps-environment` is rewritten to `production` by Xcode's distribution signing.
+To switch, open the Albatross target in Xcode, Build Settings, search `ENTITLEMENTS_FILE`, and change the value for Debug and Release.
+Before an App Store or TestFlight archive, `aps-environment` is rewritten to `production` by Xcode's distribution signing.
+
+The first build to a device from Xcode registers the capabilities on the app id (Signing & Capabilities should show Push Notifications,
+Sign in with Apple, WeatherKit, Time Sensitive Notifications and App Groups). Command-line builds cannot do this registration.
 
 Everything in the app that needs a paid capability fails quietly without it: the forecast section stays hidden, the Apple button
 shows a short message, and push registration logs a line.

@@ -116,12 +116,15 @@ struct CourseCoverView: View {
         GeometryReader { proxy in
             let width = proxy.size.width
             let corner = width * 0.07
-            let shape = UnevenRoundedRectangle(
-                topLeadingRadius: width * 0.012,
-                bottomLeadingRadius: width * 0.012,
-                bottomTrailingRadius: corner,
-                topTrailingRadius: corner
-            )
+            // Open in the booklet, the cover follows the screen: its corners are concentric with the display's, on the Duo's
+            // inner and outer screens alike. On the shelf it keeps a booklet's square spine side and rounded fore-edge.
+            let shape: AnyShape = fillsSpace
+                ? AnyShape(ConcentricRectangle(corners: .concentric(minimum: 12), isUniform: true))
+                : AnyShape(UnevenRoundedRectangle(
+                    topLeadingRadius: width * 0.012,
+                    bottomLeadingRadius: width * 0.012,
+                    bottomTrailingRadius: corner,
+                    topTrailingRadius: corner))
 
             ZStack {
                 shape.fill(paper)
@@ -156,17 +159,32 @@ struct CourseCoverView: View {
         case .none:
             EmptyView()
         case .rule:
-            RoundedRectangle(cornerRadius: corner * 0.5)
-                .strokeBorder(ink.opacity(0.55), lineWidth: max(0.5, width * 0.004))
-                .padding(inset)
+            if fillsSpace {
+                ConcentricRectangle(corners: .concentric(minimum: 4), isUniform: true)
+                    .stroke(ink.opacity(0.55), lineWidth: max(0.5, width * 0.004))
+                    .padding(inset)
+            } else {
+                RoundedRectangle(cornerRadius: corner * 0.5)
+                    .strokeBorder(ink.opacity(0.55), lineWidth: max(0.5, width * 0.004))
+                    .padding(inset)
+            }
         case .doubleRule:
             ZStack {
-                RoundedRectangle(cornerRadius: corner * 0.6)
-                    .strokeBorder(ink.opacity(0.6), lineWidth: max(0.5, width * 0.005))
-                    .padding(inset)
-                RoundedRectangle(cornerRadius: corner * 0.45)
-                    .strokeBorder(ink.opacity(0.4), lineWidth: max(0.5, width * 0.003))
-                    .padding(inset + width * 0.022)
+                if fillsSpace {
+                    ConcentricRectangle(corners: .concentric(minimum: 4), isUniform: true)
+                        .stroke(ink.opacity(0.6), lineWidth: max(0.5, width * 0.005))
+                        .padding(inset)
+                    ConcentricRectangle(corners: .concentric(minimum: 2), isUniform: true)
+                        .stroke(ink.opacity(0.4), lineWidth: max(0.5, width * 0.003))
+                        .padding(inset + width * 0.022)
+                } else {
+                    RoundedRectangle(cornerRadius: corner * 0.6)
+                        .strokeBorder(ink.opacity(0.6), lineWidth: max(0.5, width * 0.005))
+                        .padding(inset)
+                    RoundedRectangle(cornerRadius: corner * 0.45)
+                        .strokeBorder(ink.opacity(0.4), lineWidth: max(0.5, width * 0.003))
+                        .padding(inset + width * 0.022)
+                }
             }
         }
     }

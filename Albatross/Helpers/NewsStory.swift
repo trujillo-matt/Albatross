@@ -20,7 +20,7 @@ enum NewsStoryWriter {
         let player = item.playerUserID.flatMap { id in tournament.playerPool.first { $0.userID == id } }
         let name = player?.profile?.displayName
         let team = tournament.teams.first { $0.id == player?.teamID }
-        let hole = item.hole.map(ordinal)
+        let hole = item.hole.map { ordinal($0) }
         let versus = matchup.flatMap { opponents(of: item.playerUserID, in: $0, tournament: tournament) }
         let context = matchContext(matchup: matchup, versus: versus)
         let standing = matchup.flatMap { m in
